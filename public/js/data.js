@@ -1,0 +1,252 @@
+// data/*.json 로딩과 검증. 데이터 파일도 신뢰하지 않고 형태와 상호 참조를 확인한다.
+
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'belt', 'splitter', 'merger', 'inserter']);
+const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger']);
+const ITEM_CATEGORIES = new Set(['food', 'part']);
+const ID_RE = /^[a-z][a-z0-9_]{0,31}$/;
+
+function assert(cond, msg) {
+  if (!cond) throw new Error(msg);
+}
+
+function rejectForbiddenKeys(value, where) {
+  if (value === null || typeof value !== 'object') return;
+  for (const key of Object.keys(value)) {
+    assert(!FORBIDDEN_KEYS.has(key), `${where}: 허용되지 않는 키 '${key}'`);
+    rejectForbiddenKeys(value[key], `${where}.${key}`);
+  }
+}
+
+const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+const isNum = (v, min = -Infinity, max = Infinity) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
+const isInt = (v, min, max) => Number.isInteger(v) && isNum(v, min, max);
+const isStr = (v, max = 64) => typeof v === 'string' && v.length > 0 && v.length <= max;
+const short = (v) => String(v).slice(0, 32);
+
+export function validatePalette(p) {
+  rejectForbiddenKeys(p, 'palette');
+  assert(p && Array.isArray(p.colors), 'palette.colors 배열이 없음');
+  assert(p.colors.length <= 32, `팔레트는 32색 이하여야 함 (현재 ${p.colors.length})`);
+  const seen = new Set();
+  for (const c of p.colors) {
+    assert(typeof c.key === 'string' && c.key.length === 1 && c.key !== p.transparent, `팔레트 key 오류: ${short(c.key)}`);
+    assert(!seen.has(c.key), `팔레트 key 중복: ${c.key}`);
+    assert(/^#[0-9a-f]{6}$/i.test(c.hex), `팔레트 색 오류: ${c.key} ${short(c.hex)}`);
+    seen.add(c.key);
+  }
+  return p;
+}
+
+export function validateItems(data) {
+  rejectForbiddenKeys(data, 'items');
+  assert(isObj(data?.items), 'items.items 객체가 없음');
+  for (const [id, it] of Object.entries(data.items)) {
+    assert(ID_RE.test(id), `아이템 id 오류: ${short(id)}`);
+    assert(isStr(it.name, 24) && isStr(it.sprite, 32), `아이템 ${id}: name/sprite 오류`);
+    assert(isNum(it.price, 0, 1e6), `아이템 ${id}: price 오류`);
+    assert(ITEM_CATEGORIES.has(it.category), `아이템 ${id}: category 오류`);
+  }
+  return data.items;
+}
+
+export function validateMachines(data, items) {
+  rejectForbiddenKeys(data, 'machines');
+  assert(isObj(data?.machines), 'machines.machines 객체가 없음');
+  for (const [id, m] of Object.entries(data.machines)) {
+    assert(ID_RE.test(id), `기계 id 오류: ${short(id)}`);
+    assert(isStr(m.name, 24) && isStr(m.sprite, 32), `기계 ${id}: name/sprite 오류`);
+    assert(MACHINE_KINDS.has(m.kind), `기계 ${id}: 알 수 없는 kind ${short(m.kind)}`);
+    assert(Array.isArray(m.size) && m.size.length === 2 && m.size.every((n) => isInt(n, 1, 8)), `기계 ${id}: size 오류`);
+    if (m.kind === 'source') assert(isNum(m.seconds, 0.05, 600), `기계 ${id}: seconds 오류`);
+    if (m.kind === 'crafter' || m.kind === 'machine') assert(isNum(m.speed, 0.01, 100), `기계 ${id}: speed 오류`);
+    if (m.kind === 'machine') {
+      assert(isInt(m.inputBatches, 1, 99) && isInt(m.outputCap, 1, 99), `기계 ${id}: 버퍼 크기 오류`);
+    }
+    if (CONVEYOR_KINDS.has(m.kind)) {
+      assert(isNum(m.speed, 0.1, 20), `기계 ${id}: 벨트 speed 오류`);
+      assert(m.size[0] === 1 && m.size[1] === 1, `기계 ${id}: 벨트류는 1×1`);
+    }
+    if (m.kind === 'inserter') {
+      assert(isNum(m.seconds, 0.1, 60) && isStr(m.armSprite, 32), `기계 ${id}: 투입기 seconds/armSprite 오류`);
+      assert(m.size[0] === 1 && m.size[1] === 1, `기계 ${id}: 투입기는 1×1`);
+    }
+    for (const flag of ['walkable', 'dragPlace']) {
+      assert(m[flag] === undefined || typeof m[flag] === 'boolean', `기계 ${id}: ${flag} 오류`);
+    }
+    if (m.cost !== undefined) {
+      assert(isObj(m.cost) && Object.keys(m.cost).length > 0, `기계 ${id}: cost 오류`);
+      for (const [part, n] of Object.entries(m.cost)) {
+        assert(Object.hasOwn(items, part) && items[part].category === 'part', `기계 ${id}: 부품이 아닌 비용 ${short(part)}`);
+        assert(isInt(n, 1, 999), `기계 ${id}: 비용 수량 오류`);
+      }
+    }
+  }
+  return data.machines;
+}
+
+export function validateRecipes(data, items, machines) {
+  rejectForbiddenKeys(data, 'recipes');
+  assert(Array.isArray(data?.recipes), 'recipes.recipes 배열이 없음');
+  const ids = new Set();
+  const checkCounts = (obj, where) => {
+    assert(isObj(obj) && Object.keys(obj).length > 0, `${where} 비어 있음`);
+    for (const [item, n] of Object.entries(obj)) {
+      assert(Object.hasOwn(items, item), `${where}: 없는 아이템 ${short(item)}`);
+      assert(isInt(n, 1, 99), `${where}: 수량 오류`);
+    }
+  };
+  for (const r of data.recipes) {
+    assert(ID_RE.test(r.id) && !ids.has(r.id), `레시피 id 오류/중복: ${short(r.id)}`);
+    ids.add(r.id);
+    assert(isStr(r.verb, 12), `레시피 ${r.id}: verb 오류`);
+    assert(Array.isArray(r.stations) && r.stations.length > 0, `레시피 ${r.id}: stations 오류`);
+    for (const s of r.stations) {
+      const kind = Object.hasOwn(machines, s) ? machines[s].kind : null;
+      assert(kind === 'crafter' || kind === 'machine', `레시피 ${r.id}: 작업할 수 없는 기계 ${short(s)}`);
+    }
+    checkCounts(r.inputs, `레시피 ${r.id}.inputs`);
+    checkCounts(r.outputs, `레시피 ${r.id}.outputs`);
+    assert(isNum(r.seconds, 0.05, 600), `레시피 ${r.id}: seconds 오류`);
+  }
+  return data.recipes;
+}
+
+export function validateGameConfig(g, items, machines) {
+  rejectForbiddenKeys(g, 'game');
+  assert(isObj(g), 'game.json 형식 오류');
+  assert(isInt(g.tileSize, 8, 64), 'tileSize 오류');
+  assert(isInt(g.ticksPerSecond, 1, 120), 'ticksPerSecond 오류');
+  assert(isInt(g.maxTicksPerFrame, 1, 1000), 'maxTicksPerFrame 오류');
+  assert(Array.isArray(g.speeds) && g.speeds.every((s) => isNum(s, 0, 16)), 'speeds 오류');
+
+  const c = g.camera;
+  assert(isObj(c) && isInt(c.minZoom, 1, 16) && isInt(c.maxZoom, c.minZoom, 16), 'camera 배율 오류');
+  assert(isInt(c.defaultZoom, c.minZoom, c.maxZoom) && isInt(c.mobileZoom, c.minZoom, c.maxZoom), 'camera 기본 배율 오류');
+  assert(isNum(c.panTilesPerSecond, 0, 100), 'camera.panTilesPerSecond 오류');
+
+  const pl = g.player;
+  assert(isObj(pl) && isNum(pl.tilesPerSecond, 0.1, 50), 'player.tilesPerSecond 오류');
+  assert(isNum(pl.hitbox, 0.1, 0.99), 'player.hitbox 오류');
+  assert(isNum(pl.walkFrameSeconds, 0.01, 2), 'player.walkFrameSeconds 오류');
+  assert(isInt(pl.carryCapacity, 1, 8), 'player.carryCapacity 오류');
+  assert(isNum(pl.reach, 0.5, 1.5), 'player.reach 오류');
+
+  assert(isObj(g.touch) && isNum(g.touch.joystickDeadzone, 0, 0.9) && isNum(g.touch.pinchStep, 1.01, 4), 'touch 오류');
+
+  const m = g.map;
+  assert(isObj(m) && isInt(m.roomWidth, 1, 512) && isInt(m.roomHeight, 1, 512) && isInt(m.wallThickness, 0, 8), 'map 오류');
+  const w = m.roomWidth + m.wallThickness * 2;
+  const h = m.roomHeight + m.wallThickness * 2;
+
+  assert(isObj(g.playerStart) && isInt(g.playerStart.x, 0, w - 1) && isInt(g.playerStart.y, 0, h - 1), 'playerStart 오류');
+  assert(Array.isArray(g.stations) && g.stations.length <= 10000, 'stations 오류');
+  for (const s of g.stations) {
+    assert(machines && Object.hasOwn(machines, s.type), `알 수 없는 기계 종류: ${short(s.type)}`);
+    const [sw, sh] = machines[s.type].size;
+    assert(isInt(s.x, 0, w - sw) && isInt(s.y, 0, h - sh), `기계 위치 오류: ${short(s.type)} ${short(s.x)},${short(s.y)}`);
+    if (machines[s.type].kind === 'source') {
+      assert(Object.hasOwn(items, s.item), `재료 상자 품목 오류: ${short(s.item)}`);
+    }
+  }
+  return g;
+}
+
+// done 조건: 아이템 기준(have/placed/sold) 또는 기계 기준(built/made/took)
+const DONE_ITEM_KINDS = new Set(['have', 'placed', 'sold']);
+const DONE_MACHINE_KINDS = new Set(['built', 'made', 'took', 'fed']);
+const UI_TARGETS = new Set(['build']);
+
+export function validateTutorial(data, items, machines) {
+  rejectForbiddenKeys(data, 'tutorial');
+  assert(isObj(data?.tracks), 'tutorial.tracks 오류');
+  for (const [track, steps] of Object.entries(data.tracks)) {
+    assert(ID_RE.test(track) && Array.isArray(steps) && steps.length <= 100, `튜토리얼 트랙 오류: ${short(track)}`);
+    for (const [i, s] of steps.entries()) {
+      const where = `튜토리얼 ${track} ${i + 1}`;
+      assert(isStr(s.text, 40), `${where}: text 오류`);
+      assert(isObj(s.target), `${where}: target 오류`);
+      if (s.target.ui !== undefined) assert(UI_TARGETS.has(s.target.ui), `${where}: target.ui 오류`);
+      else assert(Object.hasOwn(machines, s.target.station), `${where}: target.station 오류`);
+      if (s.target.item !== undefined) assert(Object.hasOwn(items, s.target.item), `${where}: target.item 오류`);
+      assert(isObj(s.done) && Object.keys(s.done).length === 1, `${where}: done 오류`);
+      const [kind, id] = Object.entries(s.done)[0];
+      const ok = (DONE_ITEM_KINDS.has(kind) && Object.hasOwn(items, id)) ||
+        (DONE_MACHINE_KINDS.has(kind) && Object.hasOwn(machines, id));
+      assert(ok, `${where}: done 조건 오류`);
+    }
+  }
+  return data.tracks;
+}
+
+function validateUnlockLists(obj, where, recipeIds, machines) {
+  assert(isObj(obj), `${where} 오류`);
+  for (const id of obj.recipes ?? []) assert(recipeIds.has(id), `${where}: 없는 레시피 ${short(id)}`);
+  for (const id of obj.machines ?? []) assert(Object.hasOwn(machines, id), `${where}: 없는 기계 ${short(id)}`);
+}
+
+function validateParts(parts, where, items) {
+  assert(isObj(parts), `${where} 오류`);
+  for (const [id, n] of Object.entries(parts)) {
+    assert(Object.hasOwn(items, id) && items[id].category === 'part' && isInt(n, 0, 9999), `${where}: 부품 오류 ${short(id)}`);
+  }
+}
+
+export function validateProgression(data, { recipes, machines, items, tutorial }) {
+  rejectForbiddenKeys(data, 'progression');
+  const recipeIds = new Set(recipes.map((r) => r.id));
+  const start = data?.start;
+  validateUnlockLists(start, 'progression.start', recipeIds, machines);
+  assert(Array.isArray(start.recipes) && Array.isArray(start.machines), 'progression.start 목록 오류');
+  validateParts(start.parts, 'progression.start.parts', items);
+  assert(start.tutorial === null || Object.hasOwn(tutorial, start.tutorial), 'progression.start.tutorial 오류');
+
+  assert(Array.isArray(data.stages) && data.stages.length <= 100, 'progression.stages 오류');
+  const ids = new Set();
+  for (const st of data.stages) {
+    assert(ID_RE.test(st.id) && !ids.has(st.id), `단계 id 오류/중복: ${short(st.id)}`);
+    ids.add(st.id);
+    assert(isStr(st.name, 24), `단계 ${st.id}: name 오류`);
+    assert(isObj(st.when?.sold), `단계 ${st.id}: when 오류`);
+    for (const [item, n] of Object.entries(st.when.sold)) {
+      assert(Object.hasOwn(items, item) && isInt(n, 1, 1e6), `단계 ${st.id}: when.sold 오류`);
+    }
+    validateUnlockLists(st.unlock, `단계 ${st.id}.unlock`, recipeIds, machines);
+    for (const id of st.unlock.machines ?? []) assert(machines[id].cost, `단계 ${st.id}: 지을 수 없는 기계 ${id}`);
+    if (st.reward !== undefined) validateParts(st.reward.parts ?? {}, `단계 ${st.id}.reward.parts`, items);
+    if (st.tutorial !== undefined) assert(Object.hasOwn(tutorial, st.tutorial), `단계 ${st.id}: tutorial 오류`);
+  }
+  return data;
+}
+
+/** 시뮬레이션이 쓰는 규칙 묶음. 순수 데이터 + 조회용 색인. */
+export function buildRules({ game, items, machines, recipes, tutorial, progression }) {
+  const recipesByStation = Object.create(null);
+  for (const id of Object.keys(machines)) recipesByStation[id] = [];
+  for (const r of recipes) for (const s of r.stations) recipesByStation[s].push(r);
+  return { game, items, machines, recipes, recipesByStation, tutorial, progression };
+}
+
+export const DATA_FILES = ['palette', 'game', 'items', 'machines', 'recipes', 'tutorial', 'progression'];
+
+export function validateAll(raw) {
+  const palette = validatePalette(raw.palette);
+  const items = validateItems(raw.items);
+  const machines = validateMachines(raw.machines, items);
+  const recipes = validateRecipes(raw.recipes, items, machines);
+  const game = validateGameConfig(raw.game, items, machines);
+  const tutorial = validateTutorial(raw.tutorial, items, machines);
+  const progression = validateProgression(raw.progression, { recipes, machines, items, tutorial });
+  return { palette, rules: buildRules({ game, items, machines, recipes, tutorial, progression }) };
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url, { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`${url} 불러오기 실패 (${res.status})`);
+  return res.json();
+}
+
+export async function loadData() {
+  const files = await Promise.all(DATA_FILES.map((n) => fetchJson(`data/${n}.json`)));
+  return validateAll(Object.fromEntries(DATA_FILES.map((n, i) => [n, files[i]])));
+}

@@ -1,0 +1,51 @@
+{
+  "version": 3,
+  "start": {
+    "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "assemble_burger"],
+    "machines": [],
+    "parts": {},
+    "tutorial": "start"
+  },
+  "stages": [
+    {
+      "id": "first_machine",
+      "name": "첫 기계",
+      "when": {
+        "sold": {
+          "burger": 1
+        }
+      },
+      "unlock": {
+        "machines": ["grill"],
+        "recipes": []
+      },
+      "reward": {
+        "parts": {
+          "iron_plate": 8,
+          "heat_plate": 2
+        }
+      },
+      "tutorial": "grill"
+    },
+    {
+      "id": "conveyor",
+      "name": "컨베이어",
+      "when": {
+        "sold": {
+          "burger": 3
+        }
+      },
+      "unlock": {
+        "machines": ["belt", "inserter", "splitter", "merger"],
+        "recipes": []
+      },
+      "reward": {
+        "parts": {
+          "iron_plate": 40,
+          "gear": 10
+        }
+      },
+      "tutorial": "conveyor"
+    }
+  ]
+}

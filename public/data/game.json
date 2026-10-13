@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "tileSize": 16,
+  "ticksPerSecond": 20,
+  "maxTicksPerFrame": 20,
+  "speeds": [0, 1, 2, 4],
+  "camera": {
+    "minZoom": 3,
+    "maxZoom": 5,
+    "defaultZoom": 4,
+    "mobileZoom": 3,
+    "panTilesPerSecond": 10
+  },
+  "player": {
+    "tilesPerSecond": 3.2,
+    "hitbox": 0.6,
+    "walkFrameSeconds": 0.15,
+    "carryCapacity": 2,
+    "reach": 0.8
+  },
+  "touch": {
+    "joystickDeadzone": 0.2,
+    "pinchStep": 1.25
+  },
+  "map": {
+    "roomWidth": 16,
+    "roomHeight": 12,
+    "wallThickness": 1
+  },
+  "playerStart": { "x": 8, "y": 8 },
+  "stations": [
+    { "type": "crate", "x": 2, "y": 2, "item": "raw_meat" },
+    { "type": "crate", "x": 2, "y": 4, "item": "lettuce" },
+    { "type": "crate", "x": 2, "y": 6, "item": "bun" },
+    { "type": "cutting_board", "x": 5, "y": 2 },
+    { "type": "griddle_manual", "x": 8, "y": 2 },
+    { "type": "assembly_table", "x": 11, "y": 5 },
+    { "type": "counter", "x": 7, "y": 12 }
+  ]
+}

@@ -1,0 +1,290 @@
+// 부팅과 메인 루프. 로직은 고정 20틱/초, 렌더는 requestAnimationFrame + 보간.
+import { loadData } from './data.js';
+import { createWorld, stepWorld } from './sim/world.js';
+import { getTile, getOccupant, inBounds, TILE } from './sim/grid.js';
+import { findInteraction, facingTile } from './sim/interact.js';
+import { createSpriteBank } from './render/sprites.js';
+import { createCamera, pixelScale, setZoom, clampCamera, screenToWorld } from './render/camera.js';
+import { drawWorld } from './render/world.js';
+import { createEffects } from './render/effects.js';
+import { createInput } from './input.js';
+import { createHud, checkPixelFont } from './ui/hud.js';
+import { createPanels } from './ui/panels.js';
+import { createRecipeBook } from './ui/recipebook.js';
+import { createTutorialCard } from './ui/tutorial.js';
+import { createBuildMode } from './ui/build.js';
+
+const FONT_FAMILY = '"Galmuri11", ui-monospace, monospace';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d', { alpha: false });
+const stage = document.getElementById('app');
+
+const view = { width: 1, height: 1, scale: 1, dpr: 1 };
+
+function resizeCanvas(camera) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = stage.getBoundingClientRect();
+  view.width = Math.max(1, Math.floor(rect.width * dpr));
+  view.height = Math.max(1, Math.floor(rect.height * dpr));
+  view.dpr = dpr;
+  view.scale = pixelScale(camera, dpr);
+  canvas.width = view.width;
+  canvas.height = view.height;
+  canvas.style.setProperty('width', `${view.width / dpr}px`);
+  canvas.style.setProperty('height', `${view.height / dpr}px`);
+}
+
+function drawLogo(bank) {
+  const logo = document.getElementById('logo-sprite');
+  const lctx = logo.getContext('2d');
+  lctx.imageSmoothingEnabled = false;
+  lctx.drawImage(bank.get('burger'), 0, 0);
+}
+
+function hoverLabel(world, rules, x, y) {
+  const id = getOccupant(world.grid, x, y);
+  if (id !== null) {
+    const st = world.stations.find((s) => s.id === id);
+    return rules.machines[st.type].name;
+  }
+  return getTile(world.grid, x, y) === TILE.WALL ? '벽' : '바닥';
+}
+
+function showFatal(text) {
+  const el = document.getElementById('stage-msg');
+  el.textContent = text;
+  el.hidden = false;
+}
+
+async function boot() {
+  let rules;
+  let bank;
+  try {
+    const data = await loadData();
+    rules = data.rules;
+    bank = createSpriteBank(data.palette);
+    for (const def of [...Object.values(rules.items), ...Object.values(rules.machines)]) {
+      if (!bank.has(def.sprite)) throw new Error(`스프라이트 없음: ${def.sprite}`);
+    }
+  } catch (err) {
+    showFatal(`시작 실패: ${err.message}`);
+    console.error(err);
+    return;
+  }
+  const config = rules.game;
+  const ts = config.tileSize;
+
+  const state = { speed: 1, speedBeforeHidden: 1 };
+  const hud = createHud({ onSpeed: (s) => setSpeed(s), bank, rules });
+  function setSpeed(s) {
+    state.speed = s;
+    hud.setSpeed(s);
+  }
+
+  checkPixelFont().then((ok) => hud.showFontNotice(!ok));
+  drawLogo(bank);
+
+  const world = createWorld(rules);
+  const camera = createCamera(config.camera);
+  // 개발용: 주소 끝에 #debug 를 붙이면 콘솔에서 상태를 볼 수 있다.
+  const effects = createEffects(ts, FONT_FAMILY);
+  const recipeBook = createRecipeBook({ bank, rules });
+  let build = null;
+  const panels = createPanels({
+    onOpen: (name) => {
+      if (name === 'recipes') recipeBook.render(world);
+      if (name === 'build') build.renderPanel();
+    },
+    returnFocus: () => canvas.focus({ preventScroll: true }),
+  });
+  build = createBuildMode({ world, rules, bank, panels });
+  let hover = null;
+  // 건설을 시작하면 마우스가 가리키는 칸, 없으면 플레이어가 바라보는 칸에서 시작
+  build.setStartCursor(() => hover ?? facingTile(world.player, config.player.reach));
+  // 개발용: 주소 끝에 #debug 를 붙이면 콘솔에서 상태를 볼 수 있다.
+  if (location.hash === '#debug') window.__game = { world, rules, camera, build, panels };
+  const tutorialCard = createTutorialCard({ rules, world, onRestart: () => panels.close() });
+
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const enterTouchMode = () => {
+    hud.setTouchMode(true);
+    setZoom(camera, config.camera.mobileZoom);
+    view.scale = pixelScale(camera, view.dpr);
+  };
+  const input = createInput(
+    canvas,
+    {
+      joystick: document.getElementById('joystick'),
+      knob: document.getElementById('joystick-knob'),
+      interactBtn: document.getElementById('btn-interact'),
+      dropBtn: document.getElementById('btn-drop'),
+    },
+    { deadzone: config.touch.joystickDeadzone, pinchStep: config.touch.pinchStep, onTouchMode: enterTouchMode },
+  );
+
+  const worldW = world.grid.width * ts;
+  const worldH = world.grid.height * ts;
+
+  resizeCanvas(camera);
+  new ResizeObserver(() => resizeCanvas(camera)).observe(stage);
+  if (coarse) enterTouchMode();
+  setSpeed(1);
+
+  // 탭이 백그라운드로 가면 멈추고, 돌아와도 밀린 시간은 계산하지 않는다.
+  let acc = 0;
+  let last = performance.now();
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      state.speedBeforeHidden = state.speed;
+      setSpeed(0);
+    } else {
+      setSpeed(state.speedBeforeHidden);
+      acc = 0;
+      last = performance.now();
+    }
+  });
+
+  const tickDt = 1 / config.ticksPerSecond;
+  let fps = 0;
+  let fpsFrames = 0;
+  let fpsTime = 0;
+
+  function frame(now) {
+    const realDt = Math.min((now - last) / 1000, 0.25);
+    last = now;
+
+    // ── 화면 조작 (게임 속도와 무관하게 실제 시간 기준) ──
+    if (input.consumePress('Space')) setSpeed(state.speed === 0 ? (state.speedBeforeHidden || 1) : 0);
+    if (state.speed !== 0) state.speedBeforeHidden = state.speed;
+    if (input.consumePress('KeyC')) camera.follow = true;
+
+    let zoomStep = input.consumeZoom();
+    if (input.consumePress('Equal') || input.consumePress('NumpadAdd')) zoomStep += 1;
+    if (input.consumePress('Minus') || input.consumePress('NumpadSubtract')) zoomStep -= 1;
+    if (zoomStep !== 0) {
+      setZoom(camera, camera.zoom + Math.sign(zoomStep));
+      view.scale = pixelScale(camera, view.dpr);
+    }
+
+    // ── 건설 모드 ──
+    if (input.consumePress('KeyX')) build.toggleRemove();
+    if (build.active()) {
+      if (input.consumePress('KeyR')) build.rotate();
+      if (input.consumePress('Enter')) build.confirm();
+      const arrows = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+      for (const [code, [dx, dy]] of Object.entries(arrows)) {
+        if (!input.consumePress(code)) continue;
+        build.moveCursor(dx, dy);
+        const c = build.cursor();
+        camera.follow = false;
+        camera.x = (c.x + 0.5) * ts;
+        camera.y = (c.y + 0.5) * ts;
+      }
+    }
+    const toTile = (p) => {
+      const w = screenToWorld(camera, view, p.x * view.dpr, p.y * view.dpr);
+      return { x: Math.floor(w.x / ts), y: Math.floor(w.y / ts) };
+    };
+    // 마우스: 누르는 순간 설치 (끌면 이어서). 터치: 탭으로 칸만 고르고 설치 버튼으로 확정 (실수 방지)
+    for (const press of input.consumePresses()) {
+      if (!build.active()) continue;
+      const t = toTile(press);
+      build.pressAt(t.x, t.y);
+    }
+    for (const click of input.consumeClicks()) {
+      if (!build.active()) continue;
+      if (click.button === 2) { build.cancel(); continue; }
+      if (!click.touch) continue;
+      const t = toTile(click);
+      build.setCursor(t.x, t.y);
+    }
+    if (!input.mouse.left) build.endDrag();
+
+    const pan = build.active() ? { x: 0, y: 0 } : input.panVector();
+    const drag = input.consumeDrag();
+    if (pan.x || pan.y || drag.x || drag.y) camera.follow = false;
+    camera.x += pan.x * config.camera.panTilesPerSecond * ts * realDt - (drag.x * view.dpr) / view.scale;
+    camera.y += pan.y * config.camera.panTilesPerSecond * ts * realDt - (drag.y * view.dpr) / view.scale;
+
+    // ── 시뮬레이션 ──
+    acc += realDt * state.speed;
+    let steps = 0;
+    while (acc >= tickDt && steps < config.maxTicksPerFrame) {
+      const intent = input.tickIntent();
+      // 조이스틱으로 걷기 시작하면 카메라도 다시 따라간다.
+      if (intent.moveX || intent.moveY) camera.follow = true;
+      stepWorld(world, intent, tickDt, rules);
+      acc -= tickDt;
+      steps++;
+    }
+    if (steps === config.maxTicksPerFrame) acc = 0;
+    if (state.speed === 0) input.clearTaps();
+    const alpha = Math.min(1, acc / tickDt);
+
+    for (const ev of world.events) {
+      effects.push(ev);
+      if (ev.type === 'sold') hud.flashMoney();
+      if (ev.type === 'unlocked') {
+        const names = ev.machines.map((id) => rules.machines[id].name).join(', ');
+        const parts = Object.entries(ev.parts).map(([id, n]) => `${rules.items[id].name} ${n}`).join(', ');
+        hud.banner(`새 기계: ${names}${parts ? ` · 부품 받음: ${parts}` : ''}`);
+      }
+      if (ev.type === 'unlocked' || ev.type === 'built' || ev.type === 'removed') {
+        if (panels.current() === 'build') build.renderPanel();
+      }
+    }
+    world.events.length = 0;
+    effects.update(realDt);
+    tutorialCard.update(realDt);
+    build.update(realDt);
+
+    // ── 렌더 ──
+    const p = world.player;
+    if (camera.follow) {
+      camera.x = (p.prevX + (p.x - p.prevX) * alpha) * ts;
+      camera.y = (p.prevY + (p.y - p.prevY) * alpha) * ts;
+    }
+    clampCamera(camera, view, worldW, worldH);
+
+    const prevHover = hover;
+    hover = null;
+    if (input.mouse.inside) {
+      const w = screenToWorld(camera, view, input.mouse.x * view.dpr, input.mouse.y * view.dpr);
+      const hx = Math.floor(w.x / ts);
+      const hy = Math.floor(w.y / ts);
+      if (inBounds(world.grid, hx, hy)) hover = { x: hx, y: hy };
+    }
+    // 마우스가 다른 칸으로 움직였을 때만 건설 커서를 따라가게 (방향키 이동과 다투지 않게)
+    if (build.active() && hover && (hover.x !== prevHover?.x || hover.y !== prevHover?.y)) {
+      if (input.mouse.left) build.dragTo(hover.x, hover.y);
+      else build.setCursor(hover.x, hover.y);
+    }
+
+    drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build.preview());
+
+    fpsFrames++;
+    fpsTime += realDt;
+    if (fpsTime >= 0.5) {
+      fps = Math.round(fpsFrames / fpsTime);
+      fpsFrames = 0;
+      fpsTime = 0;
+    }
+    hud.update(world, {
+      interaction: findInteraction(world, rules),
+      buildPrompt: build.describe(input.isTouchMode() || coarse),
+      touch: input.isTouchMode() || coarse,
+      hover,
+      hoverLabel: hover ? hoverLabel(world, rules, hover.x, hover.y) : '',
+      zoom: camera.zoom,
+      follow: camera.follow,
+      fps,
+    });
+
+    input.endFrame();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+boot();

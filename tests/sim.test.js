@@ -1,0 +1,211 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createWorld, stepWorld, NO_INPUT } from '../public/js/sim/world.js';
+import { isSolid } from '../public/js/sim/grid.js';
+import { validateAll } from '../public/js/data.js';
+import { currentTutorialStep, tutorialTarget, skipTutorial, restartTutorial } from '../public/js/sim/tutorial.js';
+import { loadRaw, loadRules } from './helpers.js';
+
+const rules = loadRules();
+const config = rules.game;
+const dt = 1 / config.ticksPerSecond;
+
+function run(world, input, ticks) {
+  for (let i = 0; i < ticks; i++) stepWorld(world, { ...NO_INPUT, ...input }, dt, rules);
+}
+
+test('시작 방은 벽으로 둘러싸이고 작업대 칸은 막혀 있다', () => {
+  const w = createWorld(rules);
+  assert.equal(w.grid.width, config.map.roomWidth + 2);
+  assert.ok(isSolid(w.grid, 0, 0));
+  assert.equal(w.stations.length, config.stations.length);
+  for (const st of w.stations) {
+    for (let y = st.y; y < st.y + st.h; y++) for (let x = st.x; x < st.x + st.w; x++) assert.ok(isSolid(w.grid, x, y));
+  }
+});
+
+test('플레이어는 설정 속도로 이동한다', () => {
+  const w = createWorld(rules);
+  const x0 = w.player.x;
+  run(w, { moveX: 1 }, config.ticksPerSecond); // 1초
+  assert.ok(Math.abs(w.player.x - x0 - config.player.tilesPerSecond) < 1e-6);
+  assert.equal(w.player.dir, 'right');
+});
+
+test('플레이어는 벽을 통과하지 못한다', () => {
+  const w = createWorld(rules);
+  w.player.x = w.player.prevX = 14.5; // 오른쪽 아래 빈 구역
+  w.player.y = w.player.prevY = 10.5;
+  run(w, { moveX: 1, moveY: 1 }, 400);
+  const half = config.player.hitbox / 2;
+  assert.ok(w.player.x + half <= w.grid.width - 1);
+  assert.ok(w.player.y + half <= w.grid.height - 1);
+});
+
+test('대각선 이동은 정규화된다 (조이스틱 아날로그 값도 허용)', () => {
+  const w = createWorld(rules);
+  const { x, y } = w.player;
+  run(w, { moveX: 1, moveY: 1 }, 1);
+  assert.ok(Math.abs(Math.hypot(w.player.x - x, w.player.y - y) - config.player.tilesPerSecond * dt) < 1e-6);
+  const w2 = createWorld(rules);
+  run(w2, { moveX: 0.5, moveY: 0 }, 1);
+  assert.ok(Math.abs(w2.player.x - x - 0.5 * config.player.tilesPerSecond * dt) < 1e-6);
+});
+
+// ── M1: 손으로 햄버거 만들기 ──
+
+/** 작업대 앞에 서서 바라보게 한다 (걷기는 위 테스트에서 따로 확인) */
+function standAt(world, x, y, dir) {
+  Object.assign(world.player, { x: x + 0.5, y: y + 0.5, prevX: x + 0.5, prevY: y + 0.5, dir });
+}
+const press = (w) => run(w, { interactPressed: true, interactHeld: true }, 1);
+/** E 를 누르고 seconds 동안 유지 */
+function hold(w, seconds) {
+  run(w, { interactPressed: true, interactHeld: true }, 1);
+  run(w, { interactHeld: true }, Math.ceil(seconds / dt) - 1);
+}
+const secs = (recipeId, station) =>
+  rules.recipes.find((r) => r.id === recipeId).seconds / rules.machines[station].speed;
+const CRATE = rules.machines.crate.seconds;
+
+test('손으로 햄버거를 만들어 출고구에 넣으면 돈이 오른다', () => {
+  const w = createWorld(rules);
+
+  standAt(w, 3, 2, 'left'); // 생고기 상자
+  hold(w, CRATE);
+  assert.deepEqual(w.player.inventory, ['raw_meat', null]);
+
+  standAt(w, 5, 3, 'up'); // 도마: 올리고 그대로 누르고 있으면 썰기
+  hold(w, secs('chop_meat', 'cutting_board'));
+  press(w);
+  assert.deepEqual(w.player.inventory, ['ground_meat', null]);
+
+  standAt(w, 8, 3, 'up'); // 철판
+  hold(w, secs('fry_patty', 'griddle_manual'));
+  press(w);
+  assert.deepEqual(w.player.inventory, ['patty', null]);
+
+  standAt(w, 3, 4, 'left'); // 양상추 상자
+  hold(w, CRATE);
+  standAt(w, 5, 3, 'up');
+  hold(w, secs('prep_lettuce', 'cutting_board'));
+  press(w);
+  assert.deepEqual(w.player.inventory, ['patty', 'lettuce_washed']);
+
+  standAt(w, 11, 6, 'up'); // 조립대에 두 개 올리기
+  press(w);
+  press(w);
+  assert.deepEqual(w.player.inventory, [null, null]);
+
+  standAt(w, 3, 6, 'left'); // 번 상자
+  hold(w, CRATE);
+  standAt(w, 12, 6, 'up'); // 조립대 오른쪽 칸에서도 같은 조립대
+  hold(w, secs('assemble_burger', 'assembly_table'));
+  press(w);
+  assert.deepEqual(w.player.inventory, ['burger', null]);
+
+  standAt(w, 7, 11, 'down'); // 출고구
+  press(w);
+  assert.equal(w.money, rules.items.burger.price);
+  assert.deepEqual(w.player.inventory, [null, null]);
+  assert.equal(w.stats.sold.burger, 1);
+  // 같은 순서로 하면 시작 튜토리얼이 끝나고, 첫 판매로 그릴이 해금되며 그릴 튜토리얼이 이어진다
+  assert.equal(w.tutorial.track, 'grill');
+  assert.equal(w.tutorial.active, true);
+  assert.deepEqual(w.unlocked.machines, ['grill']);
+});
+
+test('작업은 누르고 있는 동안만 진행되고, 손을 떼도 진행도는 남는다', () => {
+  const w = createWorld(rules);
+  w.player.inventory[0] = 'raw_meat';
+  standAt(w, 5, 3, 'up');
+  hold(w, 1);
+  const board = w.stations.find((s) => s.type === 'cutting_board');
+  const p = board.progress;
+  assert.ok(p > 0.9 && p < 1.1);
+  run(w, {}, 40); // 손 뗌
+  assert.equal(board.progress, p);
+  assert.deepEqual(board.output, []);
+});
+
+test('엉뚱한 재료는 올라가지 않는다', () => {
+  const w = createWorld(rules);
+  w.player.inventory[0] = 'bun';
+  standAt(w, 8, 3, 'up'); // 철판에 번
+  press(w);
+  assert.deepEqual(w.player.inventory, ['bun', null]);
+  w.player.inventory[1] = 'bun';
+  standAt(w, 11, 6, 'up'); // 조립대에 번 2개 → 1개만
+  press(w);
+  press(w);
+  assert.deepEqual(w.player.inventory.filter(Boolean), ['bun']);
+});
+
+test('손은 2칸. 꽉 차면 상자에서 더 못 꺼낸다', () => {
+  const w = createWorld(rules);
+  standAt(w, 3, 2, 'left');
+  hold(w, CRATE * 5);
+  assert.deepEqual(w.player.inventory, ['raw_meat', 'raw_meat']);
+});
+
+test('재료는 팔 수 없고, Q 로 내려놓고 E 로 줍는다', () => {
+  const w = createWorld(rules);
+  w.player.inventory[0] = 'raw_meat';
+  standAt(w, 7, 11, 'down');
+  press(w);
+  assert.equal(w.money, 0);
+  assert.deepEqual(w.player.inventory, ['raw_meat', null]);
+
+  standAt(w, 9, 8, 'right');
+  run(w, { dropPressed: true }, 1);
+  assert.deepEqual(w.groundItems, [{ x: 10, y: 8, item: 'raw_meat' }]);
+  assert.deepEqual(w.player.inventory, [null, null]);
+  run(w, { dropPressed: true }, 1); // 빈 손이면 아무 일 없음
+  press(w);
+  assert.deepEqual(w.groundItems, []);
+  assert.deepEqual(w.player.inventory, ['raw_meat', null]);
+});
+
+test('시뮬레이션 상태는 JSON 직렬화 가능', () => {
+  const w = createWorld(rules);
+  w.player.inventory[0] = 'raw_meat';
+  standAt(w, 5, 3, 'up');
+  hold(w, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(w)), w);
+});
+
+test('잘못된 데이터는 거부한다', () => {
+  const bad = (patch) => () => validateAll({ ...loadRaw(), ...patch });
+  const raw = loadRaw();
+  assert.throws(bad({ game: { ...raw.game, tileSize: 'big' } }));
+  assert.throws(bad({ game: { ...raw.game, stations: [{ type: 'rocket', x: 1, y: 1 }] } }));
+  assert.throws(bad({ game: JSON.parse('{"__proto__": {"x": 1}}') }));
+  assert.throws(bad({ recipes: { recipes: [{ ...raw.recipes.recipes[0], inputs: { gold: 1 } }] } }));
+  assert.throws(bad({ machines: { machines: { ...raw.machines.machines, crate: { ...raw.machines.machines.crate, kind: 'magic' } } } }));
+});
+
+test('튜토리얼: 처음엔 생고기 상자를 가리키고, 단계를 건너뛰어 해도 따라온다', () => {
+  const w = createWorld(rules);
+  assert.equal(currentTutorialStep(w, rules).done.have, 'raw_meat');
+  const target = tutorialTarget(w, rules);
+  assert.equal(target.type, 'crate');
+  assert.equal(target.item, 'raw_meat');
+
+  // 순서와 다르게 양상추를 먼저 꺼내도, 고기를 꺼내는 순간 그 단계까지 한꺼번에 넘어간다
+  standAt(w, 3, 4, 'left');
+  hold(w, CRATE);
+  assert.equal(w.tutorial.step, 0);
+  standAt(w, 3, 2, 'left');
+  hold(w, CRATE);
+  assert.equal(w.tutorial.step, 1);
+});
+
+test('튜토리얼 건너뛰기 / 다시 하기', () => {
+  const w = createWorld(rules);
+  skipTutorial(w);
+  assert.equal(currentTutorialStep(w, rules), null);
+  assert.equal(tutorialTarget(w, rules), null);
+  restartTutorial(w);
+  assert.equal(w.tutorial.step, 0);
+  assert.ok(currentTutorialStep(w, rules));
+});

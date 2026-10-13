@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "tracks": {
+    "start": [
+      { "text": "생고기 상자에서 고기 꺼내기",       "target": { "station": "crate", "item": "raw_meat" }, "done": { "have": "raw_meat" } },
+      { "text": "도마에서 고기 썰기",                 "target": { "station": "cutting_board" },            "done": { "have": "ground_meat" } },
+      { "text": "철판에서 다진고기 굽기",             "target": { "station": "griddle_manual" },           "done": { "have": "patty" } },
+      { "text": "양상추 상자에서 양상추 꺼내기",      "target": { "station": "crate", "item": "lettuce" },  "done": { "have": "lettuce" } },
+      { "text": "도마에서 양상추 손질",               "target": { "station": "cutting_board" },            "done": { "have": "lettuce_washed" } },
+      { "text": "패티와 양상추를 조립대에 올리기",    "target": { "station": "assembly_table" },           "done": { "placed": "lettuce_washed" } },
+      { "text": "번 상자에서 번 꺼내기",              "target": { "station": "crate", "item": "bun" },      "done": { "have": "bun" } },
+      { "text": "조립대에서 햄버거 조립",             "target": { "station": "assembly_table" },           "done": { "have": "burger" } },
+      { "text": "출고구에 햄버거 팔기",               "target": { "station": "counter" },                  "done": { "sold": "burger" } }
+    ],
+    "grill": [
+      { "text": "건설 메뉴에서 그릴 짓기",            "target": { "ui": "build" },                         "done": { "built": "grill" } },
+      { "text": "그릴에 다진고기 넣기 (알아서 구워진다)", "target": { "station": "grill" },                "done": { "made": "grill" } },
+      { "text": "그릴에서 패티 꺼내기",               "target": { "station": "grill" },                    "done": { "took": "grill" } }
+    ],
+    "conveyor": [
+      { "text": "컨베이어 몇 칸 이어서 깔기",          "target": { "ui": "build" },                       "done": { "built": "belt" } },
+      { "text": "그릴 옆에 투입기: 그릴 → 벨트",       "target": { "station": "grill" },                    "done": { "fed": "belt" } },
+      { "text": "벨트 끝에 투입기: 벨트 → 조립대",     "target": { "station": "assembly_table" },           "done": { "fed": "assembly_table" } }
+    ]
+  }
+}

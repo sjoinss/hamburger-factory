@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "recipes": [
+    {
+      "id": "chop_meat",
+      "verb": "썰기",
+      "stations": ["cutting_board"],
+      "inputs": {
+        "raw_meat": 1
+      },
+      "outputs": {
+        "ground_meat": 1
+      },
+      "seconds": 2
+    },
+    {
+      "id": "prep_lettuce",
+      "verb": "손질",
+      "stations": ["cutting_board"],
+      "inputs": {
+        "lettuce": 1
+      },
+      "outputs": {
+        "lettuce_washed": 1
+      },
+      "seconds": 1.5
+    },
+    {
+      "id": "fry_patty",
+      "verb": "굽기",
+      "stations": ["griddle_manual", "grill"],
+      "inputs": {
+        "ground_meat": 1
+      },
+      "outputs": {
+        "patty": 1
+      },
+      "seconds": 4
+    },
+    {
+      "id": "assemble_burger",
+      "verb": "조립",
+      "stations": ["assembly_table"],
+      "inputs": {
+        "bun": 1,
+        "patty": 1,
+        "lettuce_washed": 1
+      },
+      "outputs": {
+        "burger": 1
+      },
+      "seconds": 2.5
+    }
+  ]
+}

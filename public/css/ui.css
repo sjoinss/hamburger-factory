@@ -1,0 +1,456 @@
+/* 색은 data/palette.json 의 값만 쓴다. 여기서는 토큰으로 한 번만 정의한다. */
+@font-face {
+  font-family: "Galmuri11";
+  src: url("../assets/fonts/Galmuri11.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  --c-black: #14100e;
+  --c-outline: #2b1d14;
+  --c-metal-1: #4a5560;
+  --c-metal-2: #7c8892;
+  --c-metal-3: #b4bec4;
+  --c-orange: #e58a3c;
+  --c-warn: #e8c33a;
+  --c-floor: #cdbf9f;
+  --c-floor-dark: #a99a78;
+  --c-wall: #2f4a4a;
+  --c-wall-2: #46606a;
+  --c-oil: #5e4a34;
+  --c-light: #f4ecd0;
+
+  --font: "Galmuri11", ui-monospace, Consolas, monospace;
+  --fs: 12px;
+  --fs-big: 24px;
+  --line: 2px;
+  --edge: 8px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --top-h: 44px;
+
+  /* 겹침 순서: 게임 < 오버레이 < 터치 조작 < 상단 바 < 패널 < 알림 */
+  --z-overlay: 1;
+  --z-touch: 2;
+  --z-top: 3;
+  --z-panel: 4;
+  --z-alert: 5;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; overflow: hidden; }
+
+body {
+  background: var(--c-black);
+  color: var(--c-light);
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: 1.5;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: none;
+}
+
+h1, h2, p, dl, dd, ol, ul { margin: 0; }
+h1, h2 { font-size: var(--fs); font-weight: normal; }
+[hidden] { display: none !important; }
+
+:focus-visible {
+  outline: var(--line) solid var(--c-warn);
+  outline-offset: 2px;
+}
+
+canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+/* ── 전체 화면 게임 ───────────────────────────────────── */
+.app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+#game {
+  position: absolute;
+  inset: 0;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+}
+#game:focus-visible { outline-offset: -4px; }
+
+button {
+  font: inherit;
+  color: var(--c-black);
+  background: var(--c-metal-3);
+  border: var(--line) solid var(--c-black);
+  box-shadow: inset 1px 1px 0 var(--c-light), inset -1px -1px 0 var(--c-metal-2), 2px 2px 0 var(--c-black);
+  padding: 2px 8px;
+  cursor: pointer;
+}
+button:hover { background: var(--c-light); }
+button:active { transform: translate(1px, 1px); box-shadow: inset 1px 1px 0 var(--c-metal-2), 1px 1px 0 var(--c-black); }
+button[aria-pressed="true"],
+button[aria-expanded="true"] {
+  background: var(--c-warn);
+  box-shadow: inset 1px 1px 0 var(--c-light), inset -1px -1px 0 var(--c-orange), 1px 1px 0 var(--c-black);
+  transform: translate(1px, 1px);
+}
+
+/* ── 상단 바: 얇은 철판 띠 ────────────────────────────── */
+.topbar {
+  z-index: var(--z-top);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  min-height: var(--top-h);
+  padding: calc(4px + var(--safe-t)) calc(8px + var(--safe-r)) 4px calc(8px + var(--safe-l));
+  background: var(--c-metal-1);
+  border-bottom: var(--line) solid var(--c-black);
+  box-shadow: inset 0 1px 0 var(--c-metal-2), 0 2px 0 var(--c-outline);
+}
+.brand { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.sprite-icon { width: 32px; height: 32px; }
+.stats { display: flex; gap: 12px; }
+.stat { display: flex; gap: 6px; }
+.stat dt { color: var(--c-metal-3); }
+.stat dd { color: var(--c-light); min-width: 3ch; }
+.speed, .menu { display: flex; gap: 4px; }
+.menu { margin-left: auto; }
+
+/* ── 손에 든 물건 (왼쪽 위 작은 띠) ───────────────────── */
+.hands {
+  z-index: var(--z-overlay);
+  position: absolute;
+  left: calc(var(--edge) + var(--safe-l));
+  top: calc(var(--top-h) + var(--safe-t) + var(--edge));
+  padding: 3px;
+  background: var(--c-outline);
+  border: var(--line) solid var(--c-black);
+  box-shadow: 2px 2px 0 var(--c-black);
+}
+.hands-slots { display: flex; gap: 3px; padding: 0; list-style: none; }
+.hands-slots li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 2px;
+  background: var(--c-black);
+  border: 1px solid var(--c-oil);
+}
+.hands-slots canvas { width: 32px; height: 32px; }
+.hands-slots .name { padding-right: 4px; color: var(--c-light); }
+.hands-slots .name:empty { display: none; }
+
+/* ── 튜토리얼 카드 (가운데 위, 쪽지) ───────────────────── */
+.tutorial {
+  z-index: var(--z-overlay);
+  position: absolute;
+  left: 50%;
+  top: calc(var(--top-h) + var(--safe-t) + var(--edge));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(420px, calc(100% - 2 * var(--edge) - 200px));
+  padding: 4px 4px 4px 10px;
+  background: var(--c-floor);
+  color: var(--c-outline);
+  border: var(--line) solid var(--c-black);
+  border-left: 6px solid var(--c-warn);
+  box-shadow: 3px 3px 0 var(--c-black);
+}
+.tutorial-count { color: var(--c-oil); white-space: nowrap; }
+.tutorial-text { flex: 1; }
+.tutorial-skip { padding: 0 6px; background: var(--c-floor-dark); white-space: nowrap; }
+.tutorial.is-done { border-left-color: var(--c-orange); }
+
+/* ── 작업 안내 한 줄 (아래 가운데) ────────────────────── */
+.prompt {
+  z-index: var(--z-overlay);
+  position: absolute;
+  left: 50%;
+  bottom: calc(12px + var(--safe-b));
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  padding: 4px 10px;
+  background: var(--c-light);
+  color: var(--c-outline);
+  border: var(--line) solid var(--c-black);
+  box-shadow: 2px 2px 0 var(--c-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.prompt:empty { display: none; }
+.prompt.is-blocked { background: var(--c-floor-dark); }
+
+/* ── 접이식 패널: 오른쪽 위에 떠 있는 작은 창 ──────────── */
+.panel {
+  z-index: var(--z-panel);
+  position: absolute;
+  right: calc(var(--edge) + var(--safe-r));
+  top: calc(var(--top-h) + var(--safe-t) + var(--edge));
+  width: 280px;
+  max-height: calc(100% - var(--top-h) - var(--safe-t) - 2 * var(--edge));
+  overflow-y: auto;
+  padding: 0 10px 10px;
+  background: var(--c-wall);
+  border: var(--line) solid var(--c-black);
+  box-shadow: inset 1px 1px 0 var(--c-wall-2), 3px 3px 0 var(--c-black);
+}
+.panel-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 -10px 8px;
+  padding: 4px 4px 4px 10px;
+  background: var(--c-black);
+}
+.panel-head h2 { color: var(--c-warn); }
+.panel-close { padding: 0 6px; }
+.panel-orders { background: var(--c-floor); color: var(--c-outline); box-shadow: 3px 3px 0 var(--c-black); }
+.panel-orders .muted { color: var(--c-oil); }
+.muted { color: var(--c-metal-3); }
+
+.kv { display: grid; gap: 2px; }
+.kv > div { display: grid; grid-template-columns: 10ch minmax(0, 1fr); gap: 6px; }
+.kv dt { color: var(--c-warn); }
+.keys-touch { display: none; }
+.is-touch .keys-touch { display: grid; }
+.is-touch .keys-desktop { display: none; }
+.wide-btn { width: 100%; margin-top: 10px; }
+
+/* 레시피북 */
+.recipe-list { display: grid; gap: 6px; padding: 0; list-style: none; }
+.recipe {
+  padding: 6px;
+  background: var(--c-black);
+  border: 1px solid var(--c-wall-2);
+}
+.recipe-out { display: flex; align-items: center; gap: 6px; }
+.recipe-out canvas { width: 32px; height: 32px; }
+.recipe-name { color: var(--c-light); }
+.recipe-where { margin-left: auto; color: var(--c-metal-3); text-align: right; }
+.recipe-in { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; margin-top: 4px; color: var(--c-metal-3); }
+.recipe-in canvas { width: 16px; height: 16px; }
+
+/* 건설 패널 */
+.chip { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.chip canvas { width: 16px; height: 16px; }
+.parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-bottom: 8px;
+  padding: 4px 6px;
+  background: var(--c-black);
+  border: 1px dashed var(--c-wall-2);
+}
+.build-list { display: grid; gap: 6px; padding: 0; list-style: none; }
+.build-item {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-areas: "icon name" "icon cost";
+  align-items: center;
+  column-gap: 8px;
+  width: 100%;
+  text-align: left;
+}
+.build-item > canvas { grid-area: icon; width: 32px; height: 32px; }
+.build-name { grid-area: name; }
+.build-cost { grid-area: cost; display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--c-outline); }
+
+/* 건설 조작 띠: 건설 중에만 아래 가운데 */
+.build-bar { display: none; }
+.is-building .build-bar {
+  position: absolute;
+  z-index: var(--z-touch);
+  left: 50%;
+  bottom: calc(12px + var(--safe-b));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--c-black);
+  border: var(--line) solid var(--c-warn);
+}
+.build-confirm { background: var(--c-warn); }
+.is-building .prompt { bottom: calc(64px + var(--safe-b)); }
+/* 건설 중에는 작업/내려놓기 버튼 대신 건설 띠 */
+.is-building .touch-buttons { visibility: hidden; }
+.is-touch .is-building .prompt { bottom: calc(136px + var(--safe-b)); }
+.is-touch .is-building .build-bar { right: calc(12px + var(--safe-r)); left: auto; transform: none; bottom: calc(24px + var(--safe-b)); }
+.is-touch .build-bar button { min-width: 64px; min-height: 56px; }
+
+/* 튜토리얼이 메뉴 버튼을 가리킬 때: 두 프레임 깜박 */
+@keyframes hint-blink {
+  0%, 49% { background: var(--c-warn); }
+  50%, 100% { background: var(--c-metal-3); }
+}
+.menu button.is-hint { animation: hint-blink 0.8s steps(1) infinite; }
+
+/* 해금 알림 */
+.banner {
+  position: absolute;
+  z-index: var(--z-alert);
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  padding: 8px 14px;
+  background: var(--c-warn);
+  color: var(--c-black);
+  border: var(--line) solid var(--c-black);
+  box-shadow: 3px 3px 0 var(--c-black);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ── 알림 ────────────────────────────────────────────── */
+.toast {
+  z-index: var(--z-alert);
+  position: absolute;
+  left: calc(var(--edge) + var(--safe-l));
+  bottom: calc(var(--edge) + var(--safe-b));
+  padding: 4px 8px;
+  background: var(--c-warn);
+  color: var(--c-black);
+  border: var(--line) solid var(--c-black);
+}
+.stage-msg {
+  z-index: var(--z-alert);
+  position: absolute;
+  left: 12px;
+  top: 60px;
+  max-width: 60ch;
+  padding: 6px 10px;
+  background: var(--c-light);
+  color: var(--c-outline);
+  border: var(--line) solid var(--c-black);
+  box-shadow: 3px 3px 0 var(--c-black);
+}
+
+/* 돈이 들어오면 두 번 깜박 (프레임 스왑 방식) */
+@keyframes money-flash {
+  0%, 49% { color: var(--c-warn); }
+  50%, 100% { color: var(--c-light); }
+}
+.stat dd.flash { animation: money-flash 0.3s steps(1) 2; }
+
+/* ── 터치 조작: 터치가 감지되거나 거친 포인터 기기에서만 ─── */
+.touch-controls { display: none; }
+
+.is-touch .touch-controls {
+  z-index: var(--z-touch);
+  display: flex;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 calc(12px + var(--safe-r)) calc(12px + var(--safe-b)) calc(12px + var(--safe-l));
+  pointer-events: none;
+}
+.is-touch .touch-controls > * { pointer-events: auto; }
+.is-touch .prompt,
+.is-touch .toast { bottom: calc(136px + var(--safe-b)); }
+
+.joystick {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  background: var(--c-outline);
+  border: var(--line) solid var(--c-black);
+  box-shadow: inset 2px 2px 0 var(--c-oil), 3px 3px 0 var(--c-black);
+  touch-action: none;
+}
+/* 십자 홈 */
+.joystick::before,
+.joystick::after {
+  content: "";
+  position: absolute;
+  background: var(--c-black);
+}
+.joystick::before { left: 50%; top: 10px; bottom: 10px; width: 4px; margin-left: -2px; }
+.joystick::after { top: 50%; left: 10px; right: 10px; height: 4px; margin-top: -2px; }
+.joystick-knob {
+  --kx: 0px;
+  --ky: 0px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  background: var(--c-metal-2);
+  border: var(--line) solid var(--c-black);
+  box-shadow: inset 2px 2px 0 var(--c-metal-3), inset -2px -2px 0 var(--c-metal-1);
+  transform: translate(var(--kx), var(--ky));
+}
+
+.touch-buttons { display: flex; align-items: flex-end; gap: 10px; }
+.touch-btn { touch-action: none; }
+.touch-btn-work {
+  width: 92px;
+  height: 92px;
+  background: var(--c-warn);
+  font-size: var(--fs-big);
+}
+.touch-btn-drop { width: 72px; height: 56px; margin-bottom: 8px; }
+.touch-btn[aria-pressed="true"] { background: var(--c-orange); transform: translate(2px, 2px); box-shadow: none; }
+
+@media (any-pointer: coarse) {
+  button { min-height: 40px; min-width: 40px; }
+}
+
+/* ── 좁은 화면: 메뉴는 둘째 줄, 패널은 아래 서랍 ────────── */
+@media (max-width: 899px) {
+  :root { --top-h: 84px; }
+  .brand h1 { display: none; }
+  .speed { margin-left: auto; }
+  .menu { order: 3; width: 100%; margin-left: 0; }
+  .menu button { flex: 1; padding: 2px 0; }
+  .tutorial {
+    left: calc(var(--edge) + var(--safe-l));
+    right: calc(var(--edge) + var(--safe-r));
+    transform: none;
+    max-width: none;
+  }
+  .hands { top: calc(var(--top-h) + var(--safe-t) + var(--edge) + 44px); }
+  .hands-slots .name { display: none; }
+
+  .panel {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
+    width: auto;
+    max-height: 60%;
+    padding-bottom: calc(10px + var(--safe-b));
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    box-shadow: 0 -3px 0 var(--c-black);
+  }
+}
+
+/* 터치에서는 키보드 단축키 표시를 숨긴다 */
+.is-touch .key-hint { display: none; }

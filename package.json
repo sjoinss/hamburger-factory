@@ -1,0 +1,14 @@
+{
+  "name": "factory-burger",
+  "version": "0.0.1",
+  "private": true,
+  "description": "햄버거 공장 — 레트로 산업풍 햄버거 공장 자동화 게임",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

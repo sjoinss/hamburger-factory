@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "items": {
+    "raw_meat"       : { "name": "생고기", "sprite": "rawMeat", "price": 0, "category": "food" },
+    "ground_meat"    : { "name": "다진고기", "sprite": "groundMeat", "price": 1, "category": "food" },
+    "patty"          : { "name": "패티", "sprite": "patty", "price": 3, "category": "food" },
+    "bun"            : { "name": "번", "sprite": "bun", "price": 0, "category": "food" },
+    "lettuce"        : { "name": "양상추", "sprite": "lettuce", "price": 0, "category": "food" },
+    "lettuce_washed" : { "name": "손질 양상추", "sprite": "lettuceWashed", "price": 0, "category": "food" },
+    "burger"         : { "name": "햄버거", "sprite": "burger", "price": 12, "category": "food" },
+    "iron_plate"     : { "name": "철판", "sprite": "ironPlate", "price": 0, "category": "part" },
+    "heat_plate"     : { "name": "열판", "sprite": "heatPlate", "price": 0, "category": "part" },
+    "gear"           : { "name": "기어", "sprite": "gear", "price": 0, "category": "part" }
+  }
+}

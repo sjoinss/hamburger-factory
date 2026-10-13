@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14100e">
+  <!-- 정적 호스팅(GitHub Pages)처럼 응답 헤더를 못 바꾸는 곳에서도 같은 정책을 쓰도록. frame-ancestors 는 헤더(server.js)에서만 적용된다. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; base-uri 'none'; form-action 'none'">
+  <title>햄버거 공장</title>
+  <link rel="stylesheet" href="css/ui.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div class="app" id="app">
+    <canvas id="game" tabindex="0" aria-label="공장 바닥. 탑뷰 격자 화면"></canvas>
+
+    <header class="topbar">
+      <div class="brand">
+        <canvas id="logo-sprite" class="sprite-icon" width="16" height="16" aria-hidden="true"></canvas>
+        <h1>햄버거 공장</h1>
+      </div>
+      <dl class="stats">
+        <div class="stat"><dt>돈</dt><dd id="stat-money">0</dd></div>
+        <div class="stat"><dt>평판</dt><dd id="stat-rep">0</dd></div>
+        <div class="stat"><dt>시간</dt><dd id="stat-time">00:00</dd></div>
+      </dl>
+      <div class="speed" role="group" aria-label="게임 속도">
+        <button type="button" data-speed="0" aria-label="일시정지">||</button>
+        <button type="button" data-speed="1">1x</button>
+        <button type="button" data-speed="2">2x</button>
+        <button type="button" data-speed="4">4x</button>
+      </div>
+      <nav class="menu" aria-label="메뉴">
+        <button type="button" data-panel="orders" aria-expanded="false" aria-controls="panel-orders">주문</button>
+        <button type="button" data-panel="recipes" aria-expanded="false" aria-controls="panel-recipes">레시피</button>
+        <button type="button" data-panel="build" aria-expanded="false" aria-controls="panel-build">건설</button>
+        <button type="button" data-panel="help" aria-expanded="false" aria-controls="panel-help">도움말</button>
+        <button type="button" data-panel="info" aria-expanded="false" aria-controls="panel-info">정보</button>
+      </nav>
+    </header>
+
+    <section class="hands" aria-label="손에 든 물건">
+      <ol class="hands-slots" id="hands-slots"></ol>
+    </section>
+
+    <section class="tutorial" id="tutorial" aria-live="polite" hidden>
+      <p class="tutorial-count" id="tutorial-count"></p>
+      <p class="tutorial-text" id="tutorial-text"></p>
+      <button type="button" class="tutorial-skip" id="tutorial-skip">건너뛰기</button>
+    </section>
+
+    <p class="prompt" id="prompt" role="status" aria-live="polite"></p>
+
+    <div class="touch-controls" id="touch-controls">
+      <div class="joystick" id="joystick" role="presentation">
+        <div class="joystick-knob" id="joystick-knob"></div>
+      </div>
+      <div class="touch-buttons">
+        <button type="button" class="touch-btn touch-btn-drop" id="btn-drop" aria-pressed="false">내려놓기</button>
+        <button type="button" class="touch-btn touch-btn-work" id="btn-interact" aria-pressed="false">작업</button>
+      </div>
+    </div>
+
+    <!-- 건설/철거 중에만 보이는 조작 띠 -->
+    <div class="build-bar" id="build-bar" role="group" aria-label="건설 조작">
+      <button type="button" id="btn-build-rotate">회전<span class="key-hint"> (R)</span></button>
+      <button type="button" class="build-confirm" id="btn-build-confirm">설치</button>
+      <button type="button" id="btn-build-cancel">취소<span class="key-hint"> (Esc)</span></button>
+    </div>
+
+    <p class="banner" id="banner" role="status" aria-live="polite" hidden></p>
+
+    <!-- 접이식 패널. 한 번에 하나만 열린다. -->
+    <section class="panel panel-orders" id="panel-orders" aria-labelledby="panel-orders-title" hidden>
+      <header class="panel-head">
+        <h2 id="panel-orders-title">주문서</h2>
+        <button type="button" class="panel-close" data-close>닫기</button>
+      </header>
+      <p class="muted">아직 주문이 없다. 만든 물건은 출고구에서 시세로 팔린다.</p>
+    </section>
+
+    <section class="panel panel-recipes" id="panel-recipes" aria-labelledby="panel-recipes-title" hidden>
+      <header class="panel-head">
+        <h2 id="panel-recipes-title">레시피북</h2>
+        <button type="button" class="panel-close" data-close>닫기</button>
+      </header>
+      <ul class="recipe-list" id="recipe-list"></ul>
+      <p class="muted" id="recipe-locked" hidden></p>
+    </section>
+
+    <section class="panel panel-build" id="panel-build" aria-labelledby="panel-build-title" hidden>
+      <header class="panel-head">
+        <h2 id="panel-build-title">건설</h2>
+        <button type="button" class="panel-close" data-close>닫기</button>
+      </header>
+      <div class="parts" id="parts-list" aria-label="보유 부품"></div>
+      <ul class="build-list" id="build-list"></ul>
+      <p class="muted" id="build-locked" hidden></p>
+      <button type="button" class="wide-btn" id="btn-remove-mode" aria-pressed="false">철거 모드<span class="key-hint"> (X)</span></button>
+    </section>
+
+    <section class="panel panel-help" id="panel-help" aria-labelledby="panel-help-title" hidden>
+      <header class="panel-head">
+        <h2 id="panel-help-title">조작</h2>
+        <button type="button" class="panel-close" data-close>닫기</button>
+      </header>
+      <dl class="kv keys-desktop">
+        <div><dt>WASD</dt><dd>이동</dd></div>
+        <div><dt>E</dt><dd>작업 (길게)</dd></div>
+        <div><dt>Q</dt><dd>내려놓기</dd></div>
+        <div><dt>방향키</dt><dd>카메라 (C: 복귀)</dd></div>
+        <div><dt>휠</dt><dd>확대</dd></div>
+        <div><dt>Space</dt><dd>일시정지</dd></div>
+        <div><dt>B</dt><dd>건설 (R 회전, X 철거)</dd></div>
+        <div><dt>Esc</dt><dd>창 닫기 / 건설 끝</dd></div>
+      </dl>
+      <dl class="kv keys-touch">
+        <div><dt>조이스틱</dt><dd>이동</dd></div>
+        <div><dt>작업</dt><dd>길게 누르기</dd></div>
+        <div><dt>화면 끌기</dt><dd>카메라</dd></div>
+        <div><dt>두 손가락</dt><dd>확대</dd></div>
+        <div><dt>건설</dt><dd>칸 탭 → 설치</dd></div>
+      </dl>
+      <button type="button" class="wide-btn" id="tutorial-restart">튜토리얼 다시 하기</button>
+    </section>
+
+    <section class="panel panel-info" id="panel-info" aria-labelledby="panel-info-title" hidden>
+      <header class="panel-head">
+        <h2 id="panel-info-title">정보</h2>
+        <button type="button" class="panel-close" data-close>닫기</button>
+      </header>
+      <dl id="info-list" class="kv"></dl>
+    </section>
+
+    <p class="toast" id="font-notice" hidden>픽셀 폰트 없음: public/assets/fonts/Galmuri11.woff2</p>
+    <p class="stage-msg" id="stage-msg" role="alert" hidden></p>
+  </div>
+</body>
+</html>
