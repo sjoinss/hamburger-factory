@@ -3,11 +3,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld, stepWorld, NO_INPUT } from '../public/js/sim/world.js';
 import { placeMachine } from '../public/js/sim/build.js';
-import { setGateManual } from '../public/js/sim/gate.js';
+import { setGateManual, gateFront } from '../public/js/sim/gate.js';
 import { openOrders } from '../public/js/sim/orders.js';
 import { insertSorted, makeBeltItem } from '../public/js/sim/conveyor.js';
 import { stationAt } from '../public/js/sim/lookup.js';
-import { captureBlueprint, checkBlueprint, pasteBlueprint, validateBlueprint, blueprintCost } from '../public/js/sim/blueprint.js';
+import { captureBlueprint, checkBlueprint, pasteBlueprint, validateBlueprint, blueprintCost, rotateBlueprint } from '../public/js/sim/blueprint.js';
 import { serializeWorld, loadWorld, replaceWorld } from '../public/js/sim/save.js';
 import { buyZone } from '../public/js/sim/zones.js';
 import { setSupplyItem } from '../public/js/sim/station.js';
@@ -118,11 +118,11 @@ test('게이트가 없으면 인식기는 대기', () => {
   assert.equal(reader.status, 'idle');
 });
 
-/** 호퍼 (7,8) + 게이트 (7,10) ↓ + 합류 포장기 (7,11) ↓ → 출고구 (7,12) */
+/** 호퍼 (7,8) + 게이트 (7,10) ↓ (셔터는 오른쪽 칸) + 합류 포장기 (8,11) ↓ → 출고구 (8,12) */
 function bundleLine(w) {
   const hopper = build(w, 'hopper', 7, 8);
   const gate = build(w, 'gate', 7, 10, D);
-  const bundler = build(w, 'bundler', 7, 11, D);
+  const bundler = build(w, 'bundler', 8, 11, D);
   return { hopper, gate, bundler };
 }
 
@@ -161,7 +161,7 @@ test('합류 포장기: 주문이 시간 초과되면 모으던 물건을 풀어
   const w = autoWorld();
   const { bundler } = bundleLine(w);
   const o = addOrder(w, { burger: 3 }, 'special', 90, w.time + 1);
-  const belt = build(w, 'belt', 6, 11, R); // 왼쪽에서 포장기로
+  const belt = build(w, 'belt', 7, 11, R); // 왼쪽에서 포장기로
   insertSorted(belt.items, { ...makeBeltItem(belt, 'burger', 1), tag: o.id });
   run(w, secs(0.5));
   assert.deepEqual(bundler.packs[o.id], { burger: 1 });
@@ -328,4 +328,43 @@ test('완전 자동: 플레이어가 가만히 서 있어도 주문이 처리되
   assert.ok(w.reputation > rep0, '주문을 처리해 평판이 올랐다');
   assert.ok(silo.stock.burger < 200, '사일로 버거가 나갔다');
   assert.deepEqual({ x: w.player.x, y: w.player.y }, playerAt, '플레이어는 그대로');
+});
+
+test('게이트 셔터 칸: 스프라이트의 셔터와 같은 칸에서 내보낸다', () => {
+  const w = autoWorld();
+  // [방향, x, y, 내보내는 칸]: 오른쪽은 위 칸, 아래는 오른쪽 칸, 왼쪽은 아래 칸, 위는 왼쪽 칸에서
+  const cases = [[0, 3, 7, { x: 4, y: 7 }], [1, 5, 7, { x: 6, y: 8 }], [2, 9, 7, { x: 8, y: 8 }], [3, 11, 8, { x: 11, y: 7 }]];
+  for (const [rot, x, y, want] of cases) {
+    const g = build(w, 'gate', x, y, rot);
+    assert.deepEqual(gateFront(g), want, `rot ${rot}`);
+  }
+});
+
+test('청사진 회전: 네 번 돌리면 원래대로, 어느 방향으로 붙여넣어도 게이트 → 벨트 연결이 그대로', () => {
+  const src = autoWorld();
+  build(src, 'hopper', 2, 7); // (2,7)-(3,8)
+  const g = build(src, 'gate', 4, 7, R); // 셔터 (4,7) → 앞 (5,7)
+  setGateManual(g, 'burger', 3, false);
+  build(src, 'belt', 5, 7, R);
+  build(src, 'belt', 6, 7, R);
+  const bp = captureBlueprint(src, rules, 2, 7, 6, 8);
+  assert.deepEqual([bp.w, bp.h], [5, 2]);
+  let r = bp;
+  for (let i = 0; i < 4; i++) r = rotateBlueprint(rules, r);
+  assert.deepEqual(r, bp);
+
+  r = bp;
+  for (let k = 0; k < 4; k++) {
+    const w = autoWorld();
+    const res = pasteBlueprint(w, rules, r, 4, 7);
+    assert.ok(res.ok, `회전 ${k}: ${res.reason}`);
+    const hopper = w.stations.find((s) => s.type === 'hopper' && s.built);
+    const gate = w.stations.find((s) => s.type === 'gate');
+    hopper.stock = { burger: 3 };
+    run(w, secs(5));
+    assert.equal(gate.mode.sent, 3, `회전 ${k}: 게이트가 벨트로 다 보냈다`);
+    const onBelts = w.stations.filter((s) => s.type === 'belt').reduce((a, s) => a + s.items.length, 0);
+    assert.equal(onBelts, 3, `회전 ${k}`);
+    r = rotateBlueprint(rules, r);
+  }
 });

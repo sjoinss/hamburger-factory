@@ -13,10 +13,21 @@ export function createGateMode() {
   return { kind: 'manual', item: null, count: 1, repeat: false, sent: 0, orderId: null, orderSent: {}, auto: false };
 }
 
-/** 내보내는 칸: 첫 칸의 앞 */
+/**
+ * 셔터 칸: 회전 전 기준 첫 칸(위 칸)이 회전한 자리. 스프라이트의 셔터와 같은 칸이다.
+ * 0 위 칸, 1(아래로) 오른쪽 칸, 2(왼쪽으로) 아래 칸, 3(위로) 왼쪽 칸
+ */
+export function gateOutletCell(gate) {
+  const x = gate.rot === 1 || gate.rot === 2 ? gate.x + gate.w - 1 : gate.x;
+  const y = gate.rot === 2 || gate.rot === 3 ? gate.y + gate.h - 1 : gate.y;
+  return { x, y };
+}
+
+/** 내보내는 칸: 셔터 칸의 앞 */
 export function gateFront(gate) {
   const [dx, dy] = DIRS[gate.rot];
-  return { x: gate.x + dx, y: gate.y + dy };
+  const c = gateOutletCell(gate);
+  return { x: c.x + dx, y: c.y + dy };
 }
 
 /** 게이트 칸에 붙어 있는 저장소들 (앞 칸 제외) */
@@ -46,7 +57,8 @@ function outputFor(world, rules, gate, item, tag) {
   if (kind === 'belt') {
     const pos = st.rot === gate.rot ? 0 : 0.5;
     if (!canInsertAt(st.items, pos)) return null;
-    const from = { x: gate.x + 0.5, y: gate.y + 0.5 };
+    const c = gateOutletCell(gate);
+    const from = { x: c.x + 0.5, y: c.y + 0.5 };
     return () => insertSorted(st.items, { ...makeBeltItem(st, item, pos, from), tag });
   }
   if (kind === 'counter') {

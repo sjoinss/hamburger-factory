@@ -6,7 +6,7 @@ import { partCount } from '../sim/parts.js';
 import { checkZone, buyZone } from '../sim/zones.js';
 import { inBounds } from '../sim/grid.js';
 import { spriteIcon, itemChip } from './icons.js';
-import { captureBlueprint, checkBlueprint, pasteBlueprint } from '../sim/blueprint.js';
+import { captureBlueprint, checkBlueprint, pasteBlueprint, rotateBlueprint } from '../sim/blueprint.js';
 import { createBlueprints } from './blueprints.js';
 
 const MESSAGE_SECONDS = 2.5;
@@ -59,7 +59,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     mode = next;
     app.classList.toggle('is-building', mode !== null);
     removeBtn.setAttribute('aria-pressed', String(mode?.kind === 'remove'));
-    bar.rotate.hidden = mode?.kind !== 'place';
+    bar.rotate.hidden = mode?.kind !== 'place' && mode?.kind !== 'paste';
     bar.draw.hidden = !((mode?.kind === 'place' && rules.machines[mode.type].dragPlace) || mode?.kind === 'select');
     bar.draw.textContent = drawLabel();
     updateConfirmLabel();
@@ -268,6 +268,8 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
 
   function rotate() {
     if (mode?.kind === 'place') mode.rot = (mode.rot + 1) % 4;
+    // 청사진은 통째로 돈다 (커서 칸이 왼쪽 위 모서리)
+    if (mode?.kind === 'paste') mode.bp = rotateBlueprint(rules, mode.bp);
   }
 
   let drag = null; // { x, y, id } 마지막으로 끌어서 놓은 칸
@@ -360,7 +362,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
       }
       if (p.kind === 'paste') {
         if (!p.ok) return { text: `${p.bp.name}: ${pasteFailText(p)}`, blocked: true };
-        return { text: `${p.bp.name}: ${touch ? '칸을 탭하고 붙여넣기' : '클릭/Enter 로 붙여넣기 · Esc 끝'}` };
+        return { text: `${p.bp.name}: ${touch ? '칸을 탭하고 붙여넣기 · 회전' : '클릭/Enter 로 붙여넣기 · R 회전 · Esc 끝'}` };
       }
       if (p.kind === 'remove') {
         if (p.ok) return { text: `${rules.machines[p.station.type].name} 철거: ${touch ? '철거 버튼' : '클릭/Enter'} (부품 돌려받음)` };

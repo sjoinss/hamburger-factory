@@ -43,6 +43,22 @@ export function captureBlueprint(world, rules, ax, ay, bx, by) {
   return { w, h, entries };
 }
 
+/**
+ * 시계 방향 90도 회전한 새 청사진. 칸 (x, y) → (h - 1 - y, x), 기계마다 방향 +1.
+ * 기계의 앞쪽(게이트 셔터 칸 등)은 회전 전 기준 칸에서 정해지므로 배치째 돌려도 연결이 그대로다.
+ */
+export function rotateBlueprint(rules, bp) {
+  return {
+    ...bp,
+    w: bp.h,
+    h: bp.w,
+    entries: bp.entries.map((e) => {
+      const [, eh] = rotatedSize(rules.machines[e.type], e.rot);
+      return { ...e, x: bp.h - e.y - eh, y: e.x, rot: (e.rot + 1) % 4 };
+    }),
+  };
+}
+
 /** 청사진에 드는 부품 합계 */
 export function blueprintCost(rules, bp) {
   const cost = {};
