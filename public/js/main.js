@@ -1,7 +1,7 @@
 // 부팅과 메인 루프. 로직은 고정 20틱/초, 렌더는 requestAnimationFrame + 보간.
 import { loadData } from './data.js';
 import { createWorld, stepWorld } from './sim/world.js';
-import { getTile, getOccupant, inBounds, TILE } from './sim/grid.js';
+import { inBounds } from './sim/grid.js';
 import { findInteraction, facingTile } from './sim/interact.js';
 import { createSpriteBank } from './render/sprites.js';
 import { createCamera, pixelScale, setZoom, clampCamera, screenToWorld } from './render/camera.js';
@@ -60,15 +60,6 @@ function drawLogo(bank) {
   const lctx = logo.getContext('2d');
   lctx.imageSmoothingEnabled = false;
   lctx.drawImage(bank.get('burger'), 0, 0);
-}
-
-function hoverLabel(world, rules, x, y) {
-  const id = getOccupant(world.grid, x, y);
-  if (id !== null) {
-    const st = world.stations.find((s) => s.id === id);
-    return rules.machines[st.type].name;
-  }
-  return getTile(world.grid, x, y) === TILE.WALL ? '벽' : '바닥';
 }
 
 function showFatal(text) {
@@ -135,7 +126,7 @@ async function boot() {
 
   // 병목 보기 (O 키 / 상단 '병목' 버튼)
   let overlay = false;
-  const overlayBtn = document.querySelector('.menu [data-ui="overlay"]');
+  const overlayBtn = document.querySelector('[data-ui="overlay"]');
   const overlayLegend = document.getElementById('overlay-legend');
   const setOverlay = (on) => {
     overlay = on;
@@ -245,9 +236,6 @@ async function boot() {
   });
 
   const tickDt = 1 / config.ticksPerSecond;
-  let fps = 0;
-  let fpsFrames = 0;
-  let fpsTime = 0;
 
   function frame(now) {
     const realDt = Math.min((now - last) / 1000, 0.25);
@@ -419,22 +407,10 @@ async function boot() {
     }
     if (panels.current() === 'orders') orderBoard.render(now);
 
-    fpsFrames++;
-    fpsTime += realDt;
-    if (fpsTime >= 0.5) {
-      fps = Math.round(fpsFrames / fpsTime);
-      fpsFrames = 0;
-      fpsTime = 0;
-    }
     hud.update(world, {
       interaction: findInteraction(world, rules),
       buildPrompt: build.describe(input.isTouchMode() || coarse),
       touch: input.isTouchMode() || coarse,
-      hover,
-      hoverLabel: hover ? hoverLabel(world, rules, hover.x, hover.y) : '',
-      zoom: camera.zoom,
-      follow: camera.follow,
-      fps,
     });
 
     input.endFrame();

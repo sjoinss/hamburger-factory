@@ -596,3 +596,9 @@ button:disabled { opacity: 1; color: var(--c-oil); background: var(--c-floor-dar
 .ending h2 { color: var(--c-warn); font-size: var(--fs-big); }
 .ending .kv { width: 100%; text-align: left; }
 .ending-sprite { width: 64px; height: 64px; image-rendering: pixelated; }
+
+/* 좁은 화면: 플레이 시간은 빼고 (목표 → 엔딩에서 볼 수 있다) 돈·평판·전력 + 속도를 한 줄에 */
+@media (max-width: 599px) {
+  .stat-time { display: none; }
+  .stats { gap: 8px; }
+}

@@ -28,7 +28,7 @@
     "automation": [
       { "text": "입고구 짓기 (생고기를 자동으로 들여온다)", "target": { "ui": "build" }, "done": { "built": "supply" } },
       { "text": "버거 조립기 짓기", "target": { "ui": "build" }, "done": { "built": "burger_assembler" } },
-      { "text": "손 안 대고 햄버거 만들기 (막히면 병목 보기)", "target": { "ui": "overlay" }, "done": { "made": "burger_assembler" } }
+      { "text": "손 안 대고 햄버거 만들기 (막히면 목표 → 병목 보기)", "target": { "ui": "stats" }, "done": { "made": "burger_assembler" } }
     ],
     "storage": [
       { "text": "깔때기 호퍼 짓기", "target": { "ui": "build" }, "done": { "built": "hopper" } },

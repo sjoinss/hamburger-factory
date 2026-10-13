@@ -11,7 +11,7 @@ export function createPanels({ onOpen, returnFocus }) {
   function close() {
     if (!current) return;
     panelOf(current).hidden = true;
-    buttons.get(current).setAttribute('aria-expanded', 'false');
+    buttons.get(current)?.setAttribute('aria-expanded', 'false');
     current = null;
     returnFocus();
   }
@@ -20,11 +20,12 @@ export function createPanels({ onOpen, returnFocus }) {
     if (current === name) return;
     if (current) {
       panelOf(current).hidden = true;
-      buttons.get(current).setAttribute('aria-expanded', 'false');
+      buttons.get(current)?.setAttribute('aria-expanded', 'false');
     }
     current = name;
     panelOf(name).hidden = false;
-    buttons.get(name).setAttribute('aria-expanded', 'true');
+    // 메뉴 버튼이 없는 패널도 있다 (기계 정보: 기계를 누르면 열린다)
+    buttons.get(name)?.setAttribute('aria-expanded', 'true');
     onOpen?.(name);
   }
 

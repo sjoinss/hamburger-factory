@@ -268,8 +268,15 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
 
   function rotate() {
     if (mode?.kind === 'place') mode.rot = (mode.rot + 1) % 4;
-    // 청사진은 통째로 돈다 (커서 칸이 왼쪽 위 모서리)
-    if (mode?.kind === 'paste') mode.bp = rotateBlueprint(rules, mode.bp);
+    // 청사진은 통째로 돈다. 가운데를 축으로 돌려서 화면 밖(모바일은 아래 조작 띠 뒤)으로 밀려나지 않게
+    if (mode?.kind === 'paste') {
+      const { w, h } = mode.bp;
+      mode.bp = rotateBlueprint(rules, mode.bp);
+      // trunc: 네 번 돌리면 커서가 제자리로 (floor 면 두 번마다 한 칸씩 밀린다)
+      const x = Math.max(0, cursor.x + Math.trunc((w - h) / 2));
+      const y = Math.max(0, cursor.y + Math.trunc((h - w) / 2));
+      if (inBounds(world.grid, x, y)) Object.assign(cursor, { x, y });
+    }
   }
 
   let drag = null; // { x, y, id } 마지막으로 끌어서 놓은 칸

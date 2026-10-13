@@ -181,7 +181,7 @@ export function validateGameConfig(g, items, machines) {
 // done 조건: 아이템 기준(have/placed/sold) 또는 기계 기준(built/made/took)
 const DONE_ITEM_KINDS = new Set(['have', 'placed', 'sold']);
 const DONE_MACHINE_KINDS = new Set(['built', 'made', 'took', 'fed']);
-const UI_TARGETS = new Set(['build', 'overlay', 'orders']);
+const UI_TARGETS = new Set(['build', 'overlay', 'orders', 'stats']);
 // ui: 기계가 아닌 화면 기능을 써 봤는가 / order: any(아무 주문) · auto(인식기가 맡긴 주문) · bundle(묶음 납품) · 주문 종류
 const DONE_UI_IDS = new Set(['blueprint']);
 const DONE_ORDER_IDS = new Set(['any', 'auto', 'bundle']);

@@ -22,7 +22,7 @@
       <dl class="stats">
         <div class="stat"><dt>돈</dt><dd id="stat-money">0</dd></div>
         <div class="stat"><dt>평판</dt><dd id="stat-rep">0</dd></div>
-        <div class="stat"><dt>시간</dt><dd id="stat-time">00:00</dd></div>
+        <div class="stat stat-time"><dt>시간</dt><dd id="stat-time">00:00</dd></div>
         <div class="stat stat-power" id="stat-power-box" hidden><dt>전력</dt><dd id="stat-power">0/0</dd></div>
       </dl>
       <div class="speed" role="group" aria-label="게임 속도">
@@ -36,9 +36,6 @@
         <button type="button" data-panel="recipes" aria-expanded="false" aria-controls="panel-recipes">레시피</button>
         <button type="button" data-panel="build" aria-expanded="false" aria-controls="panel-build">건설</button>
         <button type="button" data-panel="stats" aria-expanded="false" aria-controls="panel-stats">목표</button>
-        <button type="button" data-ui="overlay" aria-pressed="false" title="병목 보기 (O)">병목</button>
-        <button type="button" data-panel="help" aria-expanded="false" aria-controls="panel-help">도움말</button>
-        <button type="button" data-panel="info" aria-expanded="false" aria-controls="panel-info">정보</button>
         <button type="button" data-panel="settings" aria-expanded="false" aria-controls="panel-settings">설정</button>
       </nav>
     </header>
@@ -137,11 +134,26 @@
       </section>
     </section>
 
-    <section class="panel panel-help" id="panel-help" aria-labelledby="panel-help-title" hidden>
+
+    <section class="panel panel-settings" id="panel-settings" aria-labelledby="panel-settings-title" hidden>
       <header class="panel-head">
-        <h2 id="panel-help-title">조작</h2>
+        <h2 id="panel-settings-title">설정</h2>
         <button type="button" class="panel-close" data-close>닫기</button>
       </header>
+      <h3 class="info-sub">저장 <span class="muted">(30초마다 자동)</span></h3>
+      <p class="muted" id="save-status" aria-live="polite"></p>
+      <div class="btn-grid">
+        <button type="button" id="btn-save">지금 저장</button>
+        <button type="button" id="btn-export">내보내기</button>
+        <button type="button" id="btn-import">파일 불러오기</button>
+        <button type="button" id="btn-new">새로 시작</button>
+      </div>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+      <h3 class="info-sub">소리</h3>
+      <button type="button" class="wide-btn" id="btn-mute" aria-pressed="false">음소거</button>
+      <label class="slider"><span>전체</span><input type="range" id="vol-master" min="0" max="100" step="5"><output id="vol-master-out"></output></label>
+      <label class="slider"><span>효과음</span><input type="range" id="vol-sfx" min="0" max="100" step="5"><output id="vol-sfx-out"></output></label>
+      <h3 class="info-sub">조작</h3>
       <dl class="kv keys-desktop">
         <div><dt>WASD</dt><dd>이동</dd></div>
         <div><dt>E</dt><dd>작업 (길게)</dd></div>
@@ -165,26 +177,6 @@
       <button type="button" class="wide-btn" id="tutorial-restart">튜토리얼 다시 하기</button>
     </section>
 
-    <section class="panel panel-settings" id="panel-settings" aria-labelledby="panel-settings-title" hidden>
-      <header class="panel-head">
-        <h2 id="panel-settings-title">설정</h2>
-        <button type="button" class="panel-close" data-close>닫기</button>
-      </header>
-      <h3 class="info-sub">저장 <span class="muted">(30초마다 자동)</span></h3>
-      <p class="muted" id="save-status" aria-live="polite"></p>
-      <div class="btn-grid">
-        <button type="button" id="btn-save">지금 저장</button>
-        <button type="button" id="btn-export">내보내기</button>
-        <button type="button" id="btn-import">파일 불러오기</button>
-        <button type="button" id="btn-new">새로 시작</button>
-      </div>
-      <input type="file" id="import-file" accept=".json,application/json" hidden>
-      <h3 class="info-sub">소리</h3>
-      <button type="button" class="wide-btn" id="btn-mute" aria-pressed="false">음소거</button>
-      <label class="slider"><span>전체</span><input type="range" id="vol-master" min="0" max="100" step="5"><output id="vol-master-out"></output></label>
-      <label class="slider"><span>효과음</span><input type="range" id="vol-sfx" min="0" max="100" step="5"><output id="vol-sfx-out"></output></label>
-    </section>
-
     <section class="panel panel-stats" id="panel-stats" aria-labelledby="panel-stats-title" hidden>
       <header class="panel-head">
         <h2 id="panel-stats-title">목표 · 통계</h2>
@@ -197,6 +189,7 @@
         <p class="chapter-reward" id="chapter-reward"></p>
         <button type="button" class="wide-btn" id="btn-ending" hidden>엔딩 다시 보기</button>
       </section>
+      <button type="button" class="wide-btn" data-ui="overlay" aria-pressed="false">병목 보기<span class="key-hint"> (O)</span></button>
       <h3 class="info-sub">통계</h3>
       <p class="stat-headline"><span class="muted">최근 5분 수익</span> <strong id="stats-earned">0</strong></p>
       <canvas class="earn-chart" id="earn-chart" width="122" height="40" role="img" aria-label="최근 5분 10초 단위 수익 막대 그래프"></canvas>
@@ -243,9 +236,7 @@
           <p class="muted" id="gate-order-info"></p>
         </div>
       </div>
-      <p class="muted" id="inspect-empty">기계를 누르면 (F: 바라보는 기계) 상태가 여기 나온다.</p>
-      <h3 class="info-sub">게임</h3>
-      <dl id="info-list" class="kv"></dl>
+      <p class="muted" id="inspect-empty">기계를 누르면 상태가 여기 나온다.</p>
     </section>
 
     <p class="toast" id="font-notice" hidden>픽셀 폰트 없음: public/assets/fonts/Galmuri11.woff2</p>

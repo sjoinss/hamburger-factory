@@ -138,7 +138,6 @@ export function createHud({ onSpeed, bank, rules }) {
   const time = $('stat-time');
   const powerBox = $('stat-power-box');
   const powerEl = $('stat-power');
-  const infoList = $('info-list');
   const prompt = $('prompt');
   const handsList = $('hands-slots');
   const handsBox = handsList.parentElement;
@@ -152,22 +151,6 @@ export function createHud({ onSpeed, bank, rules }) {
   new ResizeObserver(() => {
     document.documentElement.style.setProperty('--top-h', `${Math.ceil(topbar.getBoundingClientRect().height)}px`);
   }).observe(topbar);
-
-  // 정보 패널 행은 한 번만 만들고 값만 바꾼다.
-  const rows = new Map();
-  function setInfo(label, value) {
-    let dd = rows.get(label);
-    if (!dd) {
-      const div = document.createElement('div');
-      const dt = document.createElement('dt');
-      dd = document.createElement('dd');
-      dt.textContent = label;
-      div.append(dt, dd);
-      infoList.append(div);
-      rows.set(label, dd);
-    }
-    if (dd.textContent !== value) dd.textContent = value;
-  }
 
   // 손 슬롯: 아이템 스프라이트를 그대로 아이콘으로 쓴다.
   const slots = [];
@@ -228,13 +211,6 @@ export function createHud({ onSpeed, bank, rules }) {
         prompt.classList.toggle('is-blocked', Boolean(d.blocked));
       }
 
-      const p = world.player;
-      setInfo('플레이어', `칸 ${Math.floor(p.x)}, ${Math.floor(p.y)}`);
-      setInfo('가리킨 칸', extra.hover ? `${extra.hover.x}, ${extra.hover.y} (${extra.hoverLabel})` : '없음');
-      setInfo('판매 합계', `${world.stats.earned}`);
-      setInfo('부품', Object.entries(world.parts).map(([id, n]) => `${itemName(rules, id)} ${n}`).join(', ') || '없음');
-      setInfo('배율', `${extra.zoom}x${extra.follow ? ' / 따라가기' : ' / 자유 시점'}`);
-      setInfo('FPS', String(extra.fps));
     },
     /** 화면 가운데 위에 잠깐 띄우는 알림 */
     banner(text, seconds = 4) {
