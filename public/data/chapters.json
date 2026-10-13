@@ -19,7 +19,7 @@
       "text": "사람 손 없이 햄버거가 나오는 주방",
       "goals": [
         { "kind": "built", "machine": "burger_assembler", "n": 1 },
-        { "kind": "rate", "item": "burger", "n": 4 }
+        { "kind": "rate", "item": "burger", "n": 6 }
       ],
       "reward": {
         "money": 100,
@@ -66,7 +66,7 @@
       "text": "버거·감자튀김·콜라를 세트로 판다",
       "goals": [
         { "kind": "sold", "item": "set", "n": 10 },
-        { "kind": "bundled", "n": 5 }
+        { "kind": "orders", "n": 30 }
       ],
       "reward": {
         "money": 500,
@@ -81,8 +81,9 @@
       "name": "6장 완전 자동",
       "text": "가만히 있어도 주문이 처리되는 공장",
       "goals": [
-        { "kind": "autoOrders", "n": 30 },
-        { "kind": "earnRate", "n": 300 }
+        { "kind": "autoOrders", "n": 20 },
+        { "kind": "bundled", "n": 5 },
+        { "kind": "earnRate", "n": 250 }
       ],
       "reward": {
         "money": 1000,

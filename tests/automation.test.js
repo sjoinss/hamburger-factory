@@ -148,3 +148,16 @@ test('자동화 라인이 돌아가는 상태도 JSON 직렬화 가능', () => {
   run(w, secs(20));
   assert.deepEqual(JSON.parse(JSON.stringify(w)), w);
 });
+
+test('밸런스: 기본 버거 라인 하나로 2장 목표(분당 햄버거)를 넘고, 7개면 8장 목표에 닿는다', () => {
+  const w = automationWorld();
+  buildBurgerLine(w);
+  run(w, secs(120));
+  const s0 = w.stats.sold.burger ?? 0;
+  run(w, secs(120));
+  const rate = ((w.stats.sold.burger ?? 0) - s0) / 2;
+  const goal = (id) => rules.chapters.find((c) => c.id === id).goals.find((g) => g.kind === 'rate').n;
+  assert.ok(rate >= goal('kitchen'), `분당 ${rate}`);
+  // 잘 다듬은 라인은 오븐(분당 12) 한도까지, 기본 라인은 그보다 조금 아래
+  assert.ok(rate * 7 >= goal('empire'), `분당 ${rate} × 7 < ${goal('empire')}`);
+});
