@@ -44,8 +44,8 @@ export function createInspector({ world, rules, bank }) {
   /** 고를 수 있는 품목: 파는 물건 + (있으면) 저장소에 든 물건 */
   const choosable = (extra = []) => {
     const ids = new Set(Object.keys(rules.items).filter((id) => rules.items[id].price > 0));
-    for (const id of extra) ids.add(id);
-    return [...ids].filter((id) => rules.items[id].category === 'food');
+    for (const id of extra) ids.add(id); // 저장소에 든 원료·부품도 고를 수 있다
+    return [...ids];
   };
 
   /** 아이콘 버튼 줄 (같은 목록이면 다시 만들지 않고 눌림 상태만 바꾼다) */
@@ -139,9 +139,10 @@ export function createInspector({ world, rules, bank }) {
       return;
     }
     pick.hidden = false;
-    if (pickFor !== st.id) {
-      pickFor = st.id;
-      pick.replaceChildren(...machine.supplies.map((item) => {
+    const pickKey = `${st.id}|${world.unlocked.supplies.join(',')}`;
+    if (pickFor !== pickKey) {
+      pickFor = pickKey;
+      pick.replaceChildren(...machine.supplies.filter((item) => world.unlocked.supplies.includes(item)).map((item) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.dataset.item = item;
@@ -149,7 +150,7 @@ export function createInspector({ world, rules, bank }) {
         const label = document.createElement('span');
         label.textContent = rules.items[item].name;
         b.append(label);
-        b.addEventListener('click', () => setSupplyItem(rules, st, item));
+        b.addEventListener('click', () => setSupplyItem(rules, st, item, world));
         return b;
       }));
     }
@@ -194,6 +195,7 @@ export function createInspector({ world, rules, bank }) {
           bars.forEach((b) => b.style.setProperty('--w', '0%'));
         }
         const parts = [];
+        if (world.power.ratio < 1 && rules.machines[st.type].power) parts.push(`전력 부족: ${Math.round(world.power.ratio * 100)}% 속도`);
         if (st.contents?.length) parts.push(`입력: ${countList(rules, st.contents)}`);
         if (st.output?.length) parts.push(`출력: ${countList(rules, st.output)}`);
         if (st.held) parts.push(`집게: ${rules.items[st.held].name}`);

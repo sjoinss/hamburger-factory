@@ -95,3 +95,7 @@ export const OVERLAY_IDLE = Array.from({ length: 16 }, (_, y) =>
     const inDotCol = (x - shift + 4) % 4 < 2;
     return inDotRow && inDotCol ? 'p' : '.';
   }).join(''));
+
+// 정전 깜박임: 한 칸 걸러 검정 (반투명 대신)
+export const OVERLAY_DIM = Array.from({ length: 16 }, (_, y) =>
+  Array.from({ length: 16 }, (_, x) => ((x + y) % 2 === 0 ? 'K' : '.')).join(''));

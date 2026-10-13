@@ -1,7 +1,8 @@
 // 격자. 순수 데이터 + 함수. DOM/Canvas 를 모른다.
 
 // STREET: 가게 밖 길 (손님 줄), WINDOW: 출고구 뒤 창구. 둘 다 플레이어는 못 들어간다.
-export const TILE = Object.freeze({ FLOOR: 'floor', WALL: 'wall', STREET: 'street', WINDOW: 'window' });
+// LOCKED: 아직 사지 않은 구역 바닥
+export const TILE = Object.freeze({ FLOOR: 'floor', WALL: 'wall', STREET: 'street', WINDOW: 'window', LOCKED: 'locked' });
 
 export function createGrid(width, height, fill = TILE.FLOOR) {
   return {
@@ -44,9 +45,13 @@ export function isSolid(grid, x, y) {
   return grid.tiles[i] !== TILE.FLOOR || grid.solid[i];
 }
 
-/** 방 하나(바닥) + 둘레 벽 + (아래쪽) 가게 앞 길. */
-export function createRoomGrid(roomWidth, roomHeight, wallThickness, streetRows = 0) {
-  const width = roomWidth + wallThickness * 2;
+/**
+ * 방 하나(바닥) + 둘레 벽 + (아래쪽) 가게 앞 길.
+ * zones: 오른쪽에 이어 붙는 잠긴 구역들 [{ x, w }] — 사이마다 벽 한 줄.
+ */
+export function createRoomGrid(roomWidth, roomHeight, wallThickness, streetRows = 0, zones = []) {
+  const right = zones.length ? Math.max(...zones.map((z) => z.x + z.w)) : roomWidth + wallThickness;
+  const width = right + wallThickness;
   const roomH = roomHeight + wallThickness * 2;
   const height = roomH + streetRows;
   const grid = createGrid(width, height, TILE.FLOOR);
@@ -57,6 +62,11 @@ export function createRoomGrid(roomWidth, roomHeight, wallThickness, streetRows 
         x < wallThickness || y < wallThickness ||
         x >= width - wallThickness || y >= roomH - wallThickness;
       if (edge) setTile(grid, x, y, TILE.WALL);
+      else if (x > roomWidth) {
+        // 시작 방 오른쪽: 구역 안이면 잠긴 바닥, 구역 사이는 벽
+        const inZone = zones.some((z) => x >= z.x && x < z.x + z.w);
+        setTile(grid, x, y, inZone ? TILE.LOCKED : TILE.WALL);
+      }
     }
   }
   return grid;

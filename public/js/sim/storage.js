@@ -2,12 +2,15 @@
 
 export const storageTotal = (st) => Object.values(st.stock).reduce((a, b) => a + b, 0);
 
+/** 용량 (창고동에 놓으면 늘어난다: 놓을 때 station.capMult 로 기록) */
+export const storageCapacity = (rules, st) => Math.floor(rules.machines[st.type].capacity * (st.capMult ?? 1));
+
 /** 사일로처럼 한 품목만 받는 저장소가 지금 담고 있는 품목 */
 const lockedItem = (st) => Object.keys(st.stock).find((id) => st.stock[id] > 0) ?? null;
 
 export function canStore(rules, st, item) {
   const m = rules.machines[st.type];
-  if (storageTotal(st) >= m.capacity) return false;
+  if (storageTotal(st) >= storageCapacity(rules, st)) return false;
   if (st.filter && st.filter !== item) return false;
   if (m.singleItem) {
     const locked = lockedItem(st);

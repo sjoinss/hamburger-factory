@@ -323,6 +323,10 @@ async function boot() {
         hud.flashMoney();
         hud.banner(`주문 완료 +${ev.reward}`, 2);
       }
+      if (ev.type === 'zoneBought') {
+        const z = rules.zones.zones.find((x) => x.id === ev.zone);
+        hud.banner(`${z.name} 매입! ${z.trait.text}`, 3);
+      }
       if (ev.type === 'orderFailed') hud.banner('주문 시간 초과: 손님이 떠났다 (평판 하락)', 3);
       if (ev.type === 'orderNew' && panels.current() === 'orders') orderBoard.forceRender();
       if (ev.type === 'unlocked') {
@@ -365,6 +369,7 @@ async function boot() {
     drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build.preview(), {
       overlay,
       destination: walker.destination(),
+      fontFamily: FONT_FAMILY,
       selected: panels.current() === 'info' ? inspector.selected() : null,
     });
     if (panels.current() === 'info') inspector.render();

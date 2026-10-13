@@ -40,6 +40,12 @@ export function machineStatusText(station, rules, world = null) {
     }[station.reason] ?? '대기';
   }
   if (kind === 'storage') return `${storageTotal(station)} / ${rules.machines[station.type].capacity}`;
+  if (kind === 'generator') {
+    const m = rules.machines[station.type];
+    const fuel = station.contents.length;
+    if (station.status === 'running') return `발전 중 ${m.output}kW · ${name(m.fuel)} ${fuel}개 남음`;
+    return `대기: ${name(m.fuel)} 넣기 (최대 ${m.fuelCap}개)`;
+  }
   if (kind === 'farm') {
     const crop = name(rules.machines[station.type].crop);
     if (station.output.length > 0) return `다 자람: ${crop} ${station.output.length}개 수확 가능`;
@@ -70,7 +76,7 @@ export function describeInteraction(act, rules, touch, world = null) {
       return { text: `${key}: ${name(act.item)} 꺼내기${n > 1 ? ` (${n}개)` : ''} · ${machineStatusText(act.station, rules)}` };
     }
     case 'deposit': {
-      const verb = act.machine.kind === 'machine' ? '넣기' : '올리기';
+      const verb = act.machine.kind === 'machine' || act.machine.kind === 'generator' ? '넣기' : '올리기';
       return { text: `${key}: ${name(act.item)} → ${act.machine.name}에 ${verb}` };
     }
     case 'sell':
@@ -114,6 +120,8 @@ export function createHud({ onSpeed, bank, rules }) {
   const money = $('stat-money');
   const rep = $('stat-rep');
   const time = $('stat-time');
+  const powerBox = $('stat-power-box');
+  const powerEl = $('stat-power');
   const infoList = $('info-list');
   const prompt = $('prompt');
   const handsList = $('hands-slots');
@@ -170,6 +178,16 @@ export function createHud({ onSpeed, bank, rules }) {
     update(world, extra) {
       if (last.money !== world.money) money.textContent = String(last.money = world.money);
       if (last.rep !== world.reputation) rep.textContent = String(last.rep = world.reputation);
+      // 전력: 쓰는 양 / 공급량. 모자라면 글로도 알린다
+      if (world.features.includes('power')) {
+        powerBox.hidden = false;
+        const p = world.power;
+        const text = p.ratio < 1
+          ? `${Math.round(p.demand)}/${Math.round(p.supply)}kW 부족 ${Math.round(p.ratio * 100)}%`
+          : `${Math.round(p.demand)}/${Math.round(p.supply)}kW`;
+        if (powerEl.textContent !== text) powerEl.textContent = text;
+        powerEl.classList.toggle('is-short', p.ratio < 1);
+      }
       const t = formatTime(world.time);
       if (last.time !== t) time.textContent = last.time = t;
 

@@ -51,15 +51,15 @@ server.js            Node 내장 http 서버 (보안 헤더, 경로 탈출 차�
 public/
   index.html
   css/ui.css         색은 CSS 변수 토큰으로만
-  data/              밸런스/설정 JSON (palette, game, items, recipes, machines, orders, tutorial, progression)
+  data/              밸런스/설정 JSON (palette, game, items, recipes, machines, orders, zones, tutorial, progression)
   js/
     main.js          부팅, 고정 20틱 루프 + rAF 렌더 보간
     data.js          JSON 로딩/검증
     input.js         키보드/마우스
-    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, rng, player, station, interact, build, conveyor, inserter, storage, gate, orders, market, progression, economy, stats, tutorial, world
+    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, rng, path, player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, world
     render/          sprites(bake/캐시), camera, world, customers, effects
-    sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, items, machines, storage, ui
-    ui/              상단 바/손/안내(hud), 접이식 패널, 레시피북, 튜토리얼 카드, 건설 모드, 기계 정보, 통계, 주문서
+    sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, farm-potato, items, machines, storage, workshop, ui
+    ui/              상단 바/손/안내(hud), 접이식 패널, 레시피북, 튜토리얼 카드, 건설 모드(구역 매입 포함), 기계 정보, 통계, 주문서, 탭 이동
 tests/               node:test
 ```
 
@@ -73,4 +73,5 @@ tests/               node:test
 - [x] M4 완성 라인 + 병목 시각화 (햄버거 6개 판매 → 입고구·절단기·세척기·반죽기·오븐·버거 조립기 해금, 통계 패널)
 - [x] M5 깔때기 호퍼 + 주문 시스템 (햄버거 15개 판매 → 호퍼·사일로·출고 게이트, 주문서·손님·시세)
 - [x] 재료 준비: 밀밭·채소밭 수확 → 맷돌/제분기 → 반죽대/반죽기 → 화덕/오븐 (입고구는 생고기만)
-- [ ] M6 부품 공방 + 확장
+- [x] M6 부품 공방 + 확장 (햄버거 25개: 제련로·프레스·와이어·기어 선반·부품 조립기·발전기, 전력, 구역 매입 / 40개: 감자튀김·콜라·세트)
+- [ ] M7 완전 자동화

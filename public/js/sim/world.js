@@ -12,6 +12,8 @@ import { updateGate } from './gate.js';
 import { createMarket, updateMarket } from './market.js';
 import { createOrders, updateOrders } from './orders.js';
 import { TILE, getTile, setTile } from './grid.js';
+import { createPower, updatePower } from './power.js';
+import { zoneMult } from './zones.js';
 
 export const NO_INPUT = Object.freeze({
   moveX: 0, moveY: 0, interactPressed: false, interactHeld: false, dropPressed: false,
@@ -21,7 +23,7 @@ export const NO_INPUT = Object.freeze({
 export function createWorld(rules) {
   const config = rules.game;
   const { roomWidth, roomHeight, wallThickness } = config.map;
-  const grid = createRoomGrid(roomWidth, roomHeight, wallThickness, config.map.streetRows ?? 0);
+  const grid = createRoomGrid(roomWidth, roomHeight, wallThickness, config.map.streetRows ?? 0, rules.zones?.zones ?? []);
 
   const stations = [];
   for (const def of config.stations) {
@@ -44,7 +46,7 @@ export function createWorld(rules) {
   }
 
   return {
-    version: 7,
+    version: 8,
     rng: 20261013, // 난수 씨앗 (rng.js)
     tick: 0,
     time: 0,
@@ -62,7 +64,10 @@ export function createWorld(rules) {
     unlocked: {
       recipes: [...rules.progression.start.recipes],
       machines: [...rules.progression.start.machines],
+      supplies: [...(rules.progression.start.supplies ?? [])],
     },
+    zonesBought: [],
+    power: createPower(),
     stagesDone: [],
     features: [...(rules.progression.start.features ?? [])],
     market: createMarket(),
@@ -78,11 +83,14 @@ export function stepWorld(world, input, dt, rules) {
   world.tick += 1;
   world.time += dt;
   updatePlayer(world.player, world.grid, input, dt, rules.game.player);
+  // 전력: 모자라면 기계가 모두 같은 비율로 느려진다 (사람 손 작업은 그대로)
+  updatePower(world, rules, dt);
+  const pdt = dt * world.power.ratio;
   updateInteraction(world, rules, input, dt);
   for (const st of world.stations) {
     const kind = rules.machines[st.type].kind;
-    if (kind === 'inserter') updateInserter(world, rules, st, dt);
-    else if (kind === 'gate') updateGate(world, rules, st, dt);
+    if (kind === 'inserter') updateInserter(world, rules, st, pdt);
+    else if (kind === 'gate') updateGate(world, rules, st, pdt);
   }
   updateConveyors(world, rules, dt);
   for (const st of world.stations) {
@@ -92,12 +100,12 @@ export function stepWorld(world, input, dt, rules) {
       continue;
     }
     if (kind === 'supply') {
-      const item = updateSupply(rules, st, dt);
+      const item = updateSupply(rules, st, pdt, zoneMult(world, rules, st, 'supply'));
       if (item) record(world, 'produced', item);
       continue;
     }
     if (kind !== 'machine') continue;
-    const done = updateMachine(rules, st, dt);
+    const done = updateMachine(rules, st, pdt);
     if (done) {
       recordRecipe(world, done);
       noteTutorial(world, 'made', st.type);

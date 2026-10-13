@@ -23,6 +23,7 @@ function tileSprite(type, x, y) {
   if (type === TILE.WALL) return h % 7 === 0 ? 'wallRust' : 'wall';
   if (type === TILE.STREET) return 'street';
   if (type === TILE.WINDOW) return 'window';
+  if (type === TILE.LOCKED) return 'locked';
   const light = (x + y) % 2 === 0;
   if (light) return h % 13 === 0 ? 'floorLightCrack' : 'floorLight';
   return h % 17 === 0 ? 'floorDarkOil' : 'floorDark';
@@ -173,7 +174,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
         if (st.w === 1) itemSprite(st.contents[st.contents.length - 1], bx, by - 1);
         else st.contents.forEach((it, i) => itemSprite(it, bx - 1 + i * 9, by - 1));
       }
-      if (machine.kind === 'machine' || machine.kind === 'inserter' || machine.kind === 'gate') {
+      if (machine.kind === 'machine' || machine.kind === 'inserter' || machine.kind === 'gate' || machine.kind === 'generator') {
         // 상태등: 오른쪽 위. 가동 = 깜박이는 초록 사각, 대기 = 노랑 점, 막힘 = 빨강 X
         const lamp = { running: 'lampRunning', idle: 'lampIdle', blocked: 'lampBlocked' }[st.status];
         sprite(lamp, animFrame, bx + st.w * ts - 6, by + 1);
@@ -237,6 +238,34 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   }
 
   effects.draw(ctx, bank, sx, sy, s);
+
+  // 아직 안 산 구역: 가운데에 이름과 효과 (텍스트는 픽셀 폰트 12px 배수)
+  if (rules.zones && world.features.includes('zones')) {
+    const k = Math.max(1, Math.floor(s / 2));
+    ctx.font = `${12 * k}px ${opts.fontFamily ?? 'monospace'}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const mid = (rules.game.map.roomHeight / 2 + 1) * ts;
+    for (const z of rules.zones.zones) {
+      if (world.zonesBought.includes(z.id)) continue;
+      const cx = sx((z.x + z.w / 2) * ts);
+      const lines = [`${z.name} (잠김)`, z.trait.text, '건설 메뉴에서 매입'];
+      lines.forEach((t, i) => {
+        const cy = sy(mid) + (i - 1) * 16 * k;
+        ctx.fillStyle = bank.color('K');
+        ctx.fillText(t, cx + k, cy + k);
+        ctx.fillStyle = bank.color(i === 0 ? 'y' : 'l');
+        ctx.fillText(t, cx, cy);
+      });
+    }
+    ctx.textAlign = 'start';
+  }
+
+  // 전력 부족: 형광등이 이따금 깜박 (점무늬로 어둡게, 팔레트 밖 색 없음)
+  if (world.power && world.power.ratio < 1 && Math.floor(world.time * 10) % 17 === 0) {
+    const dim = bank.get('overlayDim');
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) ctx.drawImage(dim, ox + x * cell, oy + y * cell, cell, cell);
+  }
 
   /**
    * 병목 보기: 막힘 = 빨강 빗금, 한산 = 파랑 점. 정상은 표시 없음 (색만이 아니라 무늬로도 구분).

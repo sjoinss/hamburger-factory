@@ -35,6 +35,16 @@
       { "text": "벨트 끝을 호퍼로 이어 재고 쌓기", "target": { "station": "hopper" }, "done": { "fed": "hopper" } },
       { "text": "호퍼 옆에 출고 게이트 짓기", "target": { "ui": "build" }, "done": { "built": "gate" } },
       { "text": "주문서에서 주문을 게이트에 맡기기", "target": { "ui": "orders" }, "done": { "order": "any" } }
+    ],
+    "workshop": [
+      { "text": "제련로 짓기 (입고구에서 철광석을 들여온다)", "target": { "ui": "build" }, "done": { "built": "smelter" } },
+      { "text": "프레스로 철판 만들기 → 호퍼에 모으면 건설에 쓰인다", "target": { "ui": "build" }, "done": { "made": "press" } },
+      { "text": "발전기 짓고 석탄 넣기 (기본 전력 120kW 넘으면 느려진다)", "target": { "ui": "build" }, "done": { "fed": "generator" } }
+    ],
+    "menu": [
+      { "text": "감자밭 짓기", "target": { "ui": "build" }, "done": { "built": "potato_field" } },
+      { "text": "튀김기로 감자튀김 만들기", "target": { "ui": "build" }, "done": { "made": "fryer" } },
+      { "text": "포장기로 세트 만들기 (버거 + 감자튀김 + 콜라)", "target": { "ui": "build" }, "done": { "made": "packer" } }
     ]
   }
 }

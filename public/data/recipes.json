@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "recipes": [
     {
       "id": "chop_meat",
@@ -86,6 +86,131 @@
         "burger": 1
       },
       "seconds": 2.5
+    },
+    {
+      "id": "smelt_iron",
+      "verb": "제련",
+      "stations": ["smelter"],
+      "inputs": {
+        "iron_ore": 1
+      },
+      "outputs": {
+        "iron_ingot": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "press_plate",
+      "verb": "찍기",
+      "stations": ["press"],
+      "inputs": {
+        "iron_ingot": 1
+      },
+      "outputs": {
+        "iron_plate": 1
+      },
+      "seconds": 2
+    },
+    {
+      "id": "draw_wire",
+      "verb": "뽑기",
+      "stations": ["wire_machine"],
+      "inputs": {
+        "iron_ingot": 1
+      },
+      "outputs": {
+        "wire": 2
+      },
+      "seconds": 2
+    },
+    {
+      "id": "cut_gear",
+      "verb": "깎기",
+      "stations": ["gear_lathe"],
+      "inputs": {
+        "iron_ingot": 1
+      },
+      "outputs": {
+        "gear": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "make_heat_plate",
+      "verb": "조립",
+      "stations": ["part_assembler"],
+      "inputs": {
+        "iron_plate": 1,
+        "wire": 2
+      },
+      "outputs": {
+        "heat_plate": 1
+      },
+      "seconds": 4
+    },
+    {
+      "id": "make_motor",
+      "verb": "조립",
+      "stations": ["part_assembler"],
+      "inputs": {
+        "gear": 2,
+        "wire": 2
+      },
+      "outputs": {
+        "motor": 1
+      },
+      "seconds": 5
+    },
+    {
+      "id": "cut_potato",
+      "verb": "썰기",
+      "stations": ["potato_cutter"],
+      "inputs": {
+        "potato": 1
+      },
+      "outputs": {
+        "potato_stick": 2
+      },
+      "seconds": 2
+    },
+    {
+      "id": "fry_fries",
+      "verb": "튀기기",
+      "stations": ["fryer"],
+      "inputs": {
+        "potato_stick": 2
+      },
+      "outputs": {
+        "fries": 1
+      },
+      "seconds": 4
+    },
+    {
+      "id": "mix_cola",
+      "verb": "섞기",
+      "stations": ["soda_mixer"],
+      "inputs": {
+        "syrup": 1,
+        "water": 1
+      },
+      "outputs": {
+        "cola": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "pack_set",
+      "verb": "포장",
+      "stations": ["packer"],
+      "inputs": {
+        "burger": 1,
+        "fries": 1,
+        "cola": 1
+      },
+      "outputs": {
+        "set": 1
+      },
+      "seconds": 3
     }
   ]
 }

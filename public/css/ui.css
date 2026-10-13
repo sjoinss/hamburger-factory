@@ -506,3 +506,12 @@ button:disabled { opacity: 1; color: var(--c-oil); background: var(--c-floor-dar
 .pick-row canvas { width: 16px; height: 16px; }
 .stepper { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
 .stepper #gate-count { min-width: 3ch; text-align: right; color: var(--c-warn); }
+
+/* ── 전력 / 구역 ─────────────────────────────────────── */
+.stat-power dd.is-short { color: var(--c-warn); text-decoration: underline; }
+.zone-list { display: grid; gap: 6px; padding: 0; list-style: none; }
+.zone { padding: 6px; background: var(--c-black); border: 1px solid var(--c-wall-2); display: grid; gap: 3px; }
+.zone-name { color: var(--c-warn); }
+.zone-cost { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--c-metal-3); }
+.zone-cost .is-short { color: var(--c-orange); }
+.zone button { width: 100%; }

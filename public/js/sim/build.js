@@ -3,6 +3,8 @@ import { TILE, getTile, getOccupant, inBounds, setOccupant } from './grid.js';
 import { createStation, rotatedSize } from './station.js';
 import { freeSlot, groundItemAt } from './interact.js';
 import { noteTutorial } from './tutorial.js';
+import { missingCost, spendParts } from './parts.js';
+import { zoneMult } from './zones.js';
 
 export function isUnlocked(world, type) {
   return world.unlocked.machines.includes(type);
@@ -10,12 +12,7 @@ export function isUnlocked(world, type) {
 
 /** 부족한 부품 { id: 부족한 수 } (없으면 빈 객체) */
 export function missingParts(world, rules, type) {
-  const missing = {};
-  for (const [id, n] of Object.entries(rules.machines[type].cost ?? {})) {
-    const have = world.parts[id] ?? 0;
-    if (have < n) missing[id] = n - have;
-  }
-  return missing;
+  return missingCost(world, rules, rules.machines[type].cost);
 }
 
 function playerOverlaps(world, rules, x, y, w, h) {
@@ -51,9 +48,10 @@ export function checkPlacement(world, rules, type, x, y, rot) {
 export function placeMachine(world, rules, type, x, y, rot = 0) {
   const check = checkPlacement(world, rules, type, x, y, rot);
   if (!check.ok) return check;
-  for (const [id, n] of Object.entries(rules.machines[type].cost)) world.parts[id] -= n;
+  spendParts(world, rules, rules.machines[type].cost);
   const id = world.nextStationId++;
   const station = createStation(id, { type, x, y, rot, built: true }, rules.machines[type]);
+  if (rules.machines[type].kind === 'storage') station.capMult = zoneMult(world, rules, station, 'storage');
   world.stations.push(station);
   const solid = !rules.machines[type].walkable;
   for (let j = y; j < y + station.h; j++) for (let i = x; i < x + station.w; i++) setOccupant(world.grid, i, j, id, solid);

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld, stepWorld, NO_INPUT } from '../public/js/sim/world.js';
-import { isSolid } from '../public/js/sim/grid.js';
+import { isSolid, getTile, TILE } from '../public/js/sim/grid.js';
 import { validateAll } from '../public/js/data.js';
 import { currentTutorialStep, tutorialTarget, skipTutorial, restartTutorial } from '../public/js/sim/tutorial.js';
 import { loadRaw, loadRules } from './helpers.js';
@@ -16,7 +16,12 @@ function run(world, input, ticks) {
 
 test('시작 방은 벽으로 둘러싸이고 작업대 칸은 막혀 있다', () => {
   const w = createWorld(rules);
-  assert.equal(w.grid.width, config.map.roomWidth + 2);
+  // 시작 방 오른쪽으로 잠긴 구역들이 이어져 있다 (벽 한 줄씩 사이)
+  const zones = rules.zones.zones;
+  assert.equal(w.grid.width, zones[zones.length - 1].x + zones[zones.length - 1].w + 1);
+  assert.equal(getTile(w.grid, config.map.roomWidth + 1, 5), TILE.WALL, '시작 방 오른쪽 벽');
+  assert.equal(getTile(w.grid, zones[0].x, 5), TILE.LOCKED, '아직 안 산 구역');
+  assert.ok(isSolid(w.grid, zones[0].x, 5));
   assert.ok(isSolid(w.grid, 0, 0));
   assert.equal(w.stations.length, config.stations.length);
   for (const st of w.stations) {

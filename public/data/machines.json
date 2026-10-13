@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "machines": {
     "crate": {
       "name": "재료 상자",
@@ -46,7 +46,8 @@
       "cost": {
         "iron_plate": 4,
         "heat_plate": 1
-      }
+      },
+      "power": 10
     },
     "belt": {
       "name": "컨베이어",
@@ -58,7 +59,8 @@
       "dragPlace": true,
       "cost": {
         "iron_plate": 1
-      }
+      },
+      "power": 0.5
     },
     "inserter": {
       "name": "투입기",
@@ -70,7 +72,8 @@
       "cost": {
         "iron_plate": 2,
         "gear": 1
-      }
+      },
+      "power": 2
     },
     "splitter": {
       "name": "분배기",
@@ -82,7 +85,8 @@
       "cost": {
         "iron_plate": 2,
         "gear": 1
-      }
+      },
+      "power": 1
     },
     "merger": {
       "name": "합류기",
@@ -94,7 +98,8 @@
       "cost": {
         "iron_plate": 2,
         "gear": 1
-      }
+      },
+      "power": 1
     },
     "supply": {
       "name": "입고구",
@@ -103,11 +108,12 @@
       "sprite": "supply",
       "seconds": 2,
       "outputCap": 4,
-      "supplies": ["raw_meat"],
+      "supplies": ["raw_meat", "iron_ore", "coal", "syrup", "water"],
       "cost": {
         "iron_plate": 3,
         "gear": 1
-      }
+      },
+      "power": 5
     },
     "meat_cutter": {
       "name": "정육 절단기",
@@ -120,7 +126,8 @@
       "cost": {
         "iron_plate": 3,
         "gear": 2
-      }
+      },
+      "power": 8
     },
     "washer": {
       "name": "세척기",
@@ -133,7 +140,8 @@
       "cost": {
         "iron_plate": 3,
         "gear": 1
-      }
+      },
+      "power": 6
     },
     "mixer": {
       "name": "반죽기",
@@ -146,7 +154,8 @@
       "cost": {
         "iron_plate": 3,
         "gear": 2
-      }
+      },
+      "power": 8
     },
     "oven": {
       "name": "오븐",
@@ -159,7 +168,8 @@
       "cost": {
         "iron_plate": 4,
         "heat_plate": 1
-      }
+      },
+      "power": 15
     },
     "burger_assembler": {
       "name": "버거 조립기",
@@ -172,7 +182,8 @@
       "cost": {
         "iron_plate": 6,
         "gear": 3
-      }
+      },
+      "power": 12
     },
     "hopper": {
       "name": "깔때기 호퍼",
@@ -207,7 +218,8 @@
       "cost": {
         "iron_plate": 4,
         "gear": 2
-      }
+      },
+      "power": 3
     },
     "wheat_field": {
       "name": "밀밭",
@@ -267,6 +279,164 @@
       "cost": {
         "iron_plate": 3,
         "gear": 2
+      },
+      "power": 8
+    },
+    "smelter": {
+      "name": "제련로",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "smelter",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 20,
+      "cost": {
+        "iron_plate": 4,
+        "heat_plate": 1
+      }
+    },
+    "press": {
+      "name": "프레스",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "press",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 15,
+      "cost": {
+        "iron_plate": 4,
+        "gear": 2
+      }
+    },
+    "wire_machine": {
+      "name": "와이어 머신",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "wireMachine",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 10,
+      "cost": {
+        "iron_plate": 3,
+        "gear": 2
+      }
+    },
+    "gear_lathe": {
+      "name": "기어 선반",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "gearLathe",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 12,
+      "cost": {
+        "iron_plate": 4,
+        "gear": 1
+      }
+    },
+    "part_assembler": {
+      "name": "부품 조립기",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "partAssembler",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 15,
+      "cost": {
+        "iron_plate": 6,
+        "gear": 4
+      }
+    },
+    "generator": {
+      "name": "발전기",
+      "kind": "generator",
+      "size": [2, 2],
+      "sprite": "generator",
+      "fuel": "coal",
+      "burnSeconds": 10,
+      "fuelCap": 10,
+      "output": 80,
+      "cost": {
+        "iron_plate": 6,
+        "gear": 2
+      }
+    },
+    "potato_field": {
+      "name": "감자밭",
+      "kind": "farm",
+      "size": [2, 2],
+      "sprite": "fieldPotato",
+      "crop": "potato",
+      "growSeconds": 15,
+      "yield": 3,
+      "harvestSeconds": 0.8,
+      "cost": {
+        "iron_plate": 2
+      }
+    },
+    "potato_cutter": {
+      "name": "감자 절단기",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "potatoCutter",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 8,
+      "cost": {
+        "iron_plate": 3,
+        "gear": 2,
+        "motor": 1
+      }
+    },
+    "fryer": {
+      "name": "튀김기",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "fryer",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 15,
+      "cost": {
+        "iron_plate": 4,
+        "heat_plate": 1,
+        "motor": 1
+      }
+    },
+    "soda_mixer": {
+      "name": "탄산 믹서",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "sodaMixer",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 8,
+      "cost": {
+        "iron_plate": 3,
+        "wire": 2,
+        "motor": 1
+      }
+    },
+    "packer": {
+      "name": "포장기",
+      "kind": "machine",
+      "size": [2, 1],
+      "sprite": "packer",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 12,
+      "cost": {
+        "iron_plate": 6,
+        "wire": 4,
+        "motor": 2
       }
     }
   }

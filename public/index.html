@@ -23,6 +23,7 @@
         <div class="stat"><dt>돈</dt><dd id="stat-money">0</dd></div>
         <div class="stat"><dt>평판</dt><dd id="stat-rep">0</dd></div>
         <div class="stat"><dt>시간</dt><dd id="stat-time">00:00</dd></div>
+        <div class="stat stat-power" id="stat-power-box" hidden><dt>전력</dt><dd id="stat-power">0/0</dd></div>
       </dl>
       <div class="speed" role="group" aria-label="게임 속도">
         <button type="button" data-speed="0" aria-label="일시정지">||</button>
@@ -104,6 +105,10 @@
       <ul class="build-list" id="build-list"></ul>
       <p class="muted" id="build-locked" hidden></p>
       <button type="button" class="wide-btn" id="btn-remove-mode" aria-pressed="false">철거 모드<span class="key-hint"> (X)</span></button>
+      <section class="zones" id="zone-box" hidden aria-labelledby="zone-title">
+        <h3 id="zone-title" class="info-sub">구역 매입</h3>
+        <ul class="zone-list" id="zone-list"></ul>
+      </section>
     </section>
 
     <section class="panel panel-help" id="panel-help" aria-labelledby="panel-help-title" hidden>

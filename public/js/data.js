@@ -1,10 +1,10 @@
 // data/*.json 로딩과 검증. 데이터 파일도 신뢰하지 않고 형태와 상호 참조를 확인한다.
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate', 'farm']);
-const FEATURES = new Set(['orders', 'market']);
+const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate', 'farm', 'generator']);
+const FEATURES = new Set(['orders', 'market', 'power', 'zones']);
 const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger']);
-const ITEM_CATEGORIES = new Set(['food', 'part']);
+const ITEM_CATEGORIES = new Set(['food', 'part', 'material']);
 const ID_RE = /^[a-z][a-z0-9_]{0,31}$/;
 
 function assert(cond, msg) {
@@ -73,6 +73,11 @@ export function validateMachines(data, items) {
       assert(isInt(m.capacity, 1, 100000) && typeof m.singleItem === 'boolean', `기계 ${id}: 저장소 capacity/singleItem 오류`);
     }
     if (m.kind === 'gate') assert(isNum(m.seconds, 0.05, 60), `기계 ${id}: 게이트 seconds 오류`);
+    assert(m.power === undefined || isNum(m.power, 0, 10000), `기계 ${id}: power 오류`);
+    if (m.kind === 'generator') {
+      assert(Object.hasOwn(items, m.fuel), `기계 ${id}: 없는 연료 ${short(m.fuel)}`);
+      assert(isNum(m.burnSeconds, 0.5, 3600) && isInt(m.fuelCap, 1, 999) && isNum(m.output, 1, 100000), `기계 ${id}: 발전기 수치 오류`);
+    }
     if (m.kind === 'farm') {
       assert(Object.hasOwn(items, m.crop), `기계 ${id}: 없는 작물 ${short(m.crop)}`);
       assert(isNum(m.growSeconds, 0.5, 3600) && isInt(m.yield, 1, 99) && isNum(m.harvestSeconds, 0.05, 60), `기계 ${id}: 밭 수치 오류`);
@@ -216,6 +221,8 @@ export function validateProgression(data, { recipes, machines, items, tutorial }
   validateUnlockLists(start, 'progression.start', recipeIds, machines);
   assert(Array.isArray(start.recipes) && Array.isArray(start.machines), 'progression.start 목록 오류');
   assert(Array.isArray(start.features ?? []) && (start.features ?? []).every((f) => FEATURES.has(f)), 'progression.start.features 오류');
+  const supplyIds = new Set(Object.values(machines).filter((m) => m.kind === 'supply').flatMap((m) => m.supplies));
+  for (const id of start.supplies ?? []) assert(supplyIds.has(id), `progression.start.supplies: 입고 목록에 없는 ${short(id)}`);
   validateParts(start.parts, 'progression.start.parts', items);
   assert(start.tutorial === null || Object.hasOwn(tutorial, start.tutorial), 'progression.start.tutorial 오류');
 
@@ -231,6 +238,7 @@ export function validateProgression(data, { recipes, machines, items, tutorial }
     }
     validateUnlockLists(st.unlock, `단계 ${st.id}.unlock`, recipeIds, machines);
     assert((st.unlock.features ?? []).every((f) => FEATURES.has(f)), `단계 ${st.id}: features 오류`);
+    for (const id of st.unlock.supplies ?? []) assert(supplyIds.has(id), `단계 ${st.id}: 입고 목록에 없는 ${short(id)}`);
     for (const id of st.unlock.machines ?? []) assert(machines[id].cost, `단계 ${st.id}: 지을 수 없는 기계 ${id}`);
     if (st.reward !== undefined) validateParts(st.reward.parts ?? {}, `단계 ${st.id}.reward.parts`, items);
     if (st.tutorial !== undefined) assert(Object.hasOwn(tutorial, st.tutorial), `단계 ${st.id}: tutorial 오류`);
@@ -265,15 +273,41 @@ export function validateOrders(data, items) {
   return data;
 }
 
+const ZONE_TRAITS = new Set(['storage', 'generator', 'supply']);
+
+export function validateZones(data, items, game) {
+  rejectForbiddenKeys(data, 'zones');
+  assert(isObj(data) && isNum(data.basePower, 0, 100000), 'zones.basePower 오류');
+  assert(Array.isArray(data.zones) && data.zones.length <= 32, 'zones.zones 오류');
+  const ids = new Set();
+  let right = game.map.roomWidth + game.map.wallThickness; // 시작 방 오른쪽 벽
+  for (const z of data.zones) {
+    const where = `구역 ${short(z.id)}`;
+    assert(ID_RE.test(z.id) && !ids.has(z.id) && z.id !== 'base', `${where}: id 오류/중복`);
+    assert(isStr(z.name, 12), `${where}: name 오류`);
+    assert(isInt(z.x, 1, 4096) && isInt(z.w, 1, 256), `${where}: 위치 오류`);
+    assert(z.x === right + 1, `${where}: 앞 구역 벽 바로 오른쪽에서 시작해야 함 (x=${right + 1})`);
+    right = z.x + z.w;
+    assert(z.requires === null || ids.has(z.requires), `${where}: requires 오류`);
+    assert(isObj(z.cost) && isInt(z.cost.money, 0, 1e9) && isObj(z.cost.parts), `${where}: cost 오류`);
+    for (const [id, n] of Object.entries(z.cost.parts)) {
+      assert(Object.hasOwn(items, id) && items[id].category === 'part' && isInt(n, 1, 9999), `${where}: 부품 비용 오류 ${short(id)}`);
+    }
+    assert(isObj(z.trait) && ZONE_TRAITS.has(z.trait.kind) && isNum(z.trait.mult, 1, 10) && isStr(z.trait.text, 40), `${where}: trait 오류`);
+    ids.add(z.id);
+  }
+  return data;
+}
+
 /** 시뮬레이션이 쓰는 규칙 묶음. 순수 데이터 + 조회용 색인. */
-export function buildRules({ game, items, machines, recipes, tutorial, progression, orders }) {
+export function buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones }) {
   const recipesByStation = Object.create(null);
   for (const id of Object.keys(machines)) recipesByStation[id] = [];
   for (const r of recipes) for (const s of r.stations) recipesByStation[s].push(r);
-  return { game, items, machines, recipes, recipesByStation, tutorial, progression, orders };
+  return { game, items, machines, recipes, recipesByStation, tutorial, progression, orders, zones };
 }
 
-export const DATA_FILES = ['palette', 'game', 'items', 'machines', 'recipes', 'tutorial', 'progression', 'orders'];
+export const DATA_FILES = ['palette', 'game', 'items', 'machines', 'recipes', 'tutorial', 'progression', 'orders', 'zones'];
 
 export function validateAll(raw) {
   const palette = validatePalette(raw.palette);
@@ -284,7 +318,8 @@ export function validateAll(raw) {
   const orders = validateOrders(raw.orders, items);
   const tutorial = validateTutorial(raw.tutorial, items, machines, orders);
   const progression = validateProgression(raw.progression, { recipes, machines, items, tutorial });
-  return { palette, rules: buildRules({ game, items, machines, recipes, tutorial, progression, orders }) };
+  const zones = validateZones(raw.zones, items, game);
+  return { palette, rules: buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones }) };
 }
 
 async function fetchJson(url) {

@@ -1,6 +1,6 @@
 // 주문서: 손님이 와서 주문하고, 출고구에 들어온 물건이 주문을 채운다. 남는 물건은 시세로 판다.
 import { random, randomRange, pick, pickWeighted, randomInt } from './rng.js';
-import { marketPrice } from './market.js';
+import { marketPrice, producible } from './market.js';
 import { sellItem } from './economy.js';
 import { record, recordEarned } from './stats.js';
 import { noteTutorial } from './tutorial.js';
@@ -24,9 +24,16 @@ export function anyOrderNeeds(world, item) {
 
 function spawnOrder(world, rules) {
   const cfg = rules.orders;
-  const kindId = pickWeighted(world, Object.fromEntries(Object.entries(cfg.kinds).map(([k, v]) => [k, v.weight])));
+  // 지금 만들 수 있는 품목으로만 된 주문만 (새 메뉴가 열리면 섞여 나온다)
+  const can = producible(world, rules);
+  const doable = (t) => Object.keys(t).every((id) => can.has(id));
+  const weights = Object.fromEntries(Object.entries(cfg.kinds)
+    .filter(([, v]) => v.templates.some(doable))
+    .map(([k, v]) => [k, v.weight]));
+  if (Object.keys(weights).length === 0) return;
+  const kindId = pickWeighted(world, weights);
   const kind = cfg.kinds[kindId];
-  const items = { ...pick(world, kind.templates) };
+  const items = { ...pick(world, kind.templates.filter(doable)) };
   const base = Object.entries(items).reduce((a, [id, n]) => a + marketPrice(world, rules, id) * n, 0);
   const order = {
     id: world.orders.nextId++,

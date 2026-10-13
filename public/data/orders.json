@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "maxOpen": 6,
   "firstSpawnSeconds": 4,
   "spawnSeconds": 20,
@@ -21,7 +21,10 @@
         { "burger": 1 },
         { "burger": 2 },
         { "patty": 2 },
-        { "burger": 1, "patty": 1 }
+        { "burger": 1, "patty": 1 },
+        { "fries": 2 },
+        { "cola": 2 },
+        { "burger": 1, "fries": 1, "cola": 1 }
       ]
     },
     "special": {
@@ -34,7 +37,9 @@
       "templates": [
         { "burger": 3 },
         { "burger": 2, "patty": 2 },
-        { "burger": 4 }
+        { "burger": 4 },
+        { "set": 2 },
+        { "burger": 2, "fries": 2 }
       ]
     },
     "bulk": {
@@ -47,7 +52,9 @@
       "templates": [
         { "burger": 8 },
         { "burger": 12 },
-        { "burger": 6, "patty": 6 }
+        { "burger": 6, "patty": 6 },
+        { "set": 4 },
+        { "cola": 8 }
       ]
     }
   }

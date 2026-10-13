@@ -6,7 +6,7 @@ import { counterAccepts, receiveAtCounter } from './orders.js';
 import { noteTutorial } from './tutorial.js';
 
 /** 벨트가 끝에서 바로 넣을 수 있는 기계 (투입기 없이) */
-const SINK_KINDS = new Set(['storage', 'counter']);
+const SINK_KINDS = new Set(['storage', 'counter', 'generator']);
 
 /** 물건 사이 최소 간격 (칸 단위). 1/3 보다 살짝 커서 한 칸에 최대 3개 */
 export const SPACING = 0.34;
@@ -110,6 +110,13 @@ export function conveyorNetwork(world, rules) {
 
 /** 벨트 끝 물건을 저장소/출고구에 넣는다. 못 넣으면 false (끝에서 대기) */
 function deliverToSink(world, rules, st, it) {
+  if (kindOf(rules, st) === 'generator') {
+    const m = rules.machines[st.type];
+    if (it.item !== m.fuel || st.contents.length >= m.fuelCap) return false;
+    st.contents.push(it.item);
+    noteTutorial(world, 'fed', st.type);
+    return true;
+  }
   if (kindOf(rules, st) === 'storage') {
     if (!canStore(rules, st, it.item)) return false;
     store(st, it.item);
@@ -195,6 +202,7 @@ function updateRouter(rules, router, net, dt) {
 }
 
 export function updateConveyors(world, rules, dt) {
+  dt *= world.power?.ratio ?? 1;
   const net = conveyorNetwork(world, rules);
   for (const n of net.order) {
     for (const it of n.items ?? []) { it.px = it.x; it.py = it.y; }

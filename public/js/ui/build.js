@@ -1,6 +1,8 @@
 // 건설 모드: 기계 고르기 → 칸 고르기(마우스/방향키/탭) → 설치. 철거 모드도 같은 커서를 쓴다.
 import { checkPlacement, placeMachine, removeMachine, removableAt, missingParts, rotateStation } from '../sim/build.js';
 import { stationAt } from '../sim/lookup.js';
+import { partCount } from '../sim/parts.js';
+import { checkZone, buyZone } from '../sim/zones.js';
 import { inBounds } from '../sim/grid.js';
 import { spriteIcon } from './icons.js';
 
@@ -105,7 +107,9 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
 
   function renderPanel() {
     const partIds = Object.keys(rules.items).filter((id) => rules.items[id].category === 'part');
-    partsList.replaceChildren(...partIds.map((id) => chip(id, `${partName(id)} ${world.parts[id] ?? 0}`)));
+    // 받은 부품 + 호퍼·사일로에 쌓인 부품 (건설에 바로 쓰인다)
+    partsList.replaceChildren(...partIds.map((id) => chip(id, `${partName(id)} ${partCount(world, rules, id)}`)));
+    renderZones();
 
     buildList.replaceChildren();
     for (const type of world.unlocked.machines) {
@@ -134,6 +138,44 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     lockedNote.textContent = world.unlocked.machines.length === 0
       ? '아직 지을 수 있는 기계가 없다. 첫 햄버거를 팔면 열린다.'
       : `잠긴 기계 ${locked}개`;
+  }
+
+  const zoneBox = document.getElementById('zone-box');
+  const zoneList = document.getElementById('zone-list');
+  const ZONE_REASON = { owned: '매입 완료', requires: '앞 구역부터', money: '돈 부족', parts: '부품 부족' };
+  function renderZones() {
+    zoneBox.hidden = !world.features.includes('zones');
+    if (zoneBox.hidden) return;
+    zoneList.replaceChildren(...rules.zones.zones.map((z) => {
+      const check = checkZone(world, rules, z.id);
+      const li = document.createElement('li');
+      li.className = 'zone';
+      const name = document.createElement('span');
+      name.className = 'zone-name';
+      name.textContent = `${z.name} · ${z.trait.text}`;
+      const cost = document.createElement('span');
+      cost.className = 'zone-cost';
+      const money = document.createElement('span');
+      money.textContent = `돈 ${z.cost.money}`;
+      if (check.reason === 'money') money.classList.add('is-short');
+      cost.append(money);
+      for (const [id, n] of Object.entries(z.cost.parts)) {
+        const c = chip(id, check.missing?.[id] ? `${n} · 부족 -${check.missing[id]}` : String(n));
+        if (check.missing?.[id]) c.classList.add('is-short');
+        cost.append(c);
+      }
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = check.ok ? '매입' : ZONE_REASON[check.reason] ?? '매입 불가';
+      btn.disabled = !check.ok;
+      btn.addEventListener('click', () => {
+        const res = buyZone(world, rules, z.id);
+        flash(res.ok ? `${z.name} 매입: ${z.trait.text}` : ZONE_REASON[res.reason] ?? '매입 불가');
+        renderPanel();
+      });
+      li.append(name, cost, btn);
+      return li;
+    }));
   }
 
   let startCursor = () => ({ x: 0, y: 0 });

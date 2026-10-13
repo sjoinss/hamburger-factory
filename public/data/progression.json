@@ -1,11 +1,12 @@
 {
-  "version": 6,
+  "version": 7,
   "start": {
     "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "mill_wheat", "mix_dough", "bake_bun", "assemble_burger"],
     "machines": [],
     "parts": {},
     "tutorial": "start",
-    "features": []
+    "features": [],
+    "supplies": ["raw_meat"]
   },
   "stages": [
     {
@@ -89,6 +90,51 @@
         }
       },
       "tutorial": "storage"
+    },
+    {
+      "id": "workshop",
+      "name": "부품 공방",
+      "when": {
+        "sold": {
+          "burger": 25
+        }
+      },
+      "unlock": {
+        "machines": ["smelter", "press", "wire_machine", "gear_lathe", "part_assembler", "generator"],
+        "recipes": ["smelt_iron", "press_plate", "draw_wire", "cut_gear", "make_heat_plate", "make_motor"],
+        "supplies": ["iron_ore", "coal"],
+        "features": ["power", "zones"]
+      },
+      "reward": {
+        "parts": {
+          "iron_plate": 40,
+          "gear": 10,
+          "heat_plate": 4
+        }
+      },
+      "tutorial": "workshop"
+    },
+    {
+      "id": "menu",
+      "name": "메뉴 확장",
+      "when": {
+        "sold": {
+          "burger": 40
+        }
+      },
+      "unlock": {
+        "machines": ["potato_field", "potato_cutter", "fryer", "soda_mixer", "packer"],
+        "recipes": ["cut_potato", "fry_fries", "mix_cola", "pack_set"],
+        "supplies": ["syrup", "water"]
+      },
+      "reward": {
+        "parts": {
+          "iron_plate": 20,
+          "motor": 4,
+          "wire": 8
+        }
+      },
+      "tutorial": "menu"
     }
   ]
 }

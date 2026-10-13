@@ -8,6 +8,7 @@ import * as ui from '../sprites/ui.js';
 import * as storage from '../sprites/storage.js';
 import * as customers from '../sprites/customers.js';
 import * as farm from '../sprites/farm.js';
+import * as ws from '../sprites/workshop.js';
 
 /** 이름 → 프레임 배열. 단일 그림도 프레임 1개짜리로 통일. */
 export const SPRITE_DEFS = {
@@ -30,6 +31,30 @@ export const SPRITE_DEFS = {
   hearth: farm.HEARTH,
   mill: farm.MILL,
   wheat: [farm.WHEAT],
+  ironOre: [ws.IRON_ORE],
+  ironIngot: [ws.IRON_INGOT],
+  coal: [ws.COAL],
+  wire: [ws.WIRE],
+  motor: [ws.MOTOR],
+  potato: [ws.POTATO],
+  potatoStick: [ws.POTATO_STICK],
+  fries: [ws.FRIES],
+  syrup: [ws.SYRUP],
+  water: [ws.WATER],
+  cola: [ws.COLA],
+  setMeal: [ws.SET_MEAL],
+  smelter: ws.SMELTER,
+  press: ws.PRESS,
+  wireMachine: ws.WIRE_MACHINE,
+  gearLathe: ws.GEAR_LATHE,
+  partAssembler: ws.PART_ASSEMBLER,
+  generator: ws.GENERATOR,
+  fieldPotato: ws.FIELD_POTATO,
+  potatoCutter: ws.POTATO_CUTTER,
+  fryer: ws.FRYER,
+  sodaMixer: ws.SODA_MIXER,
+  packer: ws.PACKER,
+  locked: [ws.LOCKED],
   customer: customers.CUSTOMER,
   ...Object.fromEntries(Object.entries(customers.DIGITS).map(([k, rows]) => [`digit${k}`, [rows]])),
   playerDown: characters.PLAYER_DOWN,
@@ -75,6 +100,7 @@ export const SPRITE_DEFS = {
   dirArrow: [ui.DIR_ARROW],
   overlayJam: [ui.OVERLAY_JAM],
   overlayIdle: [ui.OVERLAY_IDLE],
+  overlayDim: [ui.OVERLAY_DIM],
 };
 
 export function flipRows(rows) {

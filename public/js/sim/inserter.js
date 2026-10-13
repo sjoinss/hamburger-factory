@@ -40,7 +40,7 @@ function dropTarget(world, rules, ins, tile, item) {
   const st = stationAt(world, tile.x, tile.y);
   if (!st) return null; // 빈 바닥에는 놓지 않는다
   const kind = machineOf(rules, st).kind;
-  if (kind === 'crafter' || kind === 'machine' || kind === 'counter' || kind === 'storage') {
+  if (kind === 'crafter' || kind === 'machine' || kind === 'counter' || kind === 'storage' || kind === 'generator') {
     if (!canAccept(rules, st, item, world)) return null;
     return () => {
       if (kind === 'counter') receiveAtCounter(world, rules, item, st);

@@ -32,6 +32,10 @@ export function createStation(id, def, machine) {
     station.idle = 0; // 비어 있는 정도 (부드럽게 0~1)
   }
   if (machine.kind === 'machine' || machine.kind === 'supply' || machine.kind === 'inserter' || machine.kind === 'gate') station.hist = '';
+  if (machine.kind === 'generator') {
+    station.fuelLeft = 0; // 지금 타는 연료가 남은 시간
+    station.hist = '';
+  }
   if (machine.kind === 'farm') {
     // 자라는 중인 시간. 다 자라면 output 에 수확물이 생기고, 다 거둬야 다시 자란다.
     station.growth = def.ripe ? machine.growSeconds : 0;
@@ -91,6 +95,7 @@ export function canAccept(rules, station, item, world = null) {
       world.orders.list.some((o) => o.state === 'open' && (o.items[item] ?? 0) > (o.delivered[item] ?? 0));
   }
   if (machine.kind === 'storage') return canStore(rules, station, item);
+  if (machine.kind === 'generator') return item === machine.fuel && station.contents.length < machine.fuelCap;
   if (machine.kind === 'machine') {
     // 입력 버퍼: 레시피 입력의 inputBatches 배까지 쌓아 둘 수 있다.
     const counts = countItems([...station.contents, item]);
@@ -208,7 +213,7 @@ export function farmGrowth(rules, station) {
 // ── 입고구 ──
 
 /** 정해진 품목을 일정 시간마다 들여온다. 출력이 꽉 차면 멈춘다. @returns 들여온 품목 또는 null */
-export function updateSupply(rules, station, dt) {
+export function updateSupply(rules, station, dt, speedMult = 1) {
   const machine = machineOf(rules, station);
   if (station.output.length >= machine.outputCap) {
     station.status = 'blocked';
@@ -217,15 +222,17 @@ export function updateSupply(rules, station, dt) {
   station.status = 'running';
   station.active = true;
   station.progress += dt;
-  if (station.progress + 1e-9 < machine.seconds) return null;
+  if (station.progress + 1e-9 < machine.seconds / speedMult) return null;
   station.progress = 0;
   station.output.push(station.item);
   return station.item;
 }
 
-export function setSupplyItem(rules, station, item) {
+/** world 를 주면 해금된 입고 품목만 허용 */
+export function setSupplyItem(rules, station, item, world = null) {
   const machine = machineOf(rules, station);
   if (machine.kind !== 'supply' || !machine.supplies.includes(item)) return false;
+  if (world && !world.unlocked.supplies.includes(item)) return false;
   if (station.item !== item) station.progress = 0;
   station.item = item;
   return true;

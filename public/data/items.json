@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "items": {
     "raw_meat"       : { "name": "생고기", "sprite": "rawMeat", "price": 0, "category": "food" },
     "ground_meat"    : { "name": "다진고기", "sprite": "groundMeat", "price": 1, "category": "food" },
@@ -13,6 +13,18 @@
     "burger"         : { "name": "햄버거", "sprite": "burger", "price": 12, "category": "food" },
     "iron_plate"     : { "name": "철판", "sprite": "ironPlate", "price": 0, "category": "part" },
     "heat_plate"     : { "name": "열판", "sprite": "heatPlate", "price": 0, "category": "part" },
-    "gear"           : { "name": "기어", "sprite": "gear", "price": 0, "category": "part" }
+    "gear"           : { "name": "기어", "sprite": "gear", "price": 0, "category": "part" },
+    "iron_ore"       : { "name": "철광석", "sprite": "ironOre", "price": 0, "category": "material" },
+    "iron_ingot"     : { "name": "철괴", "sprite": "ironIngot", "price": 0, "category": "material" },
+    "coal"           : { "name": "석탄", "sprite": "coal", "price": 0, "category": "material" },
+    "wire"           : { "name": "철선", "sprite": "wire", "price": 0, "category": "part" },
+    "motor"          : { "name": "모터", "sprite": "motor", "price": 0, "category": "part" },
+    "potato"         : { "name": "감자", "sprite": "potato", "price": 0, "category": "food" },
+    "potato_stick"   : { "name": "감자 스틱", "sprite": "potatoStick", "price": 0, "category": "food" },
+    "fries"          : { "name": "감자튀김", "sprite": "fries", "price": 8, "category": "food" },
+    "syrup"          : { "name": "탄산 시럽", "sprite": "syrup", "price": 0, "category": "food" },
+    "water"          : { "name": "물", "sprite": "water", "price": 0, "category": "food" },
+    "cola"           : { "name": "콜라", "sprite": "cola", "price": 6, "category": "food" },
+    "set"            : { "name": "세트", "sprite": "setMeal", "price": 40, "category": "food" }
   }
 }

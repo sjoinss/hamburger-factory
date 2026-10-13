@@ -77,6 +77,11 @@ export function findInteraction(world, rules) {
         left: station.output.length, progress: station.progress / machine.harvestSeconds,
       };
     }
+    if (machine.kind === 'generator') {
+      const slot = p.inventory.findIndex((it) => it !== null && canAccept(rules, station, it));
+      if (slot !== -1) return { ...base, action: 'deposit', slot, item: p.inventory[slot] };
+      return { ...base, action: 'blocked', reason: 'status' };
+    }
     if (machine.kind === 'storage') {
       // E: 든 물건 넣기 > 비어 있는 손으로 가장 많은 품목 꺼내기
       const slot = p.inventory.findIndex((it) => it !== null && canAccept(rules, station, it));
