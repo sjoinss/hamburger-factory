@@ -13,11 +13,22 @@ export function setZoom(camera, zoom) {
   camera.zoom = Math.min(camera.maxZoom, Math.max(camera.minZoom, Math.round(zoom)));
 }
 
+/**
+ * 화면 위아래를 가리는 UI(상단 바, 터치 조작)를 뺀 실제로 보이는 세로 범위 (기기 픽셀).
+ * 카메라는 이 범위의 가운데를 기준으로 맞춘다.
+ */
+function visibleY(view) {
+  const top = view.padTop ?? 0;
+  const bottom = view.padBottom ?? 0;
+  return { top, height: Math.max(1, view.height - top - bottom) };
+}
+
 /** 월드 원점이 화면에 그려질 기기 픽셀 위치 (정수). */
 export function viewOrigin(camera, view) {
+  const v = visibleY(view);
   return {
     ox: Math.round(view.width / 2 - camera.x * view.scale),
-    oy: Math.round(view.height / 2 - camera.y * view.scale),
+    oy: Math.round(v.top + v.height / 2 - camera.y * view.scale),
   };
 }
 
@@ -29,7 +40,7 @@ export function screenToWorld(camera, view, sx, sy) {
 /** 맵이 화면보다 작으면 가운데, 크면 맵 밖으로 너무 나가지 않게. */
 export function clampCamera(camera, view, worldW, worldH) {
   const halfW = view.width / 2 / view.scale;
-  const halfH = view.height / 2 / view.scale;
+  const halfH = visibleY(view).height / 2 / view.scale;
   const margin = 32;
   camera.x = worldW <= halfW * 2
     ? worldW / 2

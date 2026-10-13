@@ -20,7 +20,18 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d', { alpha: false });
 const stage = document.getElementById('app');
 
-const view = { width: 1, height: 1, scale: 1, dpr: 1 };
+const view = { width: 1, height: 1, scale: 1, dpr: 1, padTop: 0, padBottom: 0 };
+
+/** 상단 바와 (터치일 때) 아래 조작부가 가리는 높이. 카메라가 보이는 부분 가운데에 맞추도록. */
+function updateViewPadding() {
+  const appRect = stage.getBoundingClientRect();
+  const top = document.querySelector('.topbar').getBoundingClientRect().bottom - appRect.top;
+  const controls = document.getElementById('touch-controls');
+  const shown = getComputedStyle(controls).display !== 'none';
+  const bottom = shown ? appRect.bottom - controls.getBoundingClientRect().top : 0;
+  view.padTop = Math.max(0, Math.round(top * view.dpr));
+  view.padBottom = Math.max(0, Math.round(bottom * view.dpr));
+}
 
 function resizeCanvas(camera) {
   const dpr = window.devicePixelRatio || 1;
@@ -246,6 +257,7 @@ async function boot() {
       camera.x = (p.prevX + (p.x - p.prevX) * alpha) * ts;
       camera.y = (p.prevY + (p.y - p.prevY) * alpha) * ts;
     }
+    updateViewPadding();
     clampCamera(camera, view, worldW, worldH);
 
     const prevHover = hover;
