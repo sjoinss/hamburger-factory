@@ -9,6 +9,7 @@ import { DIRS } from '../sim/lookup.js';
 import { utilization } from '../sim/stats.js';
 import { storageTotal, mostStocked } from '../sim/storage.js';
 import { drawCustomers } from './customers.js';
+import { ownedWidth } from '../sim/zones.js';
 import { viewOrigin } from './camera.js';
 
 /** 칸 좌표 → 고정 난수. 바닥 얼룩/균열 위치를 매번 같게 만든다. */
@@ -87,7 +88,8 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   const { grid } = world;
   const x0 = Math.max(0, Math.floor(-ox / cell));
   const y0 = Math.max(0, Math.floor(-oy / cell));
-  const x1 = Math.min(grid.width - 1, Math.floor((view.width - ox) / cell));
+  // 아직 안 산 구역은 그리지 않는다 (막힌 벽처럼 보이지 않게 빈 공간으로 둔다. 매입은 건설 메뉴에서)
+  const x1 = Math.min(ownedWidth(world, rules) - 1, Math.floor((view.width - ox) / cell));
   const y1 = Math.min(grid.height - 1, Math.floor((view.height - oy) / cell));
 
   for (let y = y0; y <= y1; y++) {
@@ -265,28 +267,6 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   }
 
   effects.draw(ctx, bank, sx, sy, s);
-
-  // 아직 안 산 구역: 가운데에 이름과 효과 (텍스트는 픽셀 폰트 12px 배수)
-  if (rules.zones && world.features.includes('zones')) {
-    const k = Math.max(1, Math.floor(s / 2));
-    ctx.font = `${12 * k}px ${opts.fontFamily ?? 'monospace'}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const mid = (rules.game.map.roomHeight / 2 + 1) * ts;
-    for (const z of rules.zones.zones) {
-      if (world.zonesBought.includes(z.id)) continue;
-      const cx = sx((z.x + z.w / 2) * ts);
-      const lines = [`${z.name} (잠김)`, z.trait.text];
-      lines.forEach((t, i) => {
-        const cy = sy(mid) + (i - 1) * 16 * k;
-        ctx.fillStyle = bank.color('K');
-        ctx.fillText(t, cx + k, cy + k);
-        ctx.fillStyle = bank.color(i === 0 ? 'y' : 'l');
-        ctx.fillText(t, cx, cy);
-      });
-    }
-    ctx.textAlign = 'start';
-  }
 
   // 전력 부족: 형광등이 이따금 깜박 (점무늬로 어둡게, 팔레트 밖 색 없음)
   if (world.power && world.power.ratio < 1 && Math.floor(world.time * 10) % 17 === 0) {

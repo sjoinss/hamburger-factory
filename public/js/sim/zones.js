@@ -52,3 +52,11 @@ export function openZone(world, rules, z) {
   }
   world.stationsVersion += 1;
 }
+
+/** 지금 쓸 수 있는 공장의 오른쪽 끝 (칸 수, 오른쪽 벽 포함). 그 너머는 그리지 않고 카메라도 가지 않는다. */
+export function ownedWidth(world, rules) {
+  const wall = rules.game.map.wallThickness;
+  let right = rules.game.map.roomWidth + wall * 2;
+  for (const z of rules.zones.zones) if (world.zonesBought.includes(z.id)) right = Math.max(right, z.x + z.w + wall);
+  return Math.min(right, world.grid.width);
+}

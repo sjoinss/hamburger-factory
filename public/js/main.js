@@ -21,6 +21,7 @@ import { createWalker } from './ui/walk.js';
 import { createSound } from './audio/sound.js';
 import { createSettings, readSavedGame } from './ui/settings.js';
 import { replaceWorld } from './sim/save.js';
+import { ownedWidth } from './sim/zones.js';
 import { createChapterView } from './ui/chapters.js';
 
 const FONT_FAMILY = '"Galmuri11", ui-monospace, monospace';
@@ -213,7 +214,6 @@ async function boot() {
     },
   );
 
-  const worldW = world.grid.width * ts;
   const worldH = world.grid.height * ts;
 
   resizeCanvas(camera);
@@ -376,7 +376,8 @@ async function boot() {
       camera.y = (p.prevY + (p.y - p.prevY) * alpha) * ts;
     }
     updateViewPadding();
-    clampCamera(camera, view, worldW, worldH);
+    // 산 구역까지만 (안 산 구역은 그리지 않으므로 그쪽으로 카메라가 가지 않게)
+    clampCamera(camera, view, ownedWidth(world, rules) * ts, worldH);
 
     const prevHover = hover;
     hover = null;
