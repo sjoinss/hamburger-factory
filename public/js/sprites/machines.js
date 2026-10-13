@@ -175,3 +175,90 @@ export const INSERTER_ARM = (() => {
     [[14, 6, 'k'], [14, 9, 'k'], [8, 7, 'k'], [8, 8, 'k'], [9, 7, 'r'], [9, 8, 'r']]);
   return [back, mid, front];
 })();
+
+// ── 자동화 라인 기계 (M4). 실루엣만으로 구분되게 모양을 서로 다르게 ──
+
+// 공통 몸통: 철제 상자 + 아래 그림자
+function body(w, h, top = 2) {
+  let r = blank(w, h);
+  r = rect(r, 0, top, w, h - top - 1, '1');
+  r = rect(r, 1, top + 1, w - 2, 1, '2');
+  r = frame(r, 0, top, w, h - top - 1, 'k');
+  r = rect(r, 1, h - 1, w - 1, 1, 'K');
+  return r;
+}
+
+// 입고구: 위가 열린 철제 투입함 + 경고 빗금 테두리, 위쪽에 작은 셔터
+export const SUPPLY = [0, 1].map((f) => {
+  let r = body(16, 16, 1);
+  r = rect(r, 3, 4, 10, 7, 'K');
+  r = frame(r, 3, 4, 10, 7, 'k');
+  for (let x = 1; x < 15; x++) r = plot(r, [[x, 13, (x + f) % 4 < 2 ? 'y' : 'K']]);
+  r = rect(r, 4, 1, 8, 2, '3');
+  r = plot(r, [[4, 2, 'k'], [11, 2, 'k'], [7, 6 + f, '2'], [8, 6 + f, '2'], [13, 2, 'd']]);
+  return r;
+});
+
+// 정육 절단기: 둥근 톱날이 위에 튀어나온 모양
+export const MEAT_CUTTER = [0, 1, 2].map((f) => {
+  let r = body(16, 16, 5);
+  // 톱날 (프레임마다 이빨 위치가 돈다)
+  r = rect(r, 4, 0, 8, 7, '3');
+  r = frame(r, 4, 0, 8, 7, 'k');
+  r = plot(r, [[4, 0, '.'], [11, 0, '.'], [4, 6, '2'], [11, 6, '2']]);
+  const teeth = [[[6, 0], [11, 3], [7, 6]], [[9, 0], [10, 6], [4, 3]], [[5, 1], [11, 5], [8, 6]]][f];
+  r = plot(r, teeth.map(([x, y]) => [x, y, 'K']));
+  r = plot(r, [[7, 3, 'k'], [8, 3, 'k']]);
+  r = plot(r, [[2, 9, 'R'], [3, 9, 'R'], [12, 12, 'd']]); // 핏자국 같은 얼룩
+  return r;
+});
+
+// 세척기: 물이 담긴 낮은 통 (가동 중이면 물결)
+export const WASHER = [0, 1, 2].map((f) => {
+  let r = body(16, 16, 3);
+  r = rect(r, 2, 5, 12, 7, 'p');
+  r = frame(r, 2, 5, 12, 7, 'k');
+  const wave = [[4, 7], [9, 8], [6, 10]].map(([x, y]) => [x + f, y, '3']);
+  r = plot(r, f === 0 ? [] : wave);
+  r = plot(r, [[13, 1, '2'], [13, 2, '2'], [12, 1, '2'], [11, 1, 'p']]); // 수도꼭지
+  return r;
+});
+
+// 반죽기: 큰 볼 위에 휘젓는 팔
+export const MIXER = [0, 1, 2].map((f) => {
+  let r = body(16, 16, 6);
+  r = rect(r, 3, 4, 10, 8, '3');
+  r = frame(r, 3, 4, 10, 8, 'k');
+  r = rect(r, 5, 6, 6, 4, 'l');
+  r = rect(r, 7, 0, 2, 7, '2');
+  r = frame(r, 7, 0, 2, 2, 'k');
+  const arm = [[5, 8], [10, 7], [7, 9]][f];
+  r = plot(r, [[arm[0], arm[1], 'k'], [arm[0] + 1, arm[1], 'k']]);
+  return r;
+});
+
+// 오븐: 키 큰 상자, 앞 유리창 (가동 중이면 불빛 깜박)
+export const OVEN = [0, 1, 2].map((f) => {
+  let r = body(16, 16, 0);
+  r = rect(r, 3, 4, 10, 6, f === 0 ? 'K' : f === 1 ? 'r' : 'o');
+  r = frame(r, 3, 4, 10, 6, 'k');
+  r = rect(r, 3, 11, 10, 1, '3'); // 손잡이
+  r = plot(r, [[2, 1, 'r'], [4, 1, 'y'], [6, 1, 'G'], [13, 2, '3']]);
+  r = plot(r, [[5, 6, f ? 'y' : '1'], [9, 7, f ? 'y' : '1']]);
+  return r;
+});
+
+// 버거 조립기 (2x1): 긴 작업대 + 위에서 내려오는 집게 세 개
+export const BURGER_ASSEMBLER = [0, 1, 2].map((f) => {
+  let r = body(32, 16, 4);
+  r = rect(r, 2, 8, 28, 3, 'K');
+  for (let x = 2; x < 30; x += 4) r = plot(r, [[x, 9, '1']]);
+  for (const [i, x] of [6, 15, 24].entries()) {
+    const drop = (f + i) % 3 === 1 ? 2 : 0;
+    r = rect(r, x, 0, 2, 5 + drop, '2');
+    r = rect(r, x - 1, 5 + drop, 4, 2, 'y');
+    r = plot(r, [[x - 1, 6 + drop, 'k'], [x + 2, 6 + drop, 'k']]);
+  }
+  r = plot(r, [[3, 12, 'y'], [4, 12, 'K'], [5, 12, 'y'], [27, 13, 'd'], [28, 13, 'd']]);
+  return r;
+});

@@ -21,6 +21,11 @@ export function machineStatusText(station, rules) {
     if (station.status === 'blocked') return '막힘: 앞 칸이 받지 않음';
     return '대기: 뒤 칸에 앞으로 보낼 물건 없음';
   }
+  if (kind === 'supply') {
+    if (station.status === 'blocked') return `막힘: 출력 꽉 참 (${name(station.item)})`;
+    const m = rules.machines[station.type];
+    return `들여오는 중: ${name(station.item)} ${Math.floor((station.progress / m.seconds) * 100)}%`;
+  }
   if (kind === 'splitter') return '뒤에서 받아 왼쪽·오른쪽으로 번갈아 보냄';
   if (kind === 'merger') return '세 방향에서 받아 앞으로 보냄';
   if (station.status === 'running') {

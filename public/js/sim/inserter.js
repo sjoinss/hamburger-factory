@@ -20,7 +20,7 @@ function pickCandidates(world, rules, tile) {
     return [{ item: g.item, take: () => { world.groundItems = world.groundItems.filter((x) => x !== g); } }];
   }
   const kind = machineOf(rules, st).kind;
-  if (kind === 'machine' || kind === 'crafter') {
+  if (kind === 'machine' || kind === 'crafter' || kind === 'supply') {
     return st.output.length ? [{ item: st.output[0], take: () => st.output.shift() }] : [];
   }
   if (kind === 'belt') {

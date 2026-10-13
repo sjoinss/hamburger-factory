@@ -1,7 +1,8 @@
 // 시뮬레이션 상태 전체. 직렬화 가능한 순수 데이터로 유지한다.
 import { createRoomGrid, isSolid, setOccupant } from './grid.js';
 import { createPlayer, updatePlayer } from './player.js';
-import { createStation, updateMachine } from './station.js';
+import { createStation, updateMachine, updateSupply } from './station.js';
+import { createStats, recordRecipe, record, sampleHistory } from './stats.js';
 import { updateInteraction } from './interact.js';
 import { createTutorial, updateTutorial, noteTutorial } from './tutorial.js';
 import { updateProgression } from './progression.js';
@@ -31,7 +32,7 @@ export function createWorld(rules) {
   }
 
   return {
-    version: 5,
+    version: 6,
     tick: 0,
     time: 0,
     money: 0,
@@ -43,7 +44,7 @@ export function createWorld(rules) {
     stationsVersion: 0,
     groundItems: [],
     player: createPlayer(config.playerStart.x, config.playerStart.y, config.player.carryCapacity),
-    stats: { sold: {}, earned: 0, built: {} },
+    stats: createStats(),
     parts: { ...rules.progression.start.parts },
     unlocked: {
       recipes: [...rules.progression.start.recipes],
@@ -67,11 +68,23 @@ export function stepWorld(world, input, dt, rules) {
   }
   updateConveyors(world, rules, dt);
   for (const st of world.stations) {
-    if (rules.machines[st.type].kind !== 'machine') continue;
-    if (updateMachine(rules, st, dt)) {
+    const kind = rules.machines[st.type].kind;
+    if (kind === 'supply') {
+      const item = updateSupply(rules, st, dt);
+      if (item) record(world, 'produced', item);
+      continue;
+    }
+    if (kind !== 'machine') continue;
+    const done = updateMachine(rules, st, dt);
+    if (done) {
+      recordRecipe(world, done);
       noteTutorial(world, 'made', st.type);
       world.events.push({ type: 'made', machine: st.type, item: st.output[st.output.length - 1], x: st.x, y: st.y });
     }
+  }
+  // 1초마다 기계 상태 기록 (최근 60초 가동률)
+  if (world.tick % rules.game.ticksPerSecond === 0) {
+    for (const st of world.stations) if (st.hist !== undefined) sampleHistory(st);
   }
   updateTutorial(world, rules);
   updateProgression(world, rules);

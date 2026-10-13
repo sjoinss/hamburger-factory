@@ -6,6 +6,7 @@ import { tutorialTarget } from '../sim/tutorial.js';
 import { isConveyorKind } from '../sim/conveyor.js';
 import { inserterArmPhase } from '../sim/inserter.js';
 import { DIRS } from '../sim/lookup.js';
+import { utilization } from '../sim/stats.js';
 import { viewOrigin } from './camera.js';
 
 /** 칸 좌표 → 고정 난수. 바닥 얼룩/균열 위치를 매번 같게 만든다. */
@@ -34,7 +35,7 @@ function playerFrame(player, walkFrameSeconds) {
 function stationProgress(rules, station) {
   if (station.progress <= 0) return null;
   const machine = rules.machines[station.type];
-  if (machine.kind === 'source') return station.progress / machine.seconds;
+  if (machine.kind === 'source' || machine.kind === 'supply') return station.progress / machine.seconds;
   if (machine.kind === 'machine') {
     const recipe = machineRecipe(rules, station);
     return recipe ? station.progress / recipe.seconds : null;
@@ -49,8 +50,9 @@ function stationProgress(rules, station) {
  * @param alpha 틱 사이 보간 비율 0~1
  * @param hover 마우스가 가리키는 칸 {x,y} 또는 null
  * @param build 건설/철거 미리보기 (ui/build.js preview()) 또는 null
+ * @param opts {{ overlay: boolean, selected: station|null }}
  */
-export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build) {
+export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build, opts = {}) {
   const config = rules.game;
   const ts = config.tileSize;
   const s = view.scale;
@@ -186,6 +188,9 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
     ctx.fillRect(sx(bx + 1), sy(by + 1), Math.round((w - 2) * Math.min(1, ratio)) * s, 2 * s);
   }
 
+  if (opts.overlay) drawOverlay();
+  if (opts.selected) drawFrame(opts.selected, 'y');
+
   // 바라보는 칸, 마우스 칸 (건설 중에는 건설 미리보기만)
   if (build) {
     drawBuildPreview(build);
@@ -203,6 +208,47 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   }
 
   effects.draw(ctx, bank, sx, sy, s);
+
+  /**
+   * 병목 보기: 막힘 = 빨강 빗금, 한산 = 파랑 점. 정상은 표시 없음 (색만이 아니라 무늬로도 구분).
+   * 벨트는 부드럽게 한 막힘 정도, 기계는 최근 5초 상태 기록으로 판단해 깜박임을 줄인다.
+   */
+  function drawOverlay() {
+    for (const st of world.stations) {
+      const kind = rules.machines[st.type].kind;
+      let state = null;
+      if (kind === 'belt') state = st.jam > 0.5 ? 'jam' : st.idle > 0.8 ? 'idle' : null;
+      else if (st.hist !== undefined && st.hist.length > 0) {
+        const u = utilization(st, 5);
+        state = u.blocked >= 0.6 ? 'jam' : u.idle >= 0.8 ? 'idle' : null;
+      }
+      if (!state) continue;
+      const px = st.x * ts;
+      const py = st.y * ts;
+      // 미리 구운 16x16 무늬를 칸마다 이어 붙인다 (픽셀 단위로 그리면 벨트가 많을 때 느림)
+      const img = bank.get(state === 'jam' ? 'overlayJam' : 'overlayIdle');
+      for (let ty = 0; ty < st.h; ty++) {
+        for (let tx = 0; tx < st.w; tx++) ctx.drawImage(img, sx(px + tx * ts), sy(py + ty * ts), cell, cell);
+      }
+      if (state === 'jam') drawFrame(st, 'R');
+    }
+  }
+
+  /** 기계 둘레 1px 테두리 (바깥 검정 1px) */
+  function drawFrame(st, key) {
+    const px = st.x * ts;
+    const py = st.y * ts;
+    const w = st.w * ts;
+    const h = st.h * ts;
+    fillPx('K', px - 2, py - 2, w + 4, 1);
+    fillPx('K', px - 2, py + h + 1, w + 4, 1);
+    fillPx('K', px - 2, py - 2, 1, h + 4);
+    fillPx('K', px + w + 1, py - 2, 1, h + 4);
+    fillPx(key, px - 1, py - 1, w + 2, 1);
+    fillPx(key, px - 1, py + h, w + 2, 1);
+    fillPx(key, px - 1, py - 1, 1, h + 2);
+    fillPx(key, px + w, py - 1, 1, h + 2);
+  }
 
   /** 건설: 점무늬 미리보기 + 초록 테두리. 불가능/철거: 빨강 테두리 + X 무늬 (색만으로 구분하지 않는다) */
   function drawBuildPreview(b) {

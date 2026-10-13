@@ -123,6 +123,11 @@ function moveBelt(rules, belt, net, dt) {
   }
   belt.items = keep;
   belt.active = keep.length > 0;
+  // 병목 보기용: 꽉 차서 멈춤(3개 + 맨 앞이 끝에서 대기) / 비어 있음 을 2초 정도로 부드럽게
+  const k = Math.min(1, dt / 2);
+  const jammed = keep.length >= 3 && keep[0].pos >= 1 - EPS;
+  belt.jam += ((jammed ? 1 : 0) - belt.jam) * k;
+  belt.idle += ((keep.length === 0 ? 1 : 0) - belt.idle) * k;
 }
 
 function updateRouter(rules, router, net, dt) {

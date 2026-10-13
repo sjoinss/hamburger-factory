@@ -24,7 +24,15 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     rotate: document.getElementById('btn-build-rotate'),
     confirm: document.getElementById('btn-build-confirm'),
     cancel: document.getElementById('btn-build-cancel'),
+    draw: document.getElementById('btn-build-draw'),
   };
+  // 터치: 끌기를 '벨트 깔기'로 쓸지 '화면 이동'으로 쓸지 (끌어서 깔 수 있는 기계일 때만 의미 있음)
+  let drawEnabled = true;
+  bar.draw.addEventListener('click', () => {
+    drawEnabled = !drawEnabled;
+    bar.draw.setAttribute('aria-pressed', String(drawEnabled));
+    bar.draw.textContent = drawEnabled ? '끌어서 깔기' : '끌면 화면 이동';
+  });
 
   let mode = null; // { kind: 'place', type, rot } | { kind: 'remove' }
   const cursor = { x: 0, y: 0 };
@@ -42,6 +50,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     app.classList.toggle('is-building', mode !== null);
     removeBtn.setAttribute('aria-pressed', String(mode?.kind === 'remove'));
     bar.rotate.hidden = mode?.kind !== 'place';
+    bar.draw.hidden = !(mode?.kind === 'place' && rules.machines[mode.type].dragPlace);
     bar.confirm.textContent = mode?.kind === 'remove' ? '철거' : '설치';
     onModeChange?.(mode);
   }
@@ -161,6 +170,8 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
 
   return {
     active: () => mode !== null,
+    /** 터치 한 손가락 끌기를 벨트 깔기로 쓸지 */
+    touchDraws: () => drawEnabled && mode?.kind === 'place' && Boolean(rules.machines[mode.type].dragPlace),
     /** 마우스를 누른 칸: 설치(또는 철거)하고, 끌기 시작 */
     pressAt(x, y) {
       this.setCursor(x, y);

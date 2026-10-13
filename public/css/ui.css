@@ -19,6 +19,8 @@
   --c-wall-2: #46606a;
   --c-oil: #5e4a34;
   --c-light: #f4ecd0;
+  --c-red: #a8322a;
+  --c-blue: #3c5a8a;
 
   --font: "Galmuri11", ui-monospace, Consolas, monospace;
   --fs: 12px;
@@ -454,3 +456,56 @@ button[aria-expanded="true"] {
 
 /* 터치에서는 키보드 단축키 표시를 숨긴다 */
 .is-touch .key-hint { display: none; }
+
+/* ── 병목 보기 범례 ───────────────────────────────────── */
+/* 왼쪽 위 (오른쪽은 패널 자리). 범례가 보이면 '손' 칸은 그 아래로 */
+.legend {
+  position: absolute;
+  z-index: var(--z-overlay);
+  left: calc(var(--edge) + var(--safe-l));
+  top: calc(var(--top-h) + var(--safe-t) + var(--edge));
+  display: flex;
+  gap: 10px;
+  padding: 3px 8px;
+  background: var(--c-black);
+  border: var(--line) solid var(--c-light);
+  pointer-events: none;
+}
+.legend-jam { color: var(--c-light); border-bottom: 3px solid var(--c-red); }
+.legend-idle { color: var(--c-light); border-bottom: 3px dotted var(--c-blue); }
+.menu [data-ui] { min-width: 3.5em; }
+
+/* ── 정보: 선택한 기계 ────────────────────────────────── */
+.inspect { display: grid; gap: 4px; margin-bottom: 10px; padding: 6px; background: var(--c-black); border: 1px solid var(--c-wall-2); }
+.inspect-name { color: var(--c-warn); }
+.util-bar { display: flex; height: 8px; border: 1px solid var(--c-metal-2); background: var(--c-outline); }
+.util-bar span { width: var(--w, 0%); }
+.u-run { background: var(--c-light); }
+.u-idle { background: var(--c-metal-2); }
+.u-block { background: var(--c-red); }
+.supply-pick { display: flex; flex-wrap: wrap; gap: 4px; }
+.supply-pick button { display: inline-flex; align-items: center; gap: 4px; }
+.supply-pick canvas { width: 16px; height: 16px; }
+.info-sub { margin: 4px 0; color: var(--c-metal-3); font-size: var(--fs); font-weight: normal; }
+
+/* ── 통계 ────────────────────────────────────────────── */
+.stat-headline { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.stat-headline strong { color: var(--c-warn); font-size: var(--fs-big); font-weight: normal; }
+.earn-chart { display: block; width: 244px; height: 80px; background: var(--c-black); border: 1px solid var(--c-wall-2); cursor: crosshair; }
+.chart-axis { display: flex; justify-content: space-between; gap: 6px; margin: 2px 0 8px; }
+.rate-table { width: 100%; border-collapse: collapse; }
+.rate-table caption { text-align: left; margin-bottom: 2px; }
+.rate-table th, .rate-table td { padding: 1px 4px; text-align: right; font-weight: normal; }
+.rate-table th:first-child, .rate-table td:first-child { text-align: left; }
+.rate-table thead th { color: var(--c-metal-3); border-bottom: 1px solid var(--c-wall-2); }
+.rate-table td canvas { width: 16px; height: 16px; vertical-align: middle; margin-right: 4px; }
+@media (max-width: 899px) {
+  .earn-chart { width: 100%; height: auto; aspect-ratio: 122 / 40; }
+}
+body:not(.is-touch) #btn-build-draw { display: none; }
+.has-legend .hands { top: calc(var(--top-h) + var(--safe-t) + var(--edge) + 32px); }
+@media (max-width: 899px) {
+  /* 좁은 화면: 튜토리얼 카드가 맨 위 한 줄을 쓰므로 그 아래 */
+  .legend { top: calc(var(--top-h) + var(--safe-t) + var(--edge) + 44px); }
+  .has-legend .hands { top: calc(var(--top-h) + var(--safe-t) + var(--edge) + 76px); }
+}

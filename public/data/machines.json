@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "machines": {
     "crate": {
       "name": "재료 상자",
@@ -94,6 +94,84 @@
       "cost": {
         "iron_plate": 2,
         "gear": 1
+      }
+    },
+    "supply": {
+      "name": "입고구",
+      "kind": "supply",
+      "size": [1, 1],
+      "sprite": "supply",
+      "seconds": 2,
+      "outputCap": 4,
+      "supplies": ["raw_meat", "flour", "lettuce"],
+      "cost": {
+        "iron_plate": 3,
+        "gear": 1
+      }
+    },
+    "meat_cutter": {
+      "name": "정육 절단기",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "meatCutter",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "cost": {
+        "iron_plate": 3,
+        "gear": 2
+      }
+    },
+    "washer": {
+      "name": "세척기",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "washer",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "cost": {
+        "iron_plate": 3,
+        "gear": 1
+      }
+    },
+    "mixer": {
+      "name": "반죽기",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "mixer",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "cost": {
+        "iron_plate": 3,
+        "gear": 2
+      }
+    },
+    "oven": {
+      "name": "오븐",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "oven",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "cost": {
+        "iron_plate": 4,
+        "heat_plate": 1
+      }
+    },
+    "burger_assembler": {
+      "name": "버거 조립기",
+      "kind": "machine",
+      "size": [2, 1],
+      "sprite": "burgerAssembler",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "cost": {
+        "iron_plate": 6,
+        "gear": 3
       }
     }
   }

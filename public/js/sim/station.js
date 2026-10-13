@@ -19,13 +19,18 @@ export function createStation(id, def, machine) {
     rot,
     built: def.built ?? false, // 플레이어가 지은 기계 (철거 가능)
     status: 'idle', // 자동 기계: running | idle | blocked
-    item: def.item ?? null, // 재료 상자의 품목
+    item: def.item ?? (machine.kind === 'supply' ? machine.supplies[0] : null), // 재료 상자/입고구의 품목
     contents: [], // 작업대에 올려 둔 재료
     output: [], // 완성품 (꺼내 가기 전)
     progress: 0, // 초
     active: false, // 이번 틱에 작업 중이었는가 (연출용)
   };
-  if (machine.kind === 'belt') station.items = []; // 벨트 위 물건 { item, pos(0~1), x, y, px, py }
+  if (machine.kind === 'belt') {
+    station.items = []; // 벨트 위 물건 { item, pos(0~1), x, y, px, py }
+    station.jam = 0; // 꽉 차서 멈춘 정도 (부드럽게 0~1)
+    station.idle = 0; // 비어 있는 정도 (부드럽게 0~1)
+  }
+  if (machine.kind === 'machine' || machine.kind === 'supply' || machine.kind === 'inserter') station.hist = '';
   if (machine.kind === 'splitter' || machine.kind === 'merger') {
     station.buffer = null; // 지나가는 물건 하나
     station.toggle = 0; // 분배기: 다음에 먼저 보낼 쪽
@@ -109,7 +114,7 @@ export function advanceWork(rules, station, dt) {
   for (const [id, n] of Object.entries(recipe.outputs)) {
     for (let i = 0; i < n; i++) station.output.push(id);
   }
-  return true;
+  return recipe;
 }
 
 // ── 자동 기계 ──
@@ -125,7 +130,7 @@ const outputCount = (recipe) => Object.values(recipe.outputs).reduce((a, b) => a
 
 /**
  * 자동 기계 한 틱. 플레이어가 누르고 있지 않아도 돌아간다.
- * @returns 이번 틱에 완성품이 나왔으면 true
+ * @returns 이번 틱에 완성품이 나왔으면 그 레시피, 아니면 null
  */
 export function updateMachine(rules, station, dt) {
   const machine = machineOf(rules, station);
@@ -133,16 +138,16 @@ export function updateMachine(rules, station, dt) {
   if (!recipe) {
     station.status = 'idle';
     station.progress = 0;
-    return false;
+    return null;
   }
   if (station.output.length + outputCount(recipe) > machine.outputCap) {
     station.status = 'blocked';
-    return false;
+    return null;
   }
   station.status = 'running';
   station.active = true;
   station.progress += dt * machine.speed;
-  if (station.progress + 1e-9 < recipe.seconds) return false;
+  if (station.progress + 1e-9 < recipe.seconds) return null;
   station.progress = 0;
   for (const [id, n] of Object.entries(recipe.inputs)) {
     for (let i = 0; i < n; i++) station.contents.splice(station.contents.indexOf(id), 1);
@@ -150,5 +155,31 @@ export function updateMachine(rules, station, dt) {
   for (const [id, n] of Object.entries(recipe.outputs)) {
     for (let i = 0; i < n; i++) station.output.push(id);
   }
+  return recipe;
+}
+
+// ── 입고구 ──
+
+/** 정해진 품목을 일정 시간마다 들여온다. 출력이 꽉 차면 멈춘다. @returns 들여온 품목 또는 null */
+export function updateSupply(rules, station, dt) {
+  const machine = machineOf(rules, station);
+  if (station.output.length >= machine.outputCap) {
+    station.status = 'blocked';
+    return null;
+  }
+  station.status = 'running';
+  station.active = true;
+  station.progress += dt;
+  if (station.progress + 1e-9 < machine.seconds) return null;
+  station.progress = 0;
+  station.output.push(station.item);
+  return station.item;
+}
+
+export function setSupplyItem(rules, station, item) {
+  const machine = machineOf(rules, station);
+  if (machine.kind !== 'supply' || !machine.supplies.includes(item)) return false;
+  if (station.item !== item) station.progress = 0;
+  station.item = item;
   return true;
 }

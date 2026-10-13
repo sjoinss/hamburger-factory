@@ -28,7 +28,9 @@ npm test       # 서버 보안 점검 + 시뮬레이션 + 스프라이트/팔레
 | 방향키 / 우클릭 끌기, C 복귀 | 화면 끌기 | 카메라 |
 | 휠 / + - | 두 손가락 | 확대 3x~5x |
 | Space | 상단 II 버튼 | 일시정지 |
-| B → 기계 선택 → 클릭 | 건설 → 칸 탭 → 설치 | 기계 짓기 (R 회전, 방향키+Enter 가능, 컨베이어는 끌어서 여러 칸) |
+| B → 기계 선택 → 클릭 | 건설 → 칸 탭 → 설치 | 기계 짓기 (R 회전, 방향키+Enter 가능, 컨베이어는 끌어서 여러 칸 — 모바일은 '끌어서 깔기') |
+| 클릭 / F | 기계 탭 | 기계 상태 보기 (최근 60초 가동률, 입고구 재료 고르기) |
+| O | 상단 '병목' | 병목 보기: 빨강 빗금 = 막힘, 파랑 점 = 한산 |
 | X | 건설 창의 철거 모드 | 철거 (부품 100% 환급) |
 | Esc | 닫기 / 취소 | 창 닫기, 건설 끝 |
 
@@ -53,10 +55,10 @@ public/
     main.js          부팅, 고정 20틱 루프 + rAF 렌더 보간
     data.js          JSON 로딩/검증
     input.js         키보드/마우스
-    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, player, station, interact, build, conveyor, inserter, progression, economy, tutorial, world
+    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, player, station, interact, build, conveyor, inserter, progression, economy, stats, tutorial, world
     render/          sprites(bake/캐시), camera, world, effects
     sprites/         도트 데이터 (문자열 배열): tiles, characters, items, machines, ui
-    ui/              상단 바/손/안내(hud), 접이식 패널, 레시피북, 튜토리얼 카드, 건설 모드
+    ui/              상단 바/손/안내(hud), 접이식 패널, 레시피북, 튜토리얼 카드, 건설 모드, 기계 정보, 통계
 tests/               node:test
 ```
 
@@ -67,4 +69,5 @@ tests/               node:test
 - [x] M1 수동 플레이 (+ 모바일 터치, 튜토리얼, 레시피북)
 - [x] M2 첫 기계와 건설 (첫 햄버거 판매 → 그릴 해금 + 부품 보상)
 - [x] M3 컨베이어와 투입기 (햄버거 3개 판매 → 컨베이어·투입기·분배기·합류기 해금)
-- [ ] M4 완성 라인 + 병목 시각화
+- [x] M4 완성 라인 + 병목 시각화 (햄버거 6개 판매 → 입고구·절단기·세척기·반죽기·오븐·버거 조립기 해금, 통계 패널)
+- [ ] M5 깔때기 호퍼 + 주문 시스템

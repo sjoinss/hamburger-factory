@@ -40,7 +40,7 @@ export function createTutorialCard({ rules, world, onRestart }) {
 
       const step = currentTutorialStep(world, rules);
       let key;
-      setHint(step?.target.ui ? document.querySelector(`.menu [data-panel="${step.target.ui}"]`) : null);
+      setHint(step?.target.ui ? document.querySelector(`.menu [data-panel="${step.target.ui}"], .menu [data-ui="${step.target.ui}"]`) : null);
       if (step) key = `step:${t.track}:${t.step}`;
       else if (doneTimer > 0) key = 'done';
       else key = null;

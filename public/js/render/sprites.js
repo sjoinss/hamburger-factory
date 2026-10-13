@@ -30,6 +30,12 @@ export const SPRITE_DEFS = {
   merger: [machines.MERGER],
   inserterBase: [machines.INSERTER_BASE],
   inserterArm: machines.INSERTER_ARM,
+  supply: machines.SUPPLY,
+  meatCutter: machines.MEAT_CUTTER,
+  washer: machines.WASHER,
+  mixer: machines.MIXER,
+  oven: machines.OVEN,
+  burgerAssembler: machines.BURGER_ASSEMBLER,
   rawMeat: [items.RAW_MEAT],
   groundMeat: [items.GROUND_MEAT],
   patty: [items.PATTY],
@@ -41,6 +47,8 @@ export const SPRITE_DEFS = {
   ironPlate: [items.IRON_PLATE],
   heatPlate: [items.HEAT_PLATE],
   gear: [items.GEAR],
+  flour: [items.FLOUR],
+  dough: [items.DOUGH],
   tileCursor: [ui.TILE_CURSOR],
   tileTarget: [ui.TILE_TARGET],
   tutorialArrow: [ui.TUTORIAL_ARROW],
@@ -48,6 +56,8 @@ export const SPRITE_DEFS = {
   lampIdle: [ui.LAMP_IDLE],
   lampBlocked: [ui.LAMP_BLOCKED],
   dirArrow: [ui.DIR_ARROW],
+  overlayJam: [ui.OVERLAY_JAM],
+  overlayIdle: [ui.OVERLAY_IDLE],
 };
 
 export function flipRows(rows) {

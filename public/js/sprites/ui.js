@@ -83,3 +83,15 @@ export const DIR_ARROW = [
   '...KK..',
   '...K...',
 ];
+
+// 병목 보기 무늬 (16x16, 칸마다 이어 붙인다). 막힘 = 빨강 45도 빗금, 한산 = 파랑 점
+export const OVERLAY_JAM = Array.from({ length: 16 }, (_, y) =>
+  Array.from({ length: 16 }, (_, x) => ((x + y) % 4 === 0 ? 'R' : '.')).join(''));
+// 2x2 점을 4px 간격으로, 줄마다 2px 어긋나게
+export const OVERLAY_IDLE = Array.from({ length: 16 }, (_, y) =>
+  Array.from({ length: 16 }, (_, x) => {
+    const shift = Math.floor(y / 4) % 2 === 0 ? 0 : 2;
+    const inDotRow = y % 4 === 1 || y % 4 === 2;
+    const inDotCol = (x - shift + 4) % 4 < 2;
+    return inDotRow && inDotCol ? 'p' : '.';
+  }).join(''));

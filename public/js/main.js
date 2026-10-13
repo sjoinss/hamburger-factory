@@ -13,6 +13,9 @@ import { createPanels } from './ui/panels.js';
 import { createRecipeBook } from './ui/recipebook.js';
 import { createTutorialCard } from './ui/tutorial.js';
 import { createBuildMode } from './ui/build.js';
+import { createInspector } from './ui/inspect.js';
+import { createStatsPanel } from './ui/stats.js';
+import { stationAt } from './sim/lookup.js';
 
 const FONT_FAMILY = '"Galmuri11", ui-monospace, monospace';
 
@@ -110,6 +113,25 @@ async function boot() {
     returnFocus: () => canvas.focus({ preventScroll: true }),
   });
   build = createBuildMode({ world, rules, bank, panels });
+  const inspector = createInspector({ world, rules, bank });
+  const statsPanel = createStatsPanel({ world, rules, bank });
+
+  // 병목 보기 (O 키 / 상단 '병목' 버튼)
+  let overlay = false;
+  const overlayBtn = document.querySelector('.menu [data-ui="overlay"]');
+  const overlayLegend = document.getElementById('overlay-legend');
+  const setOverlay = (on) => {
+    overlay = on;
+    overlayBtn.setAttribute('aria-pressed', String(on));
+    overlayLegend.hidden = !on;
+    document.body.classList.toggle('has-legend', on);
+  };
+  overlayBtn.addEventListener('click', () => setOverlay(!overlay));
+
+  const inspect = (st) => {
+    inspector.select(st ? st.id : null);
+    if (st) panels.open('info');
+  };
   let hover = null;
   // 건설을 시작하면 마우스가 가리키는 칸, 없으면 플레이어가 바라보는 칸에서 시작
   build.setStartCursor(() => hover ?? facingTile(world.player, config.player.reach));
@@ -132,7 +154,12 @@ async function boot() {
       interactBtn: document.getElementById('btn-interact'),
       dropBtn: document.getElementById('btn-drop'),
     },
-    { deadzone: config.touch.joystickDeadzone, pinchStep: config.touch.pinchStep, onTouchMode: enterTouchMode },
+    {
+      deadzone: config.touch.joystickDeadzone,
+      pinchStep: config.touch.pinchStep,
+      onTouchMode: enterTouchMode,
+      touchDraws: () => build.touchDraws(),
+    },
   );
 
   const worldW = world.grid.width * ts;
@@ -181,6 +208,11 @@ async function boot() {
 
     // ── 건설 모드 ──
     if (input.consumePress('KeyX')) build.toggleRemove();
+    if (input.consumePress('KeyO')) setOverlay(!overlay);
+    if (input.consumePress('KeyF')) {
+      const t = facingTile(world.player, config.player.reach);
+      inspect(stationAt(world, t.x, t.y));
+    }
     if (build.active()) {
       if (input.consumePress('KeyR')) build.rotate();
       if (input.consumePress('Enter')) build.confirm();
@@ -205,11 +237,25 @@ async function boot() {
       build.pressAt(t.x, t.y);
     }
     for (const click of input.consumeClicks()) {
-      if (!build.active()) continue;
+      if (!build.active()) {
+        // 건설 중이 아니면 클릭/탭 = 기계 상태 보기
+        if (click.button === 0) {
+          const t = toTile(click);
+          inspect(stationAt(world, t.x, t.y));
+        }
+        continue;
+      }
       if (click.button === 2) { build.cancel(); continue; }
       if (!click.touch) continue;
       const t = toTile(click);
       build.setCursor(t.x, t.y);
+    }
+    // 터치로 끌어서 깔기
+    for (const stroke of input.consumeStrokes()) {
+      if (stroke.type === 'end') { build.endDrag(); continue; }
+      const t = toTile(stroke);
+      if (stroke.type === 'start') build.pressAt(t.x, t.y);
+      else build.dragTo(t.x, t.y);
     }
     if (!input.mouse.left) build.endDrag();
 
@@ -274,7 +320,12 @@ async function boot() {
       else build.setCursor(hover.x, hover.y);
     }
 
-    drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build.preview());
+    drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build.preview(), {
+      overlay,
+      selected: panels.current() === 'info' ? inspector.selected() : null,
+    });
+    if (panels.current() === 'info') inspector.render();
+    if (panels.current() === 'stats') statsPanel.render(now);
 
     fpsFrames++;
     fpsTime += realDt;

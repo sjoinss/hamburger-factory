@@ -1,7 +1,7 @@
 // data/*.json 로딩과 검증. 데이터 파일도 신뢰하지 않고 형태와 상호 참조를 확인한다.
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'belt', 'splitter', 'merger', 'inserter']);
+const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter']);
 const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger']);
 const ITEM_CATEGORIES = new Set(['food', 'part']);
 const ID_RE = /^[a-z][a-z0-9_]{0,31}$/;
@@ -62,6 +62,11 @@ export function validateMachines(data, items) {
     if (m.kind === 'crafter' || m.kind === 'machine') assert(isNum(m.speed, 0.01, 100), `기계 ${id}: speed 오류`);
     if (m.kind === 'machine') {
       assert(isInt(m.inputBatches, 1, 99) && isInt(m.outputCap, 1, 99), `기계 ${id}: 버퍼 크기 오류`);
+    }
+    if (m.kind === 'supply') {
+      assert(isNum(m.seconds, 0.05, 600) && isInt(m.outputCap, 1, 99), `기계 ${id}: 입고 seconds/outputCap 오류`);
+      assert(Array.isArray(m.supplies) && m.supplies.length > 0, `기계 ${id}: supplies 오류`);
+      for (const item of m.supplies) assert(Object.hasOwn(items, item), `기계 ${id}: 없는 입고 품목 ${short(item)}`);
     }
     if (CONVEYOR_KINDS.has(m.kind)) {
       assert(isNum(m.speed, 0.1, 20), `기계 ${id}: 벨트 speed 오류`);
@@ -155,7 +160,7 @@ export function validateGameConfig(g, items, machines) {
 // done 조건: 아이템 기준(have/placed/sold) 또는 기계 기준(built/made/took)
 const DONE_ITEM_KINDS = new Set(['have', 'placed', 'sold']);
 const DONE_MACHINE_KINDS = new Set(['built', 'made', 'took', 'fed']);
-const UI_TARGETS = new Set(['build']);
+const UI_TARGETS = new Set(['build', 'overlay']);
 
 export function validateTutorial(data, items, machines) {
   rejectForbiddenKeys(data, 'tutorial');

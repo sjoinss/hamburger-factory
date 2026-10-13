@@ -1,10 +1,10 @@
 {
-  "version": 1,
+  "version": 2,
   "recipes": [
     {
       "id": "chop_meat",
       "verb": "썰기",
-      "stations": ["cutting_board"],
+      "stations": ["cutting_board", "meat_cutter"],
       "inputs": {
         "raw_meat": 1
       },
@@ -16,7 +16,7 @@
     {
       "id": "prep_lettuce",
       "verb": "손질",
-      "stations": ["cutting_board"],
+      "stations": ["cutting_board", "washer"],
       "inputs": {
         "lettuce": 1
       },
@@ -38,9 +38,33 @@
       "seconds": 4
     },
     {
+      "id": "mix_dough",
+      "verb": "반죽",
+      "stations": ["mixer"],
+      "inputs": {
+        "flour": 2
+      },
+      "outputs": {
+        "dough": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "bake_bun",
+      "verb": "굽기",
+      "stations": ["oven"],
+      "inputs": {
+        "dough": 1
+      },
+      "outputs": {
+        "bun": 1
+      },
+      "seconds": 5
+    },
+    {
       "id": "assemble_burger",
       "verb": "조립",
-      "stations": ["assembly_table"],
+      "stations": ["assembly_table", "burger_assembler"],
       "inputs": {
         "bun": 1,
         "patty": 1,

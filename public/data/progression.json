@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "start": {
     "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "assemble_burger"],
     "machines": [],
@@ -46,6 +46,27 @@
         }
       },
       "tutorial": "conveyor"
+    },
+    {
+      "id": "automation",
+      "name": "자동화 라인",
+      "when": {
+        "sold": {
+          "burger": 6
+        }
+      },
+      "unlock": {
+        "machines": ["supply", "meat_cutter", "washer", "mixer", "oven", "burger_assembler"],
+        "recipes": ["mix_dough", "bake_bun"]
+      },
+      "reward": {
+        "parts": {
+          "iron_plate": 60,
+          "gear": 20,
+          "heat_plate": 4
+        }
+      },
+      "tutorial": "automation"
     }
   ]
 }

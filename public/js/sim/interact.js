@@ -5,6 +5,7 @@ import { canInsertAt, insertSorted, makeBeltItem } from './conveyor.js';
 import { machineOf, canAccept, readyRecipe, missingInputs, advanceWork, workSeconds } from './station.js';
 import { sellItem } from './economy.js';
 import { noteTutorial } from './tutorial.js';
+import { record, recordRecipe } from './stats.js';
 
 const DIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
@@ -66,7 +67,7 @@ export function findInteraction(world, rules) {
     if (machine.kind === 'splitter' || machine.kind === 'merger' || machine.kind === 'inserter') {
       return { ...base, action: 'blocked', reason: 'status' };
     }
-    if (machine.kind === 'machine') {
+    if (machine.kind === 'machine' || machine.kind === 'supply') {
       if (station.output.length > 0 && hasSpace(p)) return { ...base, action: 'take', item: station.output[0] };
       const slot = p.inventory.findIndex((it) => it !== null && canAccept(rules, station, it));
       if (slot !== -1) return { ...base, action: 'deposit', slot, item: p.inventory[slot] };
@@ -151,7 +152,9 @@ function doInstant(world, rules, act) {
 
 function doHold(world, rules, act, dt) {
   if (act.action === 'work') {
-    if (advanceWork(rules, act.station, dt)) {
+    const done = advanceWork(rules, act.station, dt);
+    if (done) {
+      recordRecipe(world, done);
       world.events.push({ type: 'crafted', item: act.station.output[0], x: act.station.x, y: act.station.y });
     }
     return true;
@@ -163,6 +166,7 @@ function doHold(world, rules, act, dt) {
     if (s.progress + 1e-9 >= act.machine.seconds) {
       s.progress = 0;
       giveItem(world, s.item);
+      record(world, 'produced', s.item);
       world.events.push({ type: 'gathered', item: s.item, x: s.x, y: s.y });
     }
     return true;

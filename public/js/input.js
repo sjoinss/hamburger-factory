@@ -4,7 +4,7 @@ const GAME_KEYS = new Set([
   'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'KeyQ',
   'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
   'Space', 'KeyC', 'Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract',
-  'KeyR', 'KeyX', 'Enter',
+  'KeyR', 'KeyX', 'Enter', 'KeyF', 'KeyO',
 ]);
 // 누르고 있으면 반복 입력되는 키 (건설 커서 이동)
 const REPEAT_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
@@ -28,7 +28,7 @@ function isTypingTarget(el) {
 /**
  * @param canvas 게임 캔버스
  * @param touchUi {{ joystick, knob, interactBtn, dropBtn }} 터치 조작 요소
- * @param opts {{ deadzone, pinchStep, onTouchMode }}
+ * @param opts {{ deadzone, pinchStep, onTouchMode, touchDraws }} touchDraws(): 한 손가락 끌기를 카메라 대신 '그리기'로 쓸지
  */
 export function createInput(canvas, touchUi, opts) {
   const down = new Set();
@@ -82,6 +82,13 @@ export function createInput(canvas, touchUi, opts) {
   // 클릭/탭 판정용: 누른 위치와 여러 손가락 여부
   const starts = new Map();
   const clicks = [];
+  // 터치 그리기 (모바일에서 벨트를 끌어서 깔기): { type: start|move|end, x, y }
+  const strokes = [];
+  let drawingId = null;
+  const local = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
   const pinchDistance = () => {
     const [a, b] = [...pointers.values()];
     return Math.hypot(a.x - b.x, a.y - b.y);
@@ -93,6 +100,10 @@ export function createInput(canvas, touchUi, opts) {
       mouse.x = e.clientX - r.left;
       mouse.y = e.clientY - r.top;
       mouse.inside = true;
+    }
+    if (e.pointerId === drawingId) {
+      strokes.push({ type: 'move', ...local(e) });
+      return;
     }
     const prev = pointers.get(e.pointerId);
     if (!prev) return;
@@ -114,6 +125,18 @@ export function createInput(canvas, touchUi, opts) {
     canvas.focus({ preventScroll: true });
     const multi = starts.size > 0;
     if (multi) for (const st of starts.values()) st.multi = true;
+    if (drawingId !== null && multi) {
+      strokes.push({ type: 'end' }); // 두 번째 손가락이 오면 그리기 끝
+      drawingId = null;
+    }
+    if (e.pointerType === 'touch' && !multi && opts.touchDraws?.()) {
+      e.preventDefault();
+      drawingId = e.pointerId;
+      starts.set(e.pointerId, { x: e.clientX, y: e.clientY, multi: true }); // 탭으로 치지 않음
+      capture(canvas, e.pointerId);
+      strokes.push({ type: 'start', ...local(e) });
+      return;
+    }
     starts.set(e.pointerId, { x: e.clientX, y: e.clientY, multi });
     if (e.pointerType === 'mouse' && e.button === 0) {
       mouse.left = true;
@@ -133,6 +156,12 @@ export function createInput(canvas, touchUi, opts) {
     if (pointers.size < 2) pinchBase = 0;
   };
   canvas.addEventListener('pointerup', (e) => {
+    if (e.pointerId === drawingId) {
+      drawingId = null;
+      starts.delete(e.pointerId);
+      strokes.push({ type: 'end' });
+      return;
+    }
     const st = starts.get(e.pointerId);
     starts.delete(e.pointerId);
     endPointer(e);
@@ -145,7 +174,13 @@ export function createInput(canvas, touchUi, opts) {
       touch: e.pointerType !== 'mouse',
     });
   });
-  canvas.addEventListener('pointercancel', (e) => starts.delete(e.pointerId));
+  canvas.addEventListener('pointercancel', (e) => {
+    starts.delete(e.pointerId);
+    if (e.pointerId === drawingId) {
+      drawingId = null;
+      strokes.push({ type: 'end' });
+    }
+  });
   window.addEventListener('pointerup', (e) => {
     if (e.pointerType === 'mouse' && e.button === 0) mouse.left = false;
   });
@@ -250,6 +285,7 @@ export function createInput(canvas, touchUi, opts) {
     /** 이번 프레임의 클릭/탭 (캔버스 CSS 픽셀 좌표) */
     consumeClicks() { return clicks.splice(0); },
     consumePresses() { return presses.splice(0); },
+    consumeStrokes() { return strokes.splice(0); },
     consumeDrag() { const d = { x: dragDX, y: dragDY }; dragDX = 0; dragDY = 0; return d; },
     endFrame() { pressed.clear(); },
   };

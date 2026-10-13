@@ -34,6 +34,8 @@
         <button type="button" data-panel="orders" aria-expanded="false" aria-controls="panel-orders">주문</button>
         <button type="button" data-panel="recipes" aria-expanded="false" aria-controls="panel-recipes">레시피</button>
         <button type="button" data-panel="build" aria-expanded="false" aria-controls="panel-build">건설</button>
+        <button type="button" data-panel="stats" aria-expanded="false" aria-controls="panel-stats">통계</button>
+        <button type="button" data-ui="overlay" aria-pressed="false" title="병목 보기 (O)">병목</button>
         <button type="button" data-panel="help" aria-expanded="false" aria-controls="panel-help">도움말</button>
         <button type="button" data-panel="info" aria-expanded="false" aria-controls="panel-info">정보</button>
       </nav>
@@ -63,12 +65,18 @@
 
     <!-- 건설/철거 중에만 보이는 조작 띠 -->
     <div class="build-bar" id="build-bar" role="group" aria-label="건설 조작">
+      <button type="button" id="btn-build-draw" aria-pressed="true" hidden>끌어서 깔기</button>
       <button type="button" id="btn-build-rotate">회전<span class="key-hint"> (R)</span></button>
       <button type="button" class="build-confirm" id="btn-build-confirm">설치</button>
       <button type="button" id="btn-build-cancel">취소<span class="key-hint"> (Esc)</span></button>
     </div>
 
     <p class="banner" id="banner" role="status" aria-live="polite" hidden></p>
+
+    <p class="legend" id="overlay-legend" hidden>
+      <span class="legend-jam">빗금 = 막힘</span>
+      <span class="legend-idle">점 = 한산</span>
+    </p>
 
     <!-- 접이식 패널. 한 번에 하나만 열린다. -->
     <section class="panel panel-orders" id="panel-orders" aria-labelledby="panel-orders-title" hidden>
@@ -112,6 +120,8 @@
         <div><dt>휠</dt><dd>확대</dd></div>
         <div><dt>Space</dt><dd>일시정지</dd></div>
         <div><dt>B</dt><dd>건설 (R 회전, X 철거)</dd></div>
+        <div><dt>F / 클릭</dt><dd>기계 상태 보기</dd></div>
+        <div><dt>O</dt><dd>병목 보기</dd></div>
         <div><dt>Esc</dt><dd>창 닫기 / 건설 끝</dd></div>
       </dl>
       <dl class="kv keys-touch">
@@ -120,8 +130,24 @@
         <div><dt>화면 끌기</dt><dd>카메라</dd></div>
         <div><dt>두 손가락</dt><dd>확대</dd></div>
         <div><dt>건설</dt><dd>칸 탭 → 설치</dd></div>
+        <div><dt>기계 탭</dt><dd>상태 보기</dd></div>
       </dl>
       <button type="button" class="wide-btn" id="tutorial-restart">튜토리얼 다시 하기</button>
+    </section>
+
+    <section class="panel panel-stats" id="panel-stats" aria-labelledby="panel-stats-title" hidden>
+      <header class="panel-head">
+        <h2 id="panel-stats-title">통계</h2>
+        <button type="button" class="panel-close" data-close>닫기</button>
+      </header>
+      <p class="stat-headline"><span class="muted">최근 5분 수익</span> <strong id="stats-earned">0</strong></p>
+      <canvas class="earn-chart" id="earn-chart" width="122" height="40" role="img" aria-label="최근 5분 10초 단위 수익 막대 그래프"></canvas>
+      <p class="chart-axis"><span>5분 전</span><span id="earn-hover" class="muted">막대를 누르면 값</span><span>지금</span></p>
+      <table class="rate-table">
+        <caption class="muted">품목별 분당 (최근 1분)</caption>
+        <thead><tr><th scope="col">품목</th><th scope="col">생산</th><th scope="col">소비</th><th scope="col">판매</th></tr></thead>
+        <tbody id="rate-body"></tbody>
+      </table>
     </section>
 
     <section class="panel panel-info" id="panel-info" aria-labelledby="panel-info-title" hidden>
@@ -129,6 +155,16 @@
         <h2 id="panel-info-title">정보</h2>
         <button type="button" class="panel-close" data-close>닫기</button>
       </header>
+      <div class="inspect" id="inspect" hidden>
+        <p class="inspect-name" id="inspect-name"></p>
+        <p id="inspect-status"></p>
+        <div class="util-bar" id="util-bar" aria-hidden="true"><span class="u-run"></span><span class="u-idle"></span><span class="u-block"></span></div>
+        <p class="muted" id="inspect-util"></p>
+        <p id="inspect-buffers"></p>
+        <div class="supply-pick" id="supply-pick" role="group" aria-label="들여올 재료" hidden></div>
+      </div>
+      <p class="muted" id="inspect-empty">기계를 누르면 (F: 바라보는 기계) 상태가 여기 나온다.</p>
+      <h3 class="info-sub">게임</h3>
       <dl id="info-list" class="kv"></dl>
     </section>
 
