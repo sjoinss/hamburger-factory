@@ -146,6 +146,12 @@ async function boot() {
   // 개발용 주소 플래그: #debug (콘솔에서 __game 으로 상태 보기), #touch (PC 에서 터치 화면 미리보기). 쉼표로 함께 쓸 수 있다.
   const flags = new Set(location.hash.slice(1).split(','));
   if (flags.has('debug')) window.__game = { world, rules, camera, build, panels };
+  // #unlock: 모든 단계를 바로 연다 (해금 조건인 판매 수를 채워 둔다. 시험용)
+  if (flags.has('unlock')) {
+    for (const st of rules.progression.stages) {
+      for (const [item, n] of Object.entries(st.when.sold)) world.stats.sold[item] = Math.max(world.stats.sold[item] ?? 0, n);
+    }
+  }
   const tutorialCard = createTutorialCard({ rules, world, onRestart: () => panels.close() });
 
   const coarse = window.matchMedia('(pointer: coarse)').matches || flags.has('touch');
