@@ -33,6 +33,9 @@ function tileSprite(type, x, y) {
 // 상태등을 다는 기계
 const LAMP_KINDS = new Set(['machine', 'inserter', 'gate', 'generator', 'reader', 'bundler']);
 
+// 공장 바깥 (안 산 구역·화면 가장자리): 검정은 무거워서 바닥보다 한 톤 어두운 흙색
+const VOID_COLOR = 'n';
+
 const PLAYER_SPRITE = { down: 'playerDown', up: 'playerUp', left: 'playerLeft', right: 'playerRight' };
 
 function playerFrame(player, walkFrameSeconds) {
@@ -82,7 +85,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   const itemSprite = (item, px, py) => sprite(rules.items[item].sprite, 0, px, py);
 
   ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = bank.color('K');
+  ctx.fillStyle = bank.color(VOID_COLOR);
   ctx.fillRect(0, 0, view.width, view.height);
 
   const { grid } = world;
