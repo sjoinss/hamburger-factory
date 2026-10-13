@@ -102,11 +102,12 @@ async function boot() {
   let hover = null;
   // 건설을 시작하면 마우스가 가리키는 칸, 없으면 플레이어가 바라보는 칸에서 시작
   build.setStartCursor(() => hover ?? facingTile(world.player, config.player.reach));
-  // 개발용: 주소 끝에 #debug 를 붙이면 콘솔에서 상태를 볼 수 있다.
-  if (location.hash === '#debug') window.__game = { world, rules, camera, build, panels };
+  // 개발용 주소 플래그: #debug (콘솔에서 __game 으로 상태 보기), #touch (PC 에서 터치 화면 미리보기). 쉼표로 함께 쓸 수 있다.
+  const flags = new Set(location.hash.slice(1).split(','));
+  if (flags.has('debug')) window.__game = { world, rules, camera, build, panels };
   const tutorialCard = createTutorialCard({ rules, world, onRestart: () => panels.close() });
 
-  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const coarse = window.matchMedia('(pointer: coarse)').matches || flags.has('touch');
   const enterTouchMode = () => {
     hud.setTouchMode(true);
     setZoom(camera, config.camera.mobileZoom);
