@@ -133,6 +133,7 @@ async function boot() {
     if (st) panels.open('info');
   };
   let hover = null;
+  let mouseWasDown = false;
   // 건설을 시작하면 마우스가 가리키는 칸, 없으면 플레이어가 바라보는 칸에서 시작
   build.setStartCursor(() => hover ?? facingTile(world.player, config.player.reach));
   // 개발용 주소 플래그: #debug (콘솔에서 __game 으로 상태 보기), #touch (PC 에서 터치 화면 미리보기). 쉼표로 함께 쓸 수 있다.
@@ -257,7 +258,9 @@ async function boot() {
       if (stroke.type === 'start') build.pressAt(t.x, t.y);
       else build.dragTo(t.x, t.y);
     }
-    if (!input.mouse.left) build.endDrag();
+    // 마우스 왼쪽을 뗀 순간에만 끌기 끝 (터치 그리기는 stroke 'end' 로 끝난다)
+    if (mouseWasDown && !input.mouse.left) build.endDrag();
+    mouseWasDown = input.mouse.left;
 
     const pan = build.active() ? { x: 0, y: 0 } : input.panVector();
     const drag = input.consumeDrag();
