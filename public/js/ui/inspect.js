@@ -180,7 +180,7 @@ export function createInspector({ world, rules, bank }) {
         bars.forEach((b) => b.style.setProperty('--w', '0%'));
         buffers.textContent = '';
       } else {
-        status.textContent = st.hist !== undefined || machine.kind === 'splitter' || machine.kind === 'merger'
+        status.textContent = st.hist !== undefined || ['splitter', 'merger', 'farm'].includes(machine.kind)
           ? machineStatusText(st, rules)
           : '';
         if (st.hist !== undefined) {

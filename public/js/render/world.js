@@ -1,6 +1,6 @@
 // 월드 그리기. 시뮬레이션 상태를 읽기만 하고 바꾸지 않는다.
 import { TILE, getTile } from '../sim/grid.js';
-import { readyRecipe, workSeconds, machineRecipe } from '../sim/station.js';
+import { readyRecipe, workSeconds, machineRecipe, farmGrowth } from '../sim/station.js';
 import { facingTile } from '../sim/interact.js';
 import { tutorialTarget } from '../sim/tutorial.js';
 import { isConveyorKind } from '../sim/conveyor.js';
@@ -40,6 +40,7 @@ function stationProgress(rules, station) {
   if (station.progress <= 0) return null;
   const machine = rules.machines[station.type];
   if (machine.kind === 'source' || machine.kind === 'supply') return station.progress / machine.seconds;
+  if (machine.kind === 'farm') return station.progress / machine.harvestSeconds; // 수확 중
   if (machine.kind === 'machine') {
     const recipe = machineRecipe(rules, station);
     return recipe ? station.progress / recipe.seconds : null;
@@ -132,7 +133,10 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
       const st = d.st;
       const machine = rules.machines[st.type];
       const frames = bank.frameCount(machine.sprite);
-      const frame = st.active && frames > 1 ? 1 + animFrame : 0;
+      // 밭은 자란 정도 (0 씨앗 ~ 마지막 프레임 다 자람), 다른 기계는 가동 중일 때 깜박
+      const frame = machine.kind === 'farm'
+        ? (st.output.length > 0 ? frames - 1 : Math.min(frames - 2, Math.floor(farmGrowth(rules, st) * (frames - 1))))
+        : st.active && frames > 1 ? 1 + animFrame : 0;
       sprite(machine.sprite, frame, st.x * ts, st.y * ts, st.rot);
 
       const bx = st.x * ts;
@@ -163,7 +167,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
       } else if (machine.kind === 'machine') {
         // 자동 기계: 넣은 재료는 기계 안에 있다. 완성품만 위로 살짝 내민다.
         if (st.output.length > 0) itemSprite(st.output[0], bx + (st.w * ts - ts) / 2, by - 7);
-      } else if (st.output.length > 0) {
+      } else if (st.output.length > 0 && machine.kind !== 'farm') {
         itemSprite(st.output[0], bx + (st.w * ts - ts) / 2, by - 2);
       } else if (st.contents.length > 0) {
         if (st.w === 1) itemSprite(st.contents[st.contents.length - 1], bx, by - 1);

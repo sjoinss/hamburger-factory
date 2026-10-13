@@ -1,6 +1,6 @@
 // 상단 바, 손, 작업 안내, 정보 패널 갱신. 문자열은 textContent 로만 넣는다.
 import { spriteIcon } from './icons.js';
-import { machineRecipe } from '../sim/station.js';
+import { machineRecipe, farmGrowth } from '../sim/station.js';
 import { marketPrice } from '../sim/market.js';
 import { anyOrderNeeds } from '../sim/orders.js';
 import { storageTotal } from '../sim/storage.js';
@@ -40,6 +40,11 @@ export function machineStatusText(station, rules, world = null) {
     }[station.reason] ?? '대기';
   }
   if (kind === 'storage') return `${storageTotal(station)} / ${rules.machines[station.type].capacity}`;
+  if (kind === 'farm') {
+    const crop = name(rules.machines[station.type].crop);
+    if (station.output.length > 0) return `다 자람: ${crop} ${station.output.length}개 수확 가능`;
+    return `자라는 중 ${Math.floor(farmGrowth(rules, station) * 100)}%`;
+  }
   if (kind === 'splitter') return '뒤에서 받아 왼쪽·오른쪽으로 번갈아 보냄';
   if (kind === 'merger') return '세 방향에서 받아 앞으로 보냄';
   if (station.status === 'running') {
@@ -77,6 +82,7 @@ export function describeInteraction(act, rules, touch, world = null) {
     case 'belt-take': return { text: `${key}: 벨트에서 ${name(act.item)} 집기${act.count > 1 ? ` (${act.count}개)` : ''}` };
     case 'belt-put': return { text: `${key}: ${name(act.item)} 벨트에 올리기` };
     case 'gather': return { text: `${key} 길게: ${name(act.item)} 꺼내기 ${pct(act.progress)}` };
+    case 'harvest': return { text: `${key} 길게: ${name(act.item)} 수확 ${pct(act.progress)} (남은 ${act.left}개)` };
     case 'work':
       return {
         text: `${key} 길게: ${act.recipe.verb} ${pct(act.progress)} · ${listNames(rules, act.recipe.inputs)} → ${listNames(rules, act.recipe.outputs)}`,
@@ -87,6 +93,7 @@ export function describeInteraction(act, rules, touch, world = null) {
       if (act.reason === 'belt-busy') return { blocked: true, text: `${where}벨트 가운데가 차 있다` };
       if (act.reason === 'belt-empty') return { blocked: true, text: '' };
       if (act.reason === 'storage-empty') return { blocked: true, text: `${where}비어 있다` };
+      if (act.reason === 'growing') return { blocked: true, text: `${where}자라는 중 ${pct(act.progress)}` };
       if (act.reason === 'status') return { text: `${where}${machineStatusText(act.station, rules, world)}` };
       if (act.reason === 'unsellable') return { blocked: true, text: `${where}지금 든 물건은 팔 수 없다` };
       if (act.reason === 'empty-hands') return { blocked: true, text: `${where}팔 물건을 들고 오기` };

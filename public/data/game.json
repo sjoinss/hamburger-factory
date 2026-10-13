@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "tileSize": 16,
   "ticksPerSecond": 20,
   "maxTicksPerFrame": 20,
@@ -31,10 +31,13 @@
   "playerStart": { "x": 8, "y": 8 },
   "stations": [
     { "type": "crate", "x": 2, "y": 2, "item": "raw_meat" },
-    { "type": "crate", "x": 2, "y": 4, "item": "lettuce" },
-    { "type": "crate", "x": 2, "y": 6, "item": "bun" },
+    { "type": "lettuce_field", "x": 2, "y": 4, "ripe": true },
     { "type": "cutting_board", "x": 5, "y": 2 },
     { "type": "griddle_manual", "x": 8, "y": 2 },
+    { "type": "wheat_field", "x": 14, "y": 1, "ripe": true },
+    { "type": "hand_mill", "x": 12, "y": 2 },
+    { "type": "dough_table", "x": 14, "y": 4 },
+    { "type": "hearth", "x": 14, "y": 6 },
     { "type": "assembly_table", "x": 11, "y": 5 },
     { "type": "counter", "x": 7, "y": 12 }
   ]

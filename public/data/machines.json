@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "machines": {
     "crate": {
       "name": "재료 상자",
@@ -103,7 +103,7 @@
       "sprite": "supply",
       "seconds": 2,
       "outputCap": 4,
-      "supplies": ["raw_meat", "flour", "lettuce"],
+      "supplies": ["raw_meat"],
       "cost": {
         "iron_plate": 3,
         "gear": 1
@@ -206,6 +206,66 @@
       "seconds": 0.5,
       "cost": {
         "iron_plate": 4,
+        "gear": 2
+      }
+    },
+    "wheat_field": {
+      "name": "밀밭",
+      "kind": "farm",
+      "size": [2, 2],
+      "sprite": "fieldWheat",
+      "crop": "wheat",
+      "growSeconds": 15,
+      "yield": 4,
+      "harvestSeconds": 0.8,
+      "cost": {
+        "iron_plate": 2
+      }
+    },
+    "lettuce_field": {
+      "name": "채소밭",
+      "kind": "farm",
+      "size": [2, 2],
+      "sprite": "fieldLettuce",
+      "crop": "lettuce",
+      "growSeconds": 12,
+      "yield": 3,
+      "harvestSeconds": 0.8,
+      "cost": {
+        "iron_plate": 2
+      }
+    },
+    "hand_mill": {
+      "name": "맷돌",
+      "kind": "crafter",
+      "size": [1, 1],
+      "sprite": "handMill",
+      "speed": 0.6
+    },
+    "dough_table": {
+      "name": "반죽대",
+      "kind": "crafter",
+      "size": [1, 1],
+      "sprite": "doughTable",
+      "speed": 0.6
+    },
+    "hearth": {
+      "name": "화덕",
+      "kind": "crafter",
+      "size": [1, 1],
+      "sprite": "hearth",
+      "speed": 0.6
+    },
+    "mill": {
+      "name": "제분기",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "mill",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "cost": {
+        "iron_plate": 3,
         "gear": 2
       }
     }

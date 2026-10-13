@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "recipes": [
     {
       "id": "chop_meat",
@@ -38,9 +38,21 @@
       "seconds": 4
     },
     {
+      "id": "mill_wheat",
+      "verb": "빻기",
+      "stations": ["hand_mill", "mill"],
+      "inputs": {
+        "wheat": 1
+      },
+      "outputs": {
+        "flour": 1
+      },
+      "seconds": 2
+    },
+    {
       "id": "mix_dough",
       "verb": "반죽",
-      "stations": ["mixer"],
+      "stations": ["dough_table", "mixer"],
       "inputs": {
         "flour": 2
       },
@@ -52,7 +64,7 @@
     {
       "id": "bake_bun",
       "verb": "굽기",
-      "stations": ["oven"],
+      "stations": ["hearth", "oven"],
       "inputs": {
         "dough": 1
       },

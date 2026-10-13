@@ -7,6 +7,7 @@ import * as machines from '../sprites/machines.js';
 import * as ui from '../sprites/ui.js';
 import * as storage from '../sprites/storage.js';
 import * as customers from '../sprites/customers.js';
+import * as farm from '../sprites/farm.js';
 
 /** 이름 → 프레임 배열. 단일 그림도 프레임 1개짜리로 통일. */
 export const SPRITE_DEFS = {
@@ -22,6 +23,13 @@ export const SPRITE_DEFS = {
   hopper: [storage.HOPPER],
   silo: [storage.SILO],
   gate: [storage.GATE],
+  fieldWheat: farm.FIELD_WHEAT,
+  fieldLettuce: farm.FIELD_LETTUCE,
+  handMill: [farm.HAND_MILL],
+  doughTable: [farm.DOUGH_TABLE],
+  hearth: farm.HEARTH,
+  mill: farm.MILL,
+  wheat: [farm.WHEAT],
   customer: customers.CUSTOMER,
   ...Object.fromEntries(Object.entries(customers.DIGITS).map(([k, rows]) => [`digit${k}`, [rows]])),
   playerDown: characters.PLAYER_DOWN,

@@ -1,7 +1,7 @@
 // data/*.json 로딩과 검증. 데이터 파일도 신뢰하지 않고 형태와 상호 참조를 확인한다.
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate']);
+const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate', 'farm']);
 const FEATURES = new Set(['orders', 'market']);
 const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger']);
 const ITEM_CATEGORIES = new Set(['food', 'part']);
@@ -73,6 +73,10 @@ export function validateMachines(data, items) {
       assert(isInt(m.capacity, 1, 100000) && typeof m.singleItem === 'boolean', `기계 ${id}: 저장소 capacity/singleItem 오류`);
     }
     if (m.kind === 'gate') assert(isNum(m.seconds, 0.05, 60), `기계 ${id}: 게이트 seconds 오류`);
+    if (m.kind === 'farm') {
+      assert(Object.hasOwn(items, m.crop), `기계 ${id}: 없는 작물 ${short(m.crop)}`);
+      assert(isNum(m.growSeconds, 0.5, 3600) && isInt(m.yield, 1, 99) && isNum(m.harvestSeconds, 0.05, 60), `기계 ${id}: 밭 수치 오류`);
+    }
     if (CONVEYOR_KINDS.has(m.kind)) {
       assert(isNum(m.speed, 0.1, 20), `기계 ${id}: 벨트 speed 오류`);
       assert(m.size[0] === 1 && m.size[1] === 1, `기계 ${id}: 벨트류는 1×1`);
@@ -156,6 +160,7 @@ export function validateGameConfig(g, items, machines) {
     assert(machines && Object.hasOwn(machines, s.type), `알 수 없는 기계 종류: ${short(s.type)}`);
     const [sw, sh] = machines[s.type].size;
     assert(isInt(s.x, 0, w - sw) && isInt(s.y, 0, h - sh), `기계 위치 오류: ${short(s.type)} ${short(s.x)},${short(s.y)}`);
+    assert(s.ripe === undefined || typeof s.ripe === 'boolean', `기계 ${short(s.type)}: ripe 오류`);
     if (machines[s.type].kind === 'source') {
       assert(Object.hasOwn(items, s.item), `재료 상자 품목 오류: ${short(s.item)}`);
     }

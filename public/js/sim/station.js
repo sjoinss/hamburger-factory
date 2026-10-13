@@ -32,6 +32,10 @@ export function createStation(id, def, machine) {
     station.idle = 0; // 비어 있는 정도 (부드럽게 0~1)
   }
   if (machine.kind === 'machine' || machine.kind === 'supply' || machine.kind === 'inserter' || machine.kind === 'gate') station.hist = '';
+  if (machine.kind === 'farm') {
+    // 자라는 중인 시간. 다 자라면 output 에 수확물이 생기고, 다 거둬야 다시 자란다.
+    station.growth = def.ripe ? machine.growSeconds : 0;
+  }
   if (machine.kind === 'storage') {
     station.stock = {}; // { item: 수량 }
     station.filter = null; // 받을 품목 제한
@@ -175,6 +179,30 @@ export function updateMachine(rules, station, dt) {
     for (let i = 0; i < n; i++) station.output.push(id);
   }
   return recipe;
+}
+
+// ── 밭 ──
+
+/** 다 거둔 밭만 자란다. @returns 이번 틱에 다 자랐으면 true */
+export function updateFarm(rules, station, dt) {
+  const machine = machineOf(rules, station);
+  if (station.output.length > 0) {
+    station.status = 'ready';
+    return false;
+  }
+  station.status = 'growing';
+  station.growth += dt;
+  if (station.growth + 1e-9 < machine.growSeconds) return false;
+  station.growth = 0;
+  for (let i = 0; i < machine.yield; i++) station.output.push(machine.crop);
+  station.status = 'ready';
+  return true;
+}
+
+/** 0~1 자란 정도 (다 자라 수확을 기다리면 1) */
+export function farmGrowth(rules, station) {
+  if (station.output.length > 0) return 1;
+  return Math.min(1, station.growth / machineOf(rules, station).growSeconds);
 }
 
 // ── 입고구 ──

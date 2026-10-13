@@ -1,7 +1,7 @@
 {
-  "version": 5,
+  "version": 6,
   "start": {
-    "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "assemble_burger"],
+    "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "mill_wheat", "mix_dough", "bake_bun", "assemble_burger"],
     "machines": [],
     "parts": {},
     "tutorial": "start",
@@ -57,8 +57,8 @@
         }
       },
       "unlock": {
-        "machines": ["supply", "meat_cutter", "washer", "mixer", "oven", "burger_assembler"],
-        "recipes": ["mix_dough", "bake_bun"]
+        "machines": ["supply", "meat_cutter", "washer", "mixer", "oven", "burger_assembler", "mill", "wheat_field", "lettuce_field"],
+        "recipes": []
       },
       "reward": {
         "parts": {

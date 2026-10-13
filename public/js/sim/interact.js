@@ -2,7 +2,7 @@
 import { getOccupant, isSolid } from './grid.js';
 import { stationAt } from './lookup.js';
 import { canInsertAt, insertSorted, makeBeltItem } from './conveyor.js';
-import { machineOf, canAccept, readyRecipe, missingInputs, advanceWork, workSeconds } from './station.js';
+import { machineOf, canAccept, readyRecipe, missingInputs, advanceWork, workSeconds, farmGrowth } from './station.js';
 import { receiveAtCounter } from './orders.js';
 import { store, takeFromStorage, mostStocked } from './storage.js';
 import { noteTutorial } from './tutorial.js';
@@ -36,7 +36,8 @@ export function findInteraction(world, rules) {
     const machine = machineOf(rules, station);
     const base = { station, machine, tile };
 
-    if (station.output.length > 0 && machine.kind !== 'machine') {
+    // 완성품 꺼내기 (자동 기계와 밭은 아래에서 따로: 밭은 길게 눌러 수확)
+    if (station.output.length > 0 && machine.kind !== 'machine' && machine.kind !== 'farm') {
       return hasSpace(p)
         ? { ...base, action: 'take', item: station.output[0] }
         : { ...base, action: 'blocked', reason: 'full' };
@@ -64,6 +65,17 @@ export function findInteraction(world, rules) {
       if (slot !== -1 && canInsertAt(station.items, 0.5)) return { ...base, action: 'belt-put', slot, item: p.inventory[slot] };
       if (slot !== -1) return { ...base, action: 'blocked', reason: 'belt-busy' };
       return { ...base, action: 'blocked', reason: 'belt-empty' };
+    }
+    if (machine.kind === 'farm') {
+      // 다 자랐으면 E 를 길게 눌러 하나씩 수확
+      if (station.output.length === 0) {
+        return { ...base, action: 'blocked', reason: 'growing', progress: farmGrowth(rules, station) };
+      }
+      if (!hasSpace(p)) return { ...base, action: 'blocked', reason: 'full', item: station.output[0] };
+      return {
+        ...base, action: 'harvest', hold: true, item: station.output[0],
+        left: station.output.length, progress: station.progress / machine.harvestSeconds,
+      };
     }
     if (machine.kind === 'storage') {
       // E: 든 물건 넣기 > 비어 있는 손으로 가장 많은 품목 꺼내기
@@ -172,6 +184,17 @@ function doHold(world, rules, act, dt) {
     if (done) {
       recordRecipe(world, done);
       world.events.push({ type: 'crafted', item: act.station.output[0], x: act.station.x, y: act.station.y });
+    }
+    return true;
+  }
+  if (act.action === 'harvest') {
+    const s = act.station;
+    s.active = true;
+    s.progress += dt;
+    if (s.progress + 1e-9 >= act.machine.harvestSeconds) {
+      s.progress = 0;
+      giveItem(world, s.output.shift());
+      world.events.push({ type: 'harvested', item: act.item, x: s.x, y: s.y });
     }
     return true;
   }

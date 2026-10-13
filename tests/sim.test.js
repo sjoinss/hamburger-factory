@@ -67,6 +67,7 @@ function hold(w, seconds) {
 const secs = (recipeId, station) =>
   rules.recipes.find((r) => r.id === recipeId).seconds / rules.machines[station].speed;
 const CRATE = rules.machines.crate.seconds;
+const HARVEST = rules.machines.wheat_field.harvestSeconds;
 
 test('손으로 햄버거를 만들어 출고구에 넣으면 돈이 오른다', () => {
   const w = createWorld(rules);
@@ -85,8 +86,9 @@ test('손으로 햄버거를 만들어 출고구에 넣으면 돈이 오른다',
   press(w);
   assert.deepEqual(w.player.inventory, ['patty', null]);
 
-  standAt(w, 3, 4, 'left'); // 양상추 상자
-  hold(w, CRATE);
+  standAt(w, 4, 4, 'left'); // 채소밭: 길게 눌러 수확
+  hold(w, HARVEST);
+  assert.deepEqual(w.player.inventory, ['patty', 'lettuce']);
   standAt(w, 5, 3, 'up');
   hold(w, secs('prep_lettuce', 'cutting_board'));
   press(w);
@@ -97,8 +99,25 @@ test('손으로 햄버거를 만들어 출고구에 넣으면 돈이 오른다',
   press(w);
   assert.deepEqual(w.player.inventory, [null, null]);
 
-  standAt(w, 3, 6, 'left'); // 번 상자
-  hold(w, CRATE);
+  // 빵: 밀밭에서 수확 → 맷돌 → 반죽대 → 화덕
+  standAt(w, 13, 1, 'right');
+  hold(w, HARVEST * 2 + dt);
+  assert.deepEqual(w.player.inventory, ['wheat', 'wheat']);
+  standAt(w, 12, 3, 'up'); // 맷돌: 한 개씩 빻는다
+  hold(w, secs('mill_wheat', 'hand_mill'));
+  press(w);
+  hold(w, secs('mill_wheat', 'hand_mill'));
+  press(w);
+  assert.deepEqual(w.player.inventory, ['flour', 'flour']);
+  standAt(w, 13, 4, 'right'); // 반죽대: 두 개 올리고 반죽
+  press(w);
+  hold(w, secs('mix_dough', 'dough_table'));
+  press(w);
+  assert.deepEqual(w.player.inventory, ['dough', null]);
+  standAt(w, 13, 6, 'right'); // 화덕
+  hold(w, secs('bake_bun', 'hearth'));
+  press(w);
+  assert.deepEqual(w.player.inventory, ['bun', null]);
   standAt(w, 12, 6, 'up'); // 조립대 오른쪽 칸에서도 같은 조립대
   hold(w, secs('assemble_burger', 'assembly_table'));
   press(w);
@@ -192,8 +211,8 @@ test('튜토리얼: 처음엔 생고기 상자를 가리키고, 단계를 건너
   assert.equal(target.item, 'raw_meat');
 
   // 순서와 다르게 양상추를 먼저 꺼내도, 고기를 꺼내는 순간 그 단계까지 한꺼번에 넘어간다
-  standAt(w, 3, 4, 'left');
-  hold(w, CRATE);
+  standAt(w, 4, 4, 'left');
+  hold(w, HARVEST);
   assert.equal(w.tutorial.step, 0);
   standAt(w, 3, 2, 'left');
   hold(w, CRATE);
@@ -208,4 +227,28 @@ test('튜토리얼 건너뛰기 / 다시 하기', () => {
   restartTutorial(w);
   assert.equal(w.tutorial.step, 0);
   assert.ok(currentTutorialStep(w, rules));
+});
+
+test('밭: 다 거두면 다시 자라고, 다 자라면 수확물이 생긴다', () => {
+  const w = createWorld(rules);
+  const field = w.stations.find((s) => s.type === 'wheat_field');
+  const m = rules.machines.wheat_field;
+  assert.equal(field.output.length, 0);
+  run(w, {}, 1);
+  assert.equal(field.output.length, m.yield, '처음엔 다 자란 채로 시작');
+  field.output = [];
+  run(w, {}, Math.ceil(m.growSeconds / dt) - 2);
+  assert.equal(field.output.length, 0, '자라는 중');
+  run(w, {}, 3);
+  assert.deepEqual(field.output, new Array(m.yield).fill('wheat'));
+});
+
+test('밭: 손이 비어 있어야 수확, 수확은 길게 눌러야 한다', () => {
+  const w = createWorld(rules);
+  run(w, {}, 1);
+  standAt(w, 13, 1, 'right');
+  press(w);
+  assert.deepEqual(w.player.inventory, [null, null], '한 번 누름으로는 수확 안 됨');
+  hold(w, HARVEST);
+  assert.deepEqual(w.player.inventory, ['wheat', null]);
 });

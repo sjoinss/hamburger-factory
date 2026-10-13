@@ -6,6 +6,7 @@
     "patty"          : { "name": "패티", "sprite": "patty", "price": 3, "category": "food" },
     "bun"            : { "name": "번", "sprite": "bun", "price": 0, "category": "food" },
     "lettuce"        : { "name": "양상추", "sprite": "lettuce", "price": 0, "category": "food" },
+    "wheat"          : { "name": "밀", "sprite": "wheat", "price": 0, "category": "food" },
     "flour"          : { "name": "밀가루", "sprite": "flour", "price": 0, "category": "food" },
     "dough"          : { "name": "반죽", "sprite": "dough", "price": 0, "category": "food" },
     "lettuce_washed" : { "name": "손질 양상추", "sprite": "lettuceWashed", "price": 0, "category": "food" },

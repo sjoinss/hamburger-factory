@@ -1,7 +1,7 @@
 // 시뮬레이션 상태 전체. 직렬화 가능한 순수 데이터로 유지한다.
 import { createRoomGrid, isSolid, setOccupant } from './grid.js';
 import { createPlayer, updatePlayer } from './player.js';
-import { createStation, updateMachine, updateSupply } from './station.js';
+import { createStation, updateMachine, updateSupply, updateFarm } from './station.js';
 import { createStats, recordRecipe, record, sampleHistory } from './stats.js';
 import { updateInteraction } from './interact.js';
 import { createTutorial, updateTutorial, noteTutorial } from './tutorial.js';
@@ -87,6 +87,10 @@ export function stepWorld(world, input, dt, rules) {
   updateConveyors(world, rules, dt);
   for (const st of world.stations) {
     const kind = rules.machines[st.type].kind;
+    if (kind === 'farm') {
+      if (updateFarm(rules, st, dt)) record(world, 'produced', rules.machines[st.type].crop, rules.machines[st.type].yield);
+      continue;
+    }
     if (kind === 'supply') {
       const item = updateSupply(rules, st, dt);
       if (item) record(world, 'produced', item);
