@@ -39,6 +39,21 @@ export function machineStatusText(station, rules, world = null) {
       blocked: '막힘: 앞 칸이 받지 않음',
     }[station.reason] ?? '대기';
   }
+  if (kind === 'reader') {
+    return {
+      'no-gate': '대기: 옆에 출고 게이트가 없음',
+      'no-order': '대기: 들어온 주문 없음',
+      'no-stock': '대기: 재고가 모자라 맡길 주문이 없음',
+      busy: '게이트가 출고 중',
+      assigned: `주문 #${station.last} 을 게이트에 맡김`,
+    }[station.reason] ?? '대기';
+  }
+  if (kind === 'bundler') {
+    const packs = Object.keys(station.packs).length;
+    if (station.status === 'blocked') return '막힘: 앞 칸이 받지 않음';
+    if (packs > 0) return `주문 ${packs}건 모으는 중`;
+    return station.status === 'running' ? '내보내는 중' : '대기: 번호표 붙은 물건 기다림';
+  }
   if (kind === 'storage') return `${storageTotal(station)} / ${rules.machines[station.type].capacity}`;
   if (kind === 'generator') {
     const m = rules.machines[station.type];
@@ -98,6 +113,7 @@ export function describeInteraction(act, rules, touch, world = null) {
       if (act.reason === 'full') return { blocked: true, text: `${where}손이 꽉 찼다. ${dropKey}로 하나 내려놓기` };
       if (act.reason === 'belt-busy') return { blocked: true, text: `${where}벨트 가운데가 차 있다` };
       if (act.reason === 'belt-empty') return { blocked: true, text: '' };
+      if (act.reason === 'bag') return { blocked: true, text: `${where}주문 묶음은 손으로 집지 않는다` };
       if (act.reason === 'storage-empty') return { blocked: true, text: `${where}비어 있다` };
       if (act.reason === 'growing') return { blocked: true, text: `${where}자라는 중 ${pct(act.progress)}` };
       if (act.reason === 'status') return { text: `${where}${machineStatusText(act.station, rules, world)}` };

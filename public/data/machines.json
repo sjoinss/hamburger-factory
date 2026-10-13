@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "machines": {
     "crate": {
       "name": "재료 상자",
@@ -437,6 +437,34 @@
         "iron_plate": 6,
         "wire": 4,
         "motor": 2
+      }
+    },
+    "order_reader": {
+      "name": "주문 인식기",
+      "kind": "reader",
+      "size": [2, 2],
+      "sprite": "orderReader",
+      "seconds": 1,
+      "power": 10,
+      "cost": {
+        "circuit": 2,
+        "sensor": 2,
+        "motor": 1
+      }
+    },
+    "bundler": {
+      "name": "합류 포장기",
+      "kind": "bundler",
+      "size": [1, 1],
+      "sprite": "bundler",
+      "seconds": 1.5,
+      "passSeconds": 0.25,
+      "capacity": 24,
+      "power": 8,
+      "cost": {
+        "iron_plate": 6,
+        "sensor": 1,
+        "motor": 1
       }
     }
   }

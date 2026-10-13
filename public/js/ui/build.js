@@ -1,10 +1,13 @@
 // 건설 모드: 기계 고르기 → 칸 고르기(마우스/방향키/탭) → 설치. 철거 모드도 같은 커서를 쓴다.
+// 청사진: 영역 고르기(끌기, 또는 모서리 두 번 확정) → 이름 → 목록에서 붙여넣기.
 import { checkPlacement, placeMachine, removeMachine, removableAt, missingParts, rotateStation } from '../sim/build.js';
 import { stationAt } from '../sim/lookup.js';
 import { partCount } from '../sim/parts.js';
 import { checkZone, buyZone } from '../sim/zones.js';
 import { inBounds } from '../sim/grid.js';
-import { spriteIcon } from './icons.js';
+import { spriteIcon, itemChip } from './icons.js';
+import { captureBlueprint, checkBlueprint, pasteBlueprint } from '../sim/blueprint.js';
+import { createBlueprints } from './blueprints.js';
 
 const MESSAGE_SECONDS = 2.5;
 
@@ -30,13 +33,18 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
   };
   // 터치: 끌기를 '벨트 깔기'로 쓸지 '화면 이동'으로 쓸지 (끌어서 깔 수 있는 기계일 때만 의미 있음)
   let drawEnabled = true;
+  const drawLabel = () => {
+    if (!drawEnabled) return '끌면 화면 이동';
+    return mode?.kind === 'select' ? '끌어서 고르기' : '끌어서 깔기';
+  };
   bar.draw.addEventListener('click', () => {
     drawEnabled = !drawEnabled;
     bar.draw.setAttribute('aria-pressed', String(drawEnabled));
-    bar.draw.textContent = drawEnabled ? '끌어서 깔기' : '끌면 화면 이동';
+    bar.draw.textContent = drawLabel();
   });
 
-  let mode = null; // { kind: 'place', type, rot } | { kind: 'remove' }
+  // { kind: 'place', type, rot } | { kind: 'remove' } | { kind: 'select', a } | { kind: 'paste', bp }
+  let mode = null;
   const cursor = { x: 0, y: 0 };
   let message = '';
   let messageTimer = 0;
@@ -52,13 +60,29 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     app.classList.toggle('is-building', mode !== null);
     removeBtn.setAttribute('aria-pressed', String(mode?.kind === 'remove'));
     bar.rotate.hidden = mode?.kind !== 'place';
-    bar.draw.hidden = !(mode?.kind === 'place' && rules.machines[mode.type].dragPlace);
-    bar.confirm.textContent = mode?.kind === 'remove' ? '철거' : '설치';
+    bar.draw.hidden = !((mode?.kind === 'place' && rules.machines[mode.type].dragPlace) || mode?.kind === 'select');
+    bar.draw.textContent = drawLabel();
+    updateConfirmLabel();
     onModeChange?.(mode);
+  }
+
+  function updateConfirmLabel() {
+    const labels = { remove: '철거', paste: '붙여넣기', select: mode?.a ? '여기까지 저장' : '시작점' };
+    bar.confirm.textContent = labels[mode?.kind] ?? '설치';
   }
 
   function preview() {
     if (!mode) return null;
+    if (mode.kind === 'select') {
+      const a = mode.a ?? cursor;
+      const x = Math.min(a.x, cursor.x);
+      const y = Math.min(a.y, cursor.y);
+      return { kind: 'select', x, y, w: Math.abs(a.x - cursor.x) + 1, h: Math.abs(a.y - cursor.y) + 1, ok: true };
+    }
+    if (mode.kind === 'paste') {
+      const check = checkBlueprint(world, rules, mode.bp, cursor.x, cursor.y);
+      return { kind: 'paste', bp: mode.bp, x: cursor.x, y: cursor.y, w: mode.bp.w, h: mode.bp.h, ...check, badSet: new Set(check.bad) };
+    }
     if (mode.kind === 'place') {
       const check = checkPlacement(world, rules, mode.type, cursor.x, cursor.y, mode.rot);
       return { kind: 'place', type: mode.type, rot: mode.rot, x: cursor.x, y: cursor.y, ...check };
@@ -68,8 +92,36 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     return { kind: 'remove', x: cursor.x, y: cursor.y, w: 1, h: 1, ok: false };
   }
 
+  /** 고른 두 모서리 안의 지은 기계로 청사진을 만들고 이름을 묻는다 */
+  function finishSelect(a, b) {
+    const bp = captureBlueprint(world, rules, a.x, a.y, b.x, b.y);
+    if (!bp) {
+      flash('고른 영역에 통째로 들어온 지은 기계가 없다');
+      mode.a = null;
+      updateConfirmLabel();
+      return;
+    }
+    setMode(null);
+    blueprints.askName(bp);
+  }
+
   function confirm() {
     if (!mode) return;
+    if (mode.kind === 'select') {
+      if (!mode.a) {
+        mode.a = { ...cursor };
+        updateConfirmLabel();
+      } else finishSelect(mode.a, cursor);
+      return;
+    }
+    if (mode.kind === 'paste') {
+      const res = pasteBlueprint(world, rules, mode.bp, cursor.x, cursor.y);
+      if (res.ok) {
+        flash(`청사진 '${mode.bp.name}': 기계 ${mode.bp.entries.length}개 설치`);
+        renderPanel();
+      } else flash(pasteFailText(res));
+      return;
+    }
     if (mode.kind === 'place') {
       const res = placeMachine(world, rules, mode.type, cursor.x, cursor.y, mode.rot);
       if (!res.ok) flash(placeFailText(res));
@@ -87,6 +139,12 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     }
   }
 
+  function pasteFailText(check) {
+    if (check.reason === 'parts') return placeFailText(check);
+    if (check.reason === 'locked') return '아직 잠긴 기계가 들어 있다';
+    return `놓을 수 없는 자리 (${check.bad.length}개 겹침)`;
+  }
+
   function placeFailText(check) {
     if (check.reason === 'parts') {
       return `부품 부족: ${Object.entries(check.missing).map(([id, n]) => `${partName(id)} -${n}`).join(', ')}`;
@@ -95,21 +153,14 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
   }
 
   // ── 건설 패널 ──
-  function chip(id, text) {
-    const span = document.createElement('span');
-    span.className = 'chip';
-    span.append(spriteIcon(bank, rules.items[id].sprite));
-    const label = document.createElement('span');
-    label.textContent = text;
-    span.append(label);
-    return span;
-  }
+  const chip = (id, text) => itemChip(bank, rules, id, text);
 
   function renderPanel() {
     const partIds = Object.keys(rules.items).filter((id) => rules.items[id].category === 'part');
     // 받은 부품 + 호퍼·사일로에 쌓인 부품 (건설에 바로 쓰인다)
     partsList.replaceChildren(...partIds.map((id) => chip(id, `${partName(id)} ${partCount(world, rules, id)}`)));
     renderZones();
+    blueprints.render();
 
     buildList.replaceChildren();
     for (const type of world.unlocked.machines) {
@@ -191,6 +242,17 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     setMode({ kind: 'remove' });
   }
   const cancel = () => setMode(null);
+  function startSelect() {
+    panels.close();
+    Object.assign(cursor, startCursor());
+    setMode({ kind: 'select', a: null });
+  }
+  function startPaste(bp) {
+    panels.close();
+    Object.assign(cursor, startCursor());
+    setMode({ kind: 'paste', bp });
+  }
+  const blueprints = createBlueprints({ world, rules, bank, onPaste: startPaste, onCapture: startSelect, flash });
 
   removeBtn.addEventListener('click', () => (mode?.kind === 'remove' ? cancel() : startRemove()));
   bar.rotate.addEventListener('click', () => rotate());
@@ -209,15 +271,23 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
   }
 
   let drag = null; // { x, y, id } 마지막으로 끌어서 놓은 칸
+  let selecting = false; // 청사진 영역을 끄는 중
 
   return {
     active: () => mode !== null,
     /** 터치 한 손가락 끌기를 벨트 깔기로 쓸지 */
-    touchDraws: () => drawEnabled && mode?.kind === 'place' && Boolean(rules.machines[mode.type].dragPlace),
+    touchDraws: () => drawEnabled && ((mode?.kind === 'place' && Boolean(rules.machines[mode.type].dragPlace)) || mode?.kind === 'select'),
     /** 마우스를 누른 칸: 설치(또는 철거)하고, 끌기 시작 */
     pressAt(x, y) {
       this.setCursor(x, y);
       drag = null;
+      if (mode?.kind === 'select') {
+        // 누른 칸이 시작점, 끌고 떼면 그 칸까지 (끌지 않고 떼면 시작점만 정해 둔다)
+        mode.a = { ...cursor };
+        selecting = true;
+        updateConfirmLabel();
+        return;
+      }
       const before = world.stations.length;
       confirm();
       if (mode?.kind === 'place' && world.stations.length > before) {
@@ -226,6 +296,10 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     },
     /** 누른 채 다른 칸으로: 끌어서 깔 수 있는 기계만 이어서 설치 */
     dragTo(x, y) {
+      if (mode?.kind === 'select') {
+        if (selecting) this.setCursor(x, y);
+        return;
+      }
       if (!drag || mode?.kind !== 'place' || !rules.machines[mode.type].dragPlace) return;
       // 마우스가 빨라 칸을 건너뛰면 한 칸씩 채워 간다 (대각선은 ㄱ자로)
       let guard = 64;
@@ -249,7 +323,14 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
       drag = { x, y, id: res.station.id };
       renderPanel();
     },
-    endDrag() { drag = null; },
+    endDrag() {
+      drag = null;
+      if (!selecting) return;
+      selecting = false;
+      if (mode?.kind === 'select' && mode.a && (mode.a.x !== cursor.x || mode.a.y !== cursor.y)) finishSelect(mode.a, cursor);
+    },
+    /** 이름 묻는 창이 열려 있는가 (그동안 게임 단축키 무시) */
+    naming: () => !document.getElementById('bp-name-box').hidden,
     renderPanel,
     preview,
     /** 처음 커서 위치를 정하는 함수 (보통 플레이어가 바라보는 칸) */
@@ -273,6 +354,14 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
       if (messageTimer > 0) return { text: message, blocked: true };
       const p = preview();
       if (!p) return null;
+      if (p.kind === 'select') {
+        if (!mode.a) return { text: touch ? '청사진: 영역을 끌거나, 모서리를 탭하고 시작점' : '청사진: 영역을 끌어서 고르기 (또는 Enter 로 두 모서리)' };
+        return { text: `청사진: ${p.w}×${p.h} 영역 · ${touch ? '여기까지 저장' : '끌기를 놓거나 Enter'}` };
+      }
+      if (p.kind === 'paste') {
+        if (!p.ok) return { text: `${p.bp.name}: ${pasteFailText(p)}`, blocked: true };
+        return { text: `${p.bp.name}: ${touch ? '칸을 탭하고 붙여넣기' : '클릭/Enter 로 붙여넣기 · Esc 끝'}` };
+      }
       if (p.kind === 'remove') {
         if (p.ok) return { text: `${rules.machines[p.station.type].name} 철거: ${touch ? '철거 버튼' : '클릭/Enter'} (부품 돌려받음)` };
         return { text: `철거할 기계 고르기 · ${touch ? '취소 버튼' : 'Esc'}로 끝내기`, blocked: true };

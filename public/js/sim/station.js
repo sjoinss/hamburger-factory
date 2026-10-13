@@ -46,9 +46,21 @@ export function createStation(id, def, machine) {
   }
   if (machine.kind === 'gate') {
     // gate.js createGateMode() 와 같은 모양 (순환 import 를 피하려고 여기서 직접 만든다)
-    station.mode = { kind: 'manual', item: null, count: 1, repeat: false, sent: 0, orderId: null, orderSent: {} };
+    station.mode = { kind: 'manual', item: null, count: 1, repeat: false, sent: 0, orderId: null, orderSent: {}, auto: false };
     station.t = 0;
     station.reason = 'unset';
+  }
+  if (machine.kind === 'reader') {
+    station.t = 0;
+    station.hist = '';
+    station.reason = 'no-gate';
+    station.last = null; // 마지막으로 게이트에 맡긴 주문 번호
+  }
+  if (machine.kind === 'bundler') {
+    station.packs = {}; // { 주문 번호: { item: 수량 } } 모으는 중
+    station.out = []; // 내보낼 물건 [{ item, tag, bag }]
+    station.t = 0;
+    station.hist = '';
   }
   if (machine.kind === 'splitter' || machine.kind === 'merger') {
     station.buffer = null; // 지나가는 물건 하나
@@ -95,6 +107,7 @@ export function canAccept(rules, station, item, world = null) {
       world.orders.list.some((o) => o.state === 'open' && (o.items[item] ?? 0) > (o.delivered[item] ?? 0));
   }
   if (machine.kind === 'storage') return canStore(rules, station, item);
+  if (machine.kind === 'bundler') return false; // 번호표가 붙은 물건만 받는다 (벨트·게이트에서)
   if (machine.kind === 'generator') return item === machine.fuel && station.contents.length < machine.fuelCap;
   if (machine.kind === 'machine') {
     // 입력 버퍼: 레시피 입력의 inputBatches 배까지 쌓아 둘 수 있다.

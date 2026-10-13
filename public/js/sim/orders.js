@@ -47,24 +47,35 @@ function spawnOrder(world, rules) {
     leaveAt: null,
     // 손님 생김새 (렌더용 색 번호)
     look: { hair: randomInt(world, 4), shirt: randomInt(world, 5), seed: Math.floor(random(world) * 1e6) },
+    auto: false, // 주문 인식기가 맡겼는가
   };
   world.orders.list.push(order);
   world.events.push({ type: 'orderNew', orderId: order.id });
 }
 
-function finish(world, rules, order, done) {
+/** bundled: 합류 포장기가 한 묶음으로 납품 (보상에 묶음 보너스) */
+function finish(world, rules, order, done, bundled = false) {
   const kind = rules.orders.kinds[order.kind];
   order.state = done ? 'done' : 'failed';
   order.leaveAt = world.time + rules.orders.leaveSeconds;
   world.reputation += done ? kind.repDone : kind.repFail;
+  const reward = done ? Math.round(order.reward * (bundled ? rules.orders.bundleBonus : 1)) : 0;
   if (done) {
-    world.money += order.reward;
-    world.stats.earned += order.reward;
-    recordEarned(world, order.reward);
+    world.money += reward;
+    world.stats.earned += reward;
+    recordEarned(world, reward);
     noteTutorial(world, 'order', 'any');
     noteTutorial(world, 'order', order.kind);
+    if (order.auto) noteTutorial(world, 'order', 'auto');
+    if (bundled) noteTutorial(world, 'order', 'bundle');
   }
-  world.events.push({ type: done ? 'orderDone' : 'orderFailed', orderId: order.id, reward: done ? order.reward : 0 });
+  world.events.push({ type: done ? 'orderDone' : 'orderFailed', orderId: order.id, reward, bundled });
+}
+
+/** 손님이 오는 간격: 평판이 오를수록 짧아진다 (주문을 잘 처리하면 장사가 잘된다) */
+export function spawnInterval(world, rules) {
+  const cfg = rules.orders;
+  return Math.max(cfg.minSpawnSeconds, cfg.spawnSeconds - Math.max(0, world.reputation) * cfg.repSpawnStep);
 }
 
 export function updateOrders(world, rules, dt) {
@@ -75,7 +86,7 @@ export function updateOrders(world, rules, dt) {
   o.timer -= dt;
   if (o.timer <= 0) {
     if (openOrders(world).length < cfg.maxOpen) spawnOrder(world, rules);
-    o.timer = cfg.spawnSeconds;
+    o.timer = spawnInterval(world, rules);
   }
   for (const order of openOrders(world)) {
     if (order.deadline !== null && world.time >= order.deadline) finish(world, rules, order, false);
@@ -85,14 +96,41 @@ export function updateOrders(world, rules, dt) {
 
 /** 출고구가 받을 수 있는가: 시세가 있는 물건이거나 주문이 기다리는 물건 */
 export function counterAccepts(world, rules, item) {
-  return rules.items[item].price > 0 || anyOrderNeeds(world, item);
+  return rules.items[item].price > 0 || rules.items[item].category === 'bundle' || anyOrderNeeds(world, item);
+}
+
+/** 주문 묶음: 그 주문을 한 번에 채운다. 그 사이 주문이 끝났으면 안에 든 물건을 시세로 판다. */
+function receiveBag(world, rules, station, tag, bag) {
+  const order = tag === null ? null : orderById(world, tag);
+  const left = { ...(bag ?? {}) };
+  if (order && order.state === 'open') {
+    for (const [id, n] of Object.entries(order.items)) {
+      const add = orderNeeds(order, id);
+      if (add === 0) continue;
+      order.delivered[id] = n;
+      left[id] = Math.max(0, (left[id] ?? 0) - add);
+      world.stats.sold[id] = (world.stats.sold[id] ?? 0) + add;
+      record(world, 'sold', id, add);
+    }
+    world.events.push({ type: 'delivered', orderId: order.id, item: 'order_bag' });
+    finish(world, rules, order, true, true);
+  }
+  // 남는 물건 (주문이 이미 끝났거나 다른 길로 먼저 채워진 몫)은 시세로
+  for (const [id, n] of Object.entries(left)) {
+    if (!Object.hasOwn(rules.items, id)) continue;
+    for (let i = 0; i < n; i++) sellItem(world, rules, id, station, marketPrice(world, rules, id));
+  }
 }
 
 /**
  * 출고구에 물건 하나가 들어왔다.
  * tag(주문 번호)가 붙어 있으면 그 주문 먼저, 아니면 가장 오래된 주문, 그래도 없으면 시세로 판매.
  */
-export function receiveAtCounter(world, rules, item, station, tag = null) {
+export function receiveAtCounter(world, rules, item, station, tag = null, bag = null) {
+  if (rules.items[item].category === 'bundle') {
+    receiveBag(world, rules, station, tag, bag);
+    return;
+  }
   let order = null;
   if (world.features.includes('orders')) {
     const open = openOrders(world);

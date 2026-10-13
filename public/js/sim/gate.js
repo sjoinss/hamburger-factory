@@ -6,9 +6,11 @@ import { canAccept, machineOf } from './station.js';
 import { canInsertAt, insertSorted, makeBeltItem } from './conveyor.js';
 import { counterAccepts, receiveAtCounter, orderById } from './orders.js';
 import { noteTutorial } from './tutorial.js';
+import { bundlerAccepts, bundlerReceive } from './bundler.js';
 
 export function createGateMode() {
-  return { kind: 'manual', item: null, count: 1, repeat: false, sent: 0, orderId: null, orderSent: {} };
+  // auto: 주문 인식기가 맡긴 주문
+  return { kind: 'manual', item: null, count: 1, repeat: false, sent: 0, orderId: null, orderSent: {}, auto: false };
 }
 
 /** 내보내는 칸: 첫 칸의 앞 */
@@ -56,6 +58,9 @@ function outputFor(world, rules, gate, item, tag) {
       store(st, item);
       noteTutorial(world, 'fed', st.type);
     };
+  }
+  if (kind === 'bundler') {
+    return bundlerAccepts(world, rules, st, item, tag) ? () => bundlerReceive(world, rules, st, item, tag) : null;
   }
   if ((kind === 'machine' || kind === 'crafter') && canAccept(rules, st, item)) return () => st.contents.push(item);
   return null;

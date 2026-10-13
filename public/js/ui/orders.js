@@ -1,5 +1,5 @@
 // 주문서 보드: 최대 6건. 품목마다 필요/호퍼 보유/부족을 글로, 남은 시간, 보상, 게이트에 맡기기.
-import { openOrders, orderNeeds } from '../sim/orders.js';
+import { openOrders, orderNeeds, spawnInterval } from '../sim/orders.js';
 import { stockedTotal } from '../sim/storage.js';
 import { marketPrice } from '../sim/market.js';
 import { setGateOrder } from '../sim/gate.js';
@@ -9,6 +9,7 @@ export function createOrderBoard({ world, rules, bank, onAssigned }) {
   const list = document.getElementById('order-list');
   const empty = document.getElementById('order-empty');
   const headline = document.getElementById('market-headline');
+  const rate = document.getElementById('order-rate');
   let lastRender = -Infinity;
 
   const gates = () => world.stations.filter((s) => rules.machines[s.type].kind === 'gate');
@@ -66,7 +67,7 @@ export function createOrderBoard({ world, rules, bank, onAssigned }) {
     const btn = document.createElement('button');
     btn.type = 'button';
     if (assigned) {
-      btn.textContent = '게이트가 출고 중';
+      btn.textContent = assigned.mode.auto ? '인식기가 맡김: 출고 중' : '게이트가 출고 중';
       btn.disabled = true;
     } else if (gates().length === 0) {
       btn.textContent = '출고 게이트 없음';
@@ -92,6 +93,8 @@ export function createOrderBoard({ world, rules, bank, onAssigned }) {
         ? '손님을 기다리는 중. 만든 물건은 출고구에서 주문을 먼저 채우고, 남으면 시세로 팔린다.'
         : '아직 주문이 없다. 만든 물건은 출고구에서 팔린다. (햄버거 15개를 팔면 주문서가 열린다)';
       list.replaceChildren(...open.map(row));
+      rate.hidden = !enabled;
+      rate.textContent = `평판 ${world.reputation} · 손님이 ${Math.round(spawnInterval(world, rules))}초마다 온다`;
 
       const mk = world.market;
       if (world.features.includes('market') && mk.headline) {

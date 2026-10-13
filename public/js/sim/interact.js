@@ -58,13 +58,15 @@ export function findInteraction(world, rules) {
     }
     if (machine.kind === 'belt') {
       // E: 비어 있는 손이 있으면 맨 앞 물건 집기, 아니면 든 물건 올리기 (Q 로도 올릴 수 있다)
-      if (station.items.length > 0 && hasSpace(p)) {
+      // 주문 묶음은 손으로 집지 않는다 (번호표가 떨어지면 주문을 못 채운다)
+      const bagFirst = station.items.length > 0 && rules.items[station.items[0].item].category === 'bundle';
+      if (station.items.length > 0 && hasSpace(p) && !bagFirst) {
         return { ...base, action: 'belt-take', item: station.items[0].item, count: station.items.length };
       }
       const slot = p.inventory.findIndex((it) => it !== null);
       if (slot !== -1 && canInsertAt(station.items, 0.5)) return { ...base, action: 'belt-put', slot, item: p.inventory[slot] };
       if (slot !== -1) return { ...base, action: 'blocked', reason: 'belt-busy' };
-      return { ...base, action: 'blocked', reason: 'belt-empty' };
+      return { ...base, action: 'blocked', reason: bagFirst ? 'bag' : 'belt-empty' };
     }
     if (machine.kind === 'farm') {
       // 다 자랐으면 E 를 길게 눌러 하나씩 수확
@@ -90,7 +92,8 @@ export function findInteraction(world, rules) {
       if (top && hasSpace(p)) return { ...base, action: 'unstore', item: top };
       return { ...base, action: 'blocked', reason: top ? 'full' : 'storage-empty' };
     }
-    if (machine.kind === 'splitter' || machine.kind === 'merger' || machine.kind === 'inserter' || machine.kind === 'gate') {
+    if (machine.kind === 'splitter' || machine.kind === 'merger' || machine.kind === 'inserter' || machine.kind === 'gate' ||
+      machine.kind === 'reader' || machine.kind === 'bundler') {
       return { ...base, action: 'blocked', reason: 'status' };
     }
     if (machine.kind === 'machine' || machine.kind === 'supply') {

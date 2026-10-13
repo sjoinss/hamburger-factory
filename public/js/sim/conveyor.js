@@ -4,9 +4,10 @@ import { stationAt, DIRS } from './lookup.js';
 import { canStore, store } from './storage.js';
 import { counterAccepts, receiveAtCounter } from './orders.js';
 import { noteTutorial } from './tutorial.js';
+import { bundlerAccepts, bundlerReceive } from './bundler.js';
 
 /** 벨트가 끝에서 바로 넣을 수 있는 기계 (투입기 없이) */
-const SINK_KINDS = new Set(['storage', 'counter', 'generator']);
+const SINK_KINDS = new Set(['storage', 'counter', 'generator', 'bundler']);
 
 /** 물건 사이 최소 간격 (칸 단위). 1/3 보다 살짝 커서 한 칸에 최대 3개 */
 export const SPACING = 0.34;
@@ -44,7 +45,7 @@ export function beltPoint(node, pos) {
 
 export function makeBeltItem(node, item, pos, from = null) {
   const p = beltPoint(node, pos);
-  return { item, pos, x: p.x, y: p.y, px: from?.x ?? p.x, py: from?.y ?? p.y };
+  return { item, pos, x: p.x, y: p.y, px: from?.x ?? p.x, py: from?.y ?? p.y, tag: null, bag: null };
 }
 
 function neighbor(world, rules, node, dir) {
@@ -123,8 +124,13 @@ function deliverToSink(world, rules, st, it) {
     noteTutorial(world, 'fed', st.type);
     return true;
   }
+  if (kindOf(rules, st) === 'bundler') {
+    if (!bundlerAccepts(world, rules, st, it.item, it.tag ?? null)) return false;
+    bundlerReceive(world, rules, st, it.item, it.tag ?? null, it.bag ?? null);
+    return true;
+  }
   if (!counterAccepts(world, rules, it.item)) return false;
-  receiveAtCounter(world, rules, it.item, st, it.tag ?? null);
+  receiveAtCounter(world, rules, it.item, st, it.tag ?? null, it.bag ?? null);
   return true;
 }
 

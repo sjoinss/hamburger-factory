@@ -18,6 +18,9 @@ import { createStatsPanel } from './ui/stats.js';
 import { createOrderBoard } from './ui/orders.js';
 import { stationAt } from './sim/lookup.js';
 import { createWalker } from './ui/walk.js';
+import { createSound } from './audio/sound.js';
+import { createSettings, readSavedGame } from './ui/settings.js';
+import { replaceWorld } from './sim/save.js';
 
 const FONT_FAMILY = '"Galmuri11", ui-monospace, monospace';
 
@@ -102,6 +105,10 @@ async function boot() {
   drawLogo(bank);
 
   const world = createWorld(rules);
+  // 저장된 공장이 있으면 이어서 (망가졌으면 새로 시작하고 알려 준다)
+  const saved = readSavedGame(rules);
+  if (saved.world) replaceWorld(world, saved.world);
+  const sound = createSound();
   const camera = createCamera(config.camera);
   // 개발용: 주소 끝에 #debug 를 붙이면 콘솔에서 상태를 볼 수 있다.
   const effects = createEffects(ts, FONT_FAMILY);
@@ -171,6 +178,27 @@ async function boot() {
     }
   }
   const tutorialCard = createTutorialCard({ rules, world, onRestart: () => panels.close() });
+
+  // 불러오기 / 새로 시작: 화면 모듈들이 같은 world 객체를 붙잡고 있으므로 내용만 바꾼다
+  const settings = createSettings({
+    world,
+    rules,
+    sound,
+    banner: (text, s) => hud.banner(text, s),
+    onReplace: (next) => {
+      replaceWorld(world, next ?? createWorld(rules));
+      build.cancel();
+      walker.cancel();
+      inspector.select(null);
+      panels.close();
+      camera.follow = true;
+    },
+  });
+  if (saved.error) hud.banner(saved.error, 4);
+  else if (saved.world) {
+    hud.banner(saved.dropped ? `이어서 하기 (자리가 맞지 않는 기계 ${saved.dropped}개는 뺐다)` : '이어서 하기', 2);
+  }
+  if (flags.has('debug')) Object.assign(window.__game, { sound, settings });
 
   const coarse = window.matchMedia('(pointer: coarse)').matches || flags.has('touch');
   const enterTouchMode = () => {
@@ -318,10 +346,11 @@ async function boot() {
 
     for (const ev of world.events) {
       effects.push(ev);
+      sound.event(ev);
       if (ev.type === 'sold') hud.flashMoney();
       if (ev.type === 'orderDone') {
         hud.flashMoney();
-        hud.banner(`주문 완료 +${ev.reward}`, 2);
+        hud.banner(ev.bundled ? `묶음 주문 완료 +${ev.reward} (보너스)` : `주문 완료 +${ev.reward}`, 2);
       }
       if (ev.type === 'zoneBought') {
         const z = rules.zones.zones.find((x) => x.id === ev.zone);
@@ -339,6 +368,7 @@ async function boot() {
       }
     }
     world.events.length = 0;
+    sound.update(world, rules, state.speed > 0);
     effects.update(realDt);
     tutorialCard.update(realDt);
     build.update(realDt);

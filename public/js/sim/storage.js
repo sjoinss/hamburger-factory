@@ -10,6 +10,7 @@ const lockedItem = (st) => Object.keys(st.stock).find((id) => st.stock[id] > 0) 
 
 export function canStore(rules, st, item) {
   const m = rules.machines[st.type];
+  if (rules.items[item].category === 'bundle') return false; // 주문 묶음은 출고구로만
   if (storageTotal(st) >= storageCapacity(rules, st)) return false;
   if (st.filter && st.filter !== item) return false;
   if (m.singleItem) {

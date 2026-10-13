@@ -36,7 +36,14 @@ export function buyZone(world, rules, id) {
   const z = check.zone;
   world.money -= z.cost.money;
   spendParts(world, rules, z.cost.parts);
-  world.zonesBought.push(z.id);
+  openZone(world, rules, z);
+  world.events.push({ type: 'zoneBought', zone: z.id });
+  return check;
+}
+
+/** 구역 바닥을 열고 사이 벽을 튼다 (매입, 저장 불러오기) */
+export function openZone(world, rules, z) {
+  if (!world.zonesBought.includes(z.id)) world.zonesBought.push(z.id);
   const roomBottom = rules.game.map.roomHeight + rules.game.map.wallThickness;
   for (let y = 1; y < roomBottom; y++) {
     for (let x = z.x; x < z.x + z.w; x++) setTile(world.grid, x, y, TILE.FLOOR);
@@ -44,6 +51,4 @@ export function buyZone(world, rules, id) {
     if (getTile(world.grid, z.x - 1, y) === TILE.WALL) setTile(world.grid, z.x - 1, y, TILE.FLOOR);
   }
   world.stationsVersion += 1;
-  world.events.push({ type: 'zoneBought', zone: z.id });
-  return check;
 }

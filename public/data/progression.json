@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "start": {
     "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "mill_wheat", "mix_dough", "bake_bun", "assemble_burger"],
     "machines": [],
@@ -103,7 +103,7 @@
         "machines": ["smelter", "press", "wire_machine", "gear_lathe", "part_assembler", "generator"],
         "recipes": ["smelt_iron", "press_plate", "draw_wire", "cut_gear", "make_heat_plate", "make_motor"],
         "supplies": ["iron_ore", "coal"],
-        "features": ["power", "zones"]
+        "features": ["power", "zones", "blueprints"]
       },
       "reward": {
         "parts": {
@@ -135,6 +135,27 @@
         }
       },
       "tutorial": "menu"
+    },
+    {
+      "id": "full_auto",
+      "name": "완전 자동화",
+      "when": {
+        "sold": {
+          "burger": 60
+        }
+      },
+      "unlock": {
+        "machines": ["order_reader", "bundler"],
+        "recipes": ["make_sensor", "make_circuit"]
+      },
+      "reward": {
+        "parts": {
+          "circuit": 2,
+          "sensor": 3,
+          "motor": 2
+        }
+      },
+      "tutorial": "auto"
     }
   ]
 }

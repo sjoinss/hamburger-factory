@@ -126,7 +126,7 @@ export function createInspector({ world, rules, bank }) {
     } else {
       const order = orderById(world, m.orderId);
       gateOrderInfo.textContent = order
-        ? `주문 #${order.id}: ${Object.entries(order.items).map(([id, n]) => `${rules.items[id].name} ${m.orderSent[id] ?? 0}/${n}`).join(', ')}`
+        ? `${m.auto ? '인식기가 맡긴 ' : ''}주문 #${order.id}: ${Object.entries(order.items).map(([id, n]) => `${rules.items[id].name} ${m.orderSent[id] ?? 0}/${n}`).join(', ')}`
         : "주문서에서 '게이트에 맡기기' 를 누르면 그 주문을 내보낸다.";
     }
   }
@@ -199,6 +199,13 @@ export function createInspector({ world, rules, bank }) {
         if (st.contents?.length) parts.push(`입력: ${countList(rules, st.contents)}`);
         if (st.output?.length) parts.push(`출력: ${countList(rules, st.output)}`);
         if (st.held) parts.push(`집게: ${rules.items[st.held].name}`);
+        if (st.packs) {
+          for (const [id, pack] of Object.entries(st.packs)) {
+            const counts = Object.entries(pack).flatMap(([item, n]) => Array(n).fill(item));
+            parts.push(`주문 #${id}: ${countList(rules, counts)}`);
+          }
+          if (st.out.length) parts.push(`내보낼 것 ${st.out.length}개`);
+        }
         buffers.textContent = parts.join(' / ');
       }
       renderSupplyPick(st);

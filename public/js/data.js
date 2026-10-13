@@ -1,10 +1,11 @@
 // data/*.json 로딩과 검증. 데이터 파일도 신뢰하지 않고 형태와 상호 참조를 확인한다.
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate', 'farm', 'generator']);
-const FEATURES = new Set(['orders', 'market', 'power', 'zones']);
+const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate', 'farm', 'generator', 'reader', 'bundler']);
+export const FEATURES = new Set(['orders', 'market', 'power', 'zones', 'blueprints']);
 const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger']);
-const ITEM_CATEGORIES = new Set(['food', 'part', 'material']);
+// bundle: 합류 포장기가 만드는 주문 묶음 (출고구에서만 의미가 있다)
+const ITEM_CATEGORIES = new Set(['food', 'part', 'material', 'bundle']);
 const ID_RE = /^[a-z][a-z0-9_]{0,31}$/;
 
 function assert(cond, msg) {
@@ -72,7 +73,11 @@ export function validateMachines(data, items) {
     if (m.kind === 'storage') {
       assert(isInt(m.capacity, 1, 100000) && typeof m.singleItem === 'boolean', `기계 ${id}: 저장소 capacity/singleItem 오류`);
     }
-    if (m.kind === 'gate') assert(isNum(m.seconds, 0.05, 60), `기계 ${id}: 게이트 seconds 오류`);
+    if (m.kind === 'gate' || m.kind === 'reader') assert(isNum(m.seconds, 0.05, 60), `기계 ${id}: seconds 오류`);
+    if (m.kind === 'bundler') {
+      assert(isNum(m.seconds, 0.05, 60) && isNum(m.passSeconds, 0.01, 60) && isInt(m.capacity, 1, 999), `기계 ${id}: 포장기 seconds/passSeconds/capacity 오류`);
+      assert(m.size[0] === 1 && m.size[1] === 1, `기계 ${id}: 합류 포장기는 1×1`);
+    }
     assert(m.power === undefined || isNum(m.power, 0, 10000), `기계 ${id}: power 오류`);
     if (m.kind === 'generator') {
       assert(Object.hasOwn(items, m.fuel), `기계 ${id}: 없는 연료 ${short(m.fuel)}`);
@@ -177,6 +182,9 @@ export function validateGameConfig(g, items, machines) {
 const DONE_ITEM_KINDS = new Set(['have', 'placed', 'sold']);
 const DONE_MACHINE_KINDS = new Set(['built', 'made', 'took', 'fed']);
 const UI_TARGETS = new Set(['build', 'overlay', 'orders']);
+// ui: 기계가 아닌 화면 기능을 써 봤는가 / order: any(아무 주문) · auto(인식기가 맡긴 주문) · bundle(묶음 납품) · 주문 종류
+const DONE_UI_IDS = new Set(['blueprint']);
+const DONE_ORDER_IDS = new Set(['any', 'auto', 'bundle']);
 
 export function validateTutorial(data, items, machines, orders) {
   rejectForbiddenKeys(data, 'tutorial');
@@ -194,7 +202,8 @@ export function validateTutorial(data, items, machines, orders) {
       const [kind, id] = Object.entries(s.done)[0];
       const ok = (DONE_ITEM_KINDS.has(kind) && Object.hasOwn(items, id)) ||
         (DONE_MACHINE_KINDS.has(kind) && Object.hasOwn(machines, id)) ||
-        (kind === 'order' && (id === 'any' || Object.hasOwn(orders.kinds, id)));
+        (kind === 'ui' && DONE_UI_IDS.has(id)) ||
+        (kind === 'order' && (DONE_ORDER_IDS.has(id) || Object.hasOwn(orders.kinds, id)));
       assert(ok, `${where}: done 조건 오류`);
     }
   }
@@ -251,13 +260,15 @@ export function validateOrders(data, items) {
   assert(isObj(data), 'orders.json 형식 오류');
   assert(isInt(data.maxOpen, 1, 12), 'orders.maxOpen 오류');
   for (const k of ['firstSpawnSeconds', 'spawnSeconds', 'leaveSeconds']) assert(isNum(data[k], 0.1, 3600), `orders.${k} 오류`);
+  assert(isNum(data.bundleBonus, 1, 5), 'orders.bundleBonus 오류');
+  assert(isNum(data.minSpawnSeconds, 0.1, data.spawnSeconds) && isNum(data.repSpawnStep, 0, 60), 'orders.minSpawnSeconds/repSpawnStep 오류');
   const mk = data.market;
   assert(isObj(mk) && isNum(mk.shiftSeconds, 1, 3600) && isNum(mk.easePerSecond, 0.001, 1), 'orders.market 오류');
   assert(Array.isArray(mk.range) && isNum(mk.range[0], 0.1, 1) && isNum(mk.range[1], 1, 10), 'orders.market.range 오류');
   assert(isObj(data.kinds) && Object.keys(data.kinds).length > 0, 'orders.kinds 오류');
   for (const [id, k] of Object.entries(data.kinds)) {
     const where = `주문 종류 ${id}`;
-    assert(ID_RE.test(id) && id !== 'any', `${where}: id 오류`);
+    assert(ID_RE.test(id) && !DONE_ORDER_IDS.has(id), `${where}: id 오류`);
     assert(isStr(k.name, 8) && isNum(k.weight, 0, 100), `${where}: name/weight 오류`);
     assert(Array.isArray(k.rewardMul) && isNum(k.rewardMul[0], 0.1, 20) && isNum(k.rewardMul[1], k.rewardMul[0], 20), `${where}: rewardMul 오류`);
     assert(k.deadline === null || isNum(k.deadline, 5, 86400), `${where}: deadline 오류`);

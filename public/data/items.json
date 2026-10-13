@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "items": {
     "raw_meat"       : { "name": "생고기", "sprite": "rawMeat", "price": 0, "category": "food" },
     "ground_meat"    : { "name": "다진고기", "sprite": "groundMeat", "price": 1, "category": "food" },
@@ -25,6 +25,9 @@
     "syrup"          : { "name": "탄산 시럽", "sprite": "syrup", "price": 0, "category": "food" },
     "water"          : { "name": "물", "sprite": "water", "price": 0, "category": "food" },
     "cola"           : { "name": "콜라", "sprite": "cola", "price": 6, "category": "food" },
-    "set"            : { "name": "세트", "sprite": "setMeal", "price": 40, "category": "food" }
+    "set"            : { "name": "세트", "sprite": "setMeal", "price": 40, "category": "food" },
+    "sensor"         : { "name": "센서", "sprite": "sensor", "price": 0, "category": "part" },
+    "circuit"        : { "name": "제어 회로", "sprite": "circuit", "price": 0, "category": "part" },
+    "order_bag"      : { "name": "주문 묶음", "sprite": "orderBag", "price": 0, "category": "bundle" }
   }
 }

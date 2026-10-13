@@ -5,6 +5,7 @@ import { freeSlot, groundItemAt } from './interact.js';
 import { noteTutorial } from './tutorial.js';
 import { missingCost, spendParts } from './parts.js';
 import { zoneMult } from './zones.js';
+import { bundlerItems } from './bundler.js';
 
 export function isUnlocked(world, type) {
   return world.unlocked.machines.includes(type);
@@ -83,6 +84,7 @@ export function removeMachine(world, rules, x, y) {
     ...(st.items ?? []).map((it) => it.item),
     ...(st.buffer ? [st.buffer.item] : []),
     ...(st.held ? [st.held] : []),
+    ...(st.packs ? bundlerItems(st) : []),
   ];
   const free = world.player.inventory.filter((it) => it === null).length;
   if (items.length > free) return { ok: false, reason: 'items', count: items.length, free };

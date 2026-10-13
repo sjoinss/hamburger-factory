@@ -9,6 +9,8 @@ import { updateProgression } from './progression.js';
 import { updateInserter } from './inserter.js';
 import { updateConveyors } from './conveyor.js';
 import { updateGate } from './gate.js';
+import { updateReader } from './reader.js';
+import { updateBundler } from './bundler.js';
 import { createMarket, updateMarket } from './market.js';
 import { createOrders, updateOrders } from './orders.js';
 import { TILE, getTile, setTile } from './grid.js';
@@ -46,7 +48,7 @@ export function createWorld(rules) {
   }
 
   return {
-    version: 8,
+    version: 9,
     rng: 20261013, // 난수 씨앗 (rng.js)
     tick: 0,
     time: 0,
@@ -90,7 +92,9 @@ export function stepWorld(world, input, dt, rules) {
   for (const st of world.stations) {
     const kind = rules.machines[st.type].kind;
     if (kind === 'inserter') updateInserter(world, rules, st, pdt);
+    else if (kind === 'reader') updateReader(world, rules, st, pdt);
     else if (kind === 'gate') updateGate(world, rules, st, pdt);
+    else if (kind === 'bundler') updateBundler(world, rules, st, pdt);
   }
   updateConveyors(world, rules, dt);
   for (const st of world.stations) {

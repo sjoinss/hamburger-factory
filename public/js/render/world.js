@@ -29,6 +29,9 @@ function tileSprite(type, x, y) {
   return h % 17 === 0 ? 'floorDarkOil' : 'floorDark';
 }
 
+// 상태등을 다는 기계
+const LAMP_KINDS = new Set(['machine', 'inserter', 'gate', 'generator', 'reader', 'bundler']);
+
 const PLAYER_SPRITE = { down: 'playerDown', up: 'playerUp', left: 'playerLeft', right: 'playerRight' };
 
 function playerFrame(player, walkFrameSeconds) {
@@ -174,7 +177,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
         if (st.w === 1) itemSprite(st.contents[st.contents.length - 1], bx, by - 1);
         else st.contents.forEach((it, i) => itemSprite(it, bx - 1 + i * 9, by - 1));
       }
-      if (machine.kind === 'machine' || machine.kind === 'inserter' || machine.kind === 'gate' || machine.kind === 'generator') {
+      if (LAMP_KINDS.has(machine.kind)) {
         // 상태등: 오른쪽 위. 가동 = 깜박이는 초록 사각, 대기 = 노랑 점, 막힘 = 빨강 X
         const lamp = { running: 'lampRunning', idle: 'lampIdle', blocked: 'lampBlocked' }[st.status];
         sprite(lamp, animFrame, bx + st.w * ts - 6, by + 1);
@@ -324,7 +327,32 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
       const ay = py + h / 2 - 3.5 + dy * (h / 2 - 2);
       ctx.drawImage(arrow, sx(ax), sy(ay), arrow.width * s, arrow.height * s);
     }
+    if (b.kind === 'select') {
+      // 청사진 영역: 노란 테두리 + 모서리 꺾쇠 (안의 기계가 보이게 속은 비운다)
+      outline(px, py, w, h, 'y');
+      for (const [cx, cy] of [[px, py], [px + w - 4, py], [px, py + h - 2], [px + w - 4, py + h - 2]]) fillPx('y', cx, cy, 4, 2);
+      return;
+    }
+    if (b.kind === 'paste') {
+      // 청사진 붙여넣기: 기계마다 점무늬 그림자, 못 놓는 기계는 빨강 X
+      for (const [i, e] of b.bp.entries.entries()) {
+        const img = bank.ghost(rules.machines[e.type].sprite, 0, e.rot);
+        const ex = (b.x + e.x) * ts;
+        const ey = (b.y + e.y) * ts;
+        ctx.drawImage(img, sx(ex), sy(ey), img.width * s, img.height * s);
+        if (b.badSet.has(i)) cross(ex, ey, img.width, img.height, 'R');
+      }
+      outline(px, py, w, h, b.ok ? 'G' : 'R');
+      if (b.reason === 'parts') cross(px, py, w, h, 'R');
+      return;
+    }
     const key = b.ok ? 'G' : 'R';
+    outline(px, py, w, h, key);
+    if (!b.ok || b.kind === 'remove') cross(px, py, w, h, key);
+  }
+
+  /** 1px 테두리 (바깥 검정 1px) */
+  function outline(px, py, w, h, key) {
     fillPx('K', px - 1, py - 1, w + 2, 1);
     fillPx('K', px - 1, py + h, w + 2, 1);
     fillPx('K', px - 1, py - 1, 1, h + 2);
@@ -333,12 +361,13 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
     fillPx(key, px, py + h - 1, w, 1);
     fillPx(key, px, py, 1, h);
     fillPx(key, px + w - 1, py, 1, h);
-    if (!b.ok || b.kind === 'remove') {
-      // X 무늬: 칸마다 대각선 두 줄
-      for (let i = 0; i < w; i += 1) {
-        fillPx(key, px + i, py + Math.floor((i * h) / w), 1, 1);
-        fillPx(key, px + w - 1 - i, py + Math.floor((i * h) / w), 1, 1);
-      }
+  }
+
+  /** X 무늬: 대각선 두 줄 */
+  function cross(px, py, w, h, key) {
+    for (let i = 0; i < w; i += 1) {
+      fillPx(key, px + i, py + Math.floor((i * h) / w), 1, 1);
+      fillPx(key, px + w - 1 - i, py + Math.floor((i * h) / w), 1, 1);
     }
   }
 }

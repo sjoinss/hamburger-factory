@@ -11,3 +11,14 @@ export function spriteIcon(bank, spriteName) {
   ctx.drawImage(src, 0, 0);
   return cv;
 }
+
+/** 아이템 아이콘 + 짧은 글 (부품 수량 등) */
+export function itemChip(bank, rules, id, text) {
+  const span = document.createElement('span');
+  span.className = 'chip';
+  span.append(spriteIcon(bank, rules.items[id].sprite));
+  const label = document.createElement('span');
+  label.textContent = text;
+  span.append(label);
+  return span;
+}

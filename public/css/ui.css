@@ -515,3 +515,49 @@ button:disabled { opacity: 1; color: var(--c-oil); background: var(--c-floor-dar
 .zone-cost { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--c-metal-3); }
 .zone-cost .is-short { color: var(--c-orange); }
 .zone button { width: 100%; }
+
+/* ── 설정: 저장 / 소리 ───────────────────────────────── */
+.btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.slider { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.slider span { min-width: 4em; }
+.slider input { flex: 1; min-height: 32px; accent-color: var(--c-warn); }
+.slider output { min-width: 3ch; text-align: right; color: var(--c-warn); }
+#save-status { min-height: 1.4em; }
+
+/* ── 청사진 ──────────────────────────────────────────── */
+.bp-list { display: grid; gap: 6px; padding: 0; list-style: none; }
+.bp { display: grid; gap: 3px; padding: 6px; background: var(--c-black); border: 1px solid var(--c-wall-2); }
+.bp-name { color: var(--c-warn); overflow-wrap: anywhere; }
+.bp-cost { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--c-metal-3); }
+.bp-cost .is-short { color: var(--c-orange); }
+.bp-actions { display: flex; gap: 4px; }
+.bp-actions button { flex: 1; }
+.name-box {
+  position: absolute;
+  z-index: var(--z-alert);
+  left: 50%;
+  top: 45%; /* 알림 띠(30%) 와 겹치지 않게 */
+  transform: translateX(-50%);
+  display: grid;
+  gap: 6px;
+  width: min(320px, calc(100% - 24px));
+  padding: 10px;
+  background: var(--c-wall);
+  border: var(--line) solid var(--c-black);
+  box-shadow: 3px 3px 0 var(--c-black);
+}
+.name-box label { color: var(--c-warn); }
+.name-box input {
+  min-height: 32px;
+  padding: 4px 6px;
+  font: inherit;
+  color: var(--c-light);
+  background: var(--c-black);
+  border: var(--line) solid var(--c-metal-2);
+}
+.name-actions { display: flex; gap: 6px; }
+.name-actions button { flex: 1; }
+/* iOS 는 16px 보다 작은 입력칸에 초점이 가면 화면을 확대한다 */
+@media (any-pointer: coarse) {
+  .name-box input { font-size: 16px; }
+}

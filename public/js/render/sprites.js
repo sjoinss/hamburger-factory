@@ -9,6 +9,7 @@ import * as storage from '../sprites/storage.js';
 import * as customers from '../sprites/customers.js';
 import * as farm from '../sprites/farm.js';
 import * as ws from '../sprites/workshop.js';
+import * as auto from '../sprites/auto.js';
 
 /** 이름 → 프레임 배열. 단일 그림도 프레임 1개짜리로 통일. */
 export const SPRITE_DEFS = {
@@ -55,6 +56,11 @@ export const SPRITE_DEFS = {
   sodaMixer: ws.SODA_MIXER,
   packer: ws.PACKER,
   locked: [ws.LOCKED],
+  sensor: [auto.SENSOR],
+  circuit: [auto.CIRCUIT],
+  orderBag: [auto.ORDER_BAG],
+  orderReader: auto.ORDER_READER,
+  bundler: auto.BUNDLER,
   customer: customers.CUSTOMER,
   ...Object.fromEntries(Object.entries(customers.DIGITS).map(([k, rows]) => [`digit${k}`, [rows]])),
   playerDown: characters.PLAYER_DOWN,

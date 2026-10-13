@@ -39,6 +39,7 @@
         <button type="button" data-ui="overlay" aria-pressed="false" title="병목 보기 (O)">병목</button>
         <button type="button" data-panel="help" aria-expanded="false" aria-controls="panel-help">도움말</button>
         <button type="button" data-panel="info" aria-expanded="false" aria-controls="panel-info">정보</button>
+        <button type="button" data-panel="settings" aria-expanded="false" aria-controls="panel-settings">설정</button>
       </nav>
     </header>
 
@@ -69,6 +70,16 @@
       <button type="button" id="btn-build-cancel">취소<span class="key-hint"> (Esc)</span></button>
     </div>
 
+    <!-- 청사진 이름 짓기 (영역을 고른 뒤) -->
+    <div class="name-box" id="bp-name-box" role="dialog" aria-labelledby="bp-name-label" hidden>
+      <label id="bp-name-label" for="bp-name">청사진 이름</label>
+      <input type="text" id="bp-name" maxlength="20" autocomplete="off" spellcheck="false">
+      <div class="name-actions">
+        <button type="button" class="build-confirm" id="bp-name-ok">저장</button>
+        <button type="button" id="bp-name-cancel">취소</button>
+      </div>
+    </div>
+
     <p class="banner" id="banner" role="status" aria-live="polite" hidden></p>
 
     <p class="legend" id="overlay-legend" hidden>
@@ -83,6 +94,7 @@
         <button type="button" class="panel-close" data-close>닫기</button>
       </header>
       <p class="headline" id="market-headline" hidden></p>
+      <p class="muted" id="order-rate" hidden></p>
       <p class="muted" id="order-empty"></p>
       <ol class="order-list" id="order-list"></ol>
     </section>
@@ -105,6 +117,11 @@
       <ul class="build-list" id="build-list"></ul>
       <p class="muted" id="build-locked" hidden></p>
       <button type="button" class="wide-btn" id="btn-remove-mode" aria-pressed="false">철거 모드<span class="key-hint"> (X)</span></button>
+      <section class="blueprints" id="bp-box" hidden aria-labelledby="bp-title">
+        <h3 id="bp-title" class="info-sub">청사진</h3>
+        <ul class="bp-list" id="bp-list"></ul>
+        <button type="button" class="wide-btn" id="btn-bp-capture">영역 저장</button>
+      </section>
       <section class="zones" id="zone-box" hidden aria-labelledby="zone-title">
         <h3 id="zone-title" class="info-sub">구역 매입</h3>
         <ul class="zone-list" id="zone-list"></ul>
@@ -137,6 +154,26 @@
         <div><dt>건설</dt><dd>칸 탭 → 설치</dd></div>
       </dl>
       <button type="button" class="wide-btn" id="tutorial-restart">튜토리얼 다시 하기</button>
+    </section>
+
+    <section class="panel panel-settings" id="panel-settings" aria-labelledby="panel-settings-title" hidden>
+      <header class="panel-head">
+        <h2 id="panel-settings-title">설정</h2>
+        <button type="button" class="panel-close" data-close>닫기</button>
+      </header>
+      <h3 class="info-sub">저장 <span class="muted">(30초마다 자동)</span></h3>
+      <p class="muted" id="save-status" aria-live="polite"></p>
+      <div class="btn-grid">
+        <button type="button" id="btn-save">지금 저장</button>
+        <button type="button" id="btn-export">내보내기</button>
+        <button type="button" id="btn-import">파일 불러오기</button>
+        <button type="button" id="btn-new">새로 시작</button>
+      </div>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+      <h3 class="info-sub">소리</h3>
+      <button type="button" class="wide-btn" id="btn-mute" aria-pressed="false">음소거</button>
+      <label class="slider"><span>전체</span><input type="range" id="vol-master" min="0" max="100" step="5"><output id="vol-master-out"></output></label>
+      <label class="slider"><span>효과음</span><input type="range" id="vol-sfx" min="0" max="100" step="5"><output id="vol-sfx-out"></output></label>
     </section>
 
     <section class="panel panel-stats" id="panel-stats" aria-labelledby="panel-stats-title" hidden>

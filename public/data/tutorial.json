@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "tracks": {
     "start": [
       { "text": "생고기 상자에서 고기 꺼내기", "target": { "station": "crate", "item": "raw_meat" }, "done": { "have": "raw_meat" } },
@@ -39,12 +39,19 @@
     "workshop": [
       { "text": "제련로 짓기 (입고구에서 철광석을 들여온다)", "target": { "ui": "build" }, "done": { "built": "smelter" } },
       { "text": "프레스로 철판 만들기 → 호퍼에 모으면 건설에 쓰인다", "target": { "ui": "build" }, "done": { "made": "press" } },
-      { "text": "발전기 짓고 석탄 넣기 (기본 전력 120kW 넘으면 느려진다)", "target": { "ui": "build" }, "done": { "fed": "generator" } }
+      { "text": "발전기 짓고 석탄 넣기 (기본 전력 120kW 넘으면 느려진다)", "target": { "ui": "build" }, "done": { "fed": "generator" } },
+      { "text": "건설 → 청사진: 영역 저장 후 붙여넣기", "target": { "ui": "build" }, "done": { "ui": "blueprint" } }
     ],
     "menu": [
       { "text": "감자밭 짓기", "target": { "ui": "build" }, "done": { "built": "potato_field" } },
       { "text": "튀김기로 감자튀김 만들기", "target": { "ui": "build" }, "done": { "made": "fryer" } },
       { "text": "포장기로 세트 만들기 (버거 + 감자튀김 + 콜라)", "target": { "ui": "build" }, "done": { "made": "packer" } }
+    ],
+    "auto": [
+      { "text": "출고 게이트 옆에 주문 인식기 짓기", "target": { "ui": "build" }, "done": { "built": "order_reader" } },
+      { "text": "가만히 기다리기: 인식기가 주문을 맡긴다", "target": { "ui": "orders" }, "done": { "order": "auto" } },
+      { "text": "출고구 앞에 합류 포장기 (묶음 보너스)", "target": { "ui": "build" }, "done": { "built": "bundler" } },
+      { "text": "주문을 묶음으로 납품하기", "target": { "ui": "orders" }, "done": { "order": "bundle" } }
     ]
   }
 }

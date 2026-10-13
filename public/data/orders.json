@@ -1,9 +1,12 @@
 {
-  "version": 2,
+  "version": 4,
   "maxOpen": 6,
   "firstSpawnSeconds": 4,
   "spawnSeconds": 20,
+  "minSpawnSeconds": 8,
+  "repSpawnStep": 0.2,
   "leaveSeconds": 3,
+  "bundleBonus": 1.25,
   "market": {
     "shiftSeconds": 15,
     "range": [0.8, 1.2],

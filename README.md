@@ -33,9 +33,11 @@ npm test       # 서버 보안 점검 + 시뮬레이션 + 스프라이트/팔레
 | O | 상단 '병목' | 병목 보기: 빨강 빗금 = 막힘, 파랑 점 = 한산 |
 | 상단 '주문' | 상단 '주문' | 주문서: 품목/보유량/부족/남은 시간, '게이트에 맡기기' |
 | X | 건설 창의 철거 모드 | 철거 (부품 100% 환급) |
+| 건설 → 청사진 '영역 저장' → 끌기 | 끌기, 또는 모서리 탭 → 시작점 → 여기까지 저장 | 청사진 저장 (목록에서 붙여넣기) |
+| 상단 '설정' | 상단 '설정' | 저장(30초 자동)·내보내기·불러오기·새로 시작, 소리 |
 | Esc | 닫기 / 취소 | 창 닫기, 건설 끝 |
 
-화면은 게임이 전부 쓰고, 주문·레시피·건설·도움말·정보는 상단 메뉴에서 하나씩 펼친다.
+화면은 게임이 전부 쓰고, 주문·레시피·건설·도움말·정보·설정은 상단 메뉴에서 하나씩 펼친다.
 처음 시작하면 튜토리얼이 한 단계씩 목표를 알려 주고, 화살표가 다음 작업대를 가리킨다 (도움말에서 다시 하기).
 
 개발용: 주소 끝에 `#debug` 를 붙이면 콘솔에서 `__game` 으로 상태를 볼 수 있고, `#touch` 를 붙이면 PC 에서 터치 화면을 미리 볼 수 있다 `#unlock` 은 모든 단계를 바로 연다 (`#debug,touch,unlock` 처럼 함께).
@@ -56,10 +58,11 @@ public/
     main.js          부팅, 고정 20틱 루프 + rAF 렌더 보간
     data.js          JSON 로딩/검증
     input.js         키보드/마우스
-    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, rng, path, player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, world
+    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, rng, path, player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, world
     render/          sprites(bake/캐시), camera, world, customers, effects
-    sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, farm-potato, items, machines, storage, workshop, ui
-    ui/              상단 바/손/안내(hud), 접이식 패널, 레시피북, 튜토리얼 카드, 건설 모드(구역 매입 포함), 기계 정보, 통계, 주문서, 탭 이동
+    sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, farm-potato, items, machines, storage, workshop, auto, ui
+    audio/           Web Audio 합성 효과음 (파일 없음)
+    ui/              상단 바/손/안내(hud), 접이식 패널, 레시피북, 튜토리얼 카드, 건설 모드(구역 매입·청사진 포함), 기계 정보, 통계, 주문서, 탭 이동, 설정(저장·소리)
 tests/               node:test
 ```
 
@@ -74,4 +77,4 @@ tests/               node:test
 - [x] M5 깔때기 호퍼 + 주문 시스템 (햄버거 15개 판매 → 호퍼·사일로·출고 게이트, 주문서·손님·시세)
 - [x] 재료 준비: 밀밭·채소밭 수확 → 맷돌/제분기 → 반죽대/반죽기 → 화덕/오븐 (입고구는 생고기만)
 - [x] M6 부품 공방 + 확장 (햄버거 25개: 제련로·프레스·와이어·기어 선반·부품 조립기·발전기, 전력, 구역 매입 / 40개: 감자튀김·콜라·세트)
-- [ ] M7 완전 자동화
+- [x] M7 완전 자동화 (햄버거 60개: 주문 인식기·합류 포장기, 센서·제어 회로 / 청사진, 저장·불러오기, 효과음, 평판이 오르면 손님이 더 자주 온다)

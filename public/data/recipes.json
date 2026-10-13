@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "recipes": [
     {
       "id": "chop_meat",
@@ -211,6 +211,33 @@
         "set": 1
       },
       "seconds": 3
+    },
+    {
+      "id": "make_sensor",
+      "verb": "조립",
+      "stations": ["part_assembler"],
+      "inputs": {
+        "iron_plate": 2,
+        "gear": 1
+      },
+      "outputs": {
+        "sensor": 1
+      },
+      "seconds": 4
+    },
+    {
+      "id": "make_circuit",
+      "verb": "조립",
+      "stations": ["part_assembler"],
+      "inputs": {
+        "motor": 1,
+        "wire": 2,
+        "heat_plate": 1
+      },
+      "outputs": {
+        "circuit": 1
+      },
+      "seconds": 6
     }
   ]
 }

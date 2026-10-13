@@ -25,10 +25,12 @@ function pickCandidates(world, rules, tile) {
     return st.output.length ? [{ item: st.output[0], take: () => st.output.shift() }] : [];
   }
   if (kind === 'belt') {
-    // 앞쪽(끝에 가까운) 물건부터
-    return st.items.map((it) => ({ item: it.item, take: () => st.items.splice(st.items.indexOf(it), 1) }));
+    // 앞쪽(끝에 가까운) 물건부터. 주문 묶음은 집게로 옮기면 번호표가 떨어지므로 집지 않는다.
+    return st.items
+      .filter((it) => rules.items[it.item].category !== 'bundle')
+      .map((it) => ({ item: it.item, take: () => st.items.splice(st.items.indexOf(it), 1) }));
   }
-  if ((kind === 'splitter' || kind === 'merger') && st.buffer) {
+  if ((kind === 'splitter' || kind === 'merger') && st.buffer && rules.items[st.buffer.item].category !== 'bundle') {
     const b = st.buffer;
     return [{ item: b.item, take: () => { st.buffer = null; } }];
   }
