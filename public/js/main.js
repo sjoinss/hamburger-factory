@@ -21,6 +21,7 @@ import { createWalker } from './ui/walk.js';
 import { createSound } from './audio/sound.js';
 import { createSettings, readSavedGame } from './ui/settings.js';
 import { replaceWorld } from './sim/save.js';
+import { createChapterView } from './ui/chapters.js';
 
 const FONT_FAMILY = '"Galmuri11", ui-monospace, monospace';
 
@@ -124,6 +125,7 @@ async function boot() {
   build = createBuildMode({ world, rules, bank, panels });
   const inspector = createInspector({ world, rules, bank });
   const statsPanel = createStatsPanel({ world, rules, bank });
+  const chapterView = createChapterView({ world, rules, bank });
   const orderBoard = createOrderBoard({
     world,
     rules,
@@ -191,6 +193,7 @@ async function boot() {
       walker.cancel();
       inspector.select(null);
       panels.close();
+      document.getElementById('ending').hidden = true;
       camera.follow = true;
     },
   });
@@ -356,6 +359,13 @@ async function boot() {
         const z = rules.zones.zones.find((x) => x.id === ev.zone);
         hud.banner(`${z.name} 매입! ${z.trait.text}`, 3);
       }
+      if (ev.type === 'chapterDone') {
+        const done = rules.chapters.find((c) => c.id === ev.chapter);
+        const next = rules.chapters[world.chapters.index];
+        hud.flashMoney();
+        hud.banner(`${done.name} 완료!${ev.reward.money ? ` +${ev.reward.money}` : ''}${next ? ` · 다음: ${next.name} (목표 메뉴)` : ''}`, 4);
+      }
+      if (ev.type === 'ending') chapterView.showEnding();
       if (ev.type === 'orderFailed') hud.banner('주문 시간 초과: 손님이 떠났다 (평판 하락)', 3);
       if (ev.type === 'orderNew' && panels.current() === 'orders') orderBoard.forceRender();
       if (ev.type === 'unlocked') {
@@ -403,7 +413,10 @@ async function boot() {
       selected: panels.current() === 'info' ? inspector.selected() : null,
     });
     if (panels.current() === 'info') inspector.render();
-    if (panels.current() === 'stats') statsPanel.render(now);
+    if (panels.current() === 'stats') {
+      chapterView.render();
+      statsPanel.render(now);
+    }
     if (panels.current() === 'orders') orderBoard.render(now);
 
     fpsFrames++;

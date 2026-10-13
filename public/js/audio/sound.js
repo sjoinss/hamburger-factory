@@ -160,7 +160,9 @@ export function createSound() {
         case 'built': return play('build');
         case 'removed': return play('remove');
         case 'unlocked':
-        case 'zoneBought': return play('fanfare');
+        case 'zoneBought':
+        case 'chapterDone':
+        case 'ending': return play('fanfare');
         case 'bundled': return play('tape');
         case 'readerAssigned': return play('beep');
         default: return undefined;

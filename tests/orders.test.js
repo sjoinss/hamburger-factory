@@ -25,6 +25,7 @@ function storageWorld({ orders = true } = {}) {
   run(w, 1);
   Object.assign(w.player, { x: 15.5, y: 1.5, prevX: 15.5, prevY: 1.5 });
   if (!orders) w.features = w.features.filter((f) => f !== 'orders');
+  w.chapters.ended = true; // 챕터 보상이 돈 계산에 끼지 않게
   w.orders.timer = 1e9; // 테스트에서는 손님이 저절로 오지 않게 (필요한 테스트만 직접 넣는다)
   return w;
 }

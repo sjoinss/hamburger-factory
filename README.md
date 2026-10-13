@@ -34,6 +34,7 @@ npm test       # 서버 보안 점검 + 시뮬레이션 + 스프라이트/팔레
 | 상단 '주문' | 상단 '주문' | 주문서: 품목/보유량/부족/남은 시간, '게이트에 맡기기' |
 | X | 건설 창의 철거 모드 | 철거 (부품 100% 환급) |
 | 건설 → 청사진 '영역 저장' → 끌기 | 끌기, 또는 모서리 탭 → 시작점 → 여기까지 저장 | 청사진 저장 (목록에서 붙여넣기) |
+| 상단 '목표' | 상단 '목표' | 지금 장의 목표·보상, 통계 |
 | 상단 '설정' | 상단 '설정' | 저장(30초 자동)·내보내기·불러오기·새로 시작, 소리 |
 | Esc | 닫기 / 취소 | 창 닫기, 건설 끝 |
 
@@ -53,12 +54,12 @@ server.js            Node 내장 http 서버 (보안 헤더, 경로 탈출 차�
 public/
   index.html
   css/ui.css         색은 CSS 변수 토큰으로만
-  data/              밸런스/설정 JSON (palette, game, items, recipes, machines, orders, zones, tutorial, progression)
+  data/              밸런스/설정 JSON (palette, game, items, recipes, machines, orders, zones, tutorial, progression, chapters)
   js/
     main.js          부팅, 고정 20틱 루프 + rAF 렌더 보간
     data.js          JSON 로딩/검증
     input.js         키보드/마우스
-    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, rng, path, player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, world
+    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, rng, path, player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, chapters, world
     render/          sprites(bake/캐시), camera, world, customers, effects
     sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, farm-potato, items, machines, storage, workshop, auto, ui
     audio/           Web Audio 합성 효과음 (파일 없음)
@@ -78,3 +79,4 @@ tests/               node:test
 - [x] 재료 준비: 밀밭·채소밭 수확 → 맷돌/제분기 → 반죽대/반죽기 → 화덕/오븐 (입고구는 생고기만)
 - [x] M6 부품 공방 + 확장 (햄버거 25개: 제련로·프레스·와이어·기어 선반·부품 조립기·발전기, 전력, 구역 매입 / 40개: 감자튀김·콜라·세트)
 - [x] M7 완전 자동화 (햄버거 60개: 주문 인식기·합류 포장기, 센서·제어 회로 / 청사진, 저장·불러오기, 효과음, 평판이 오르면 손님이 더 자주 온다)
+- [x] M8 챕터 목표 (1장 개업 ~ 7장 버거 제국, 장마다 보상, 마지막 장을 끝내면 엔딩 후 샌드박스. 상단 '목표')

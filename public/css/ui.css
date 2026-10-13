@@ -561,3 +561,38 @@ button:disabled { opacity: 1; color: var(--c-oil); background: var(--c-floor-dar
 @media (any-pointer: coarse) {
   .name-box input { font-size: 16px; }
 }
+
+/* ── 챕터 목표 / 엔딩 ─────────────────────────────────── */
+.chapter { display: grid; gap: 4px; margin-bottom: 10px; padding: 6px; background: var(--c-black); border: 1px solid var(--c-warn); }
+.chapter-head { display: flex; justify-content: space-between; gap: 8px; }
+.chapter-name { color: var(--c-warn); }
+.goal-list { display: grid; gap: 2px; padding: 0; list-style: none; }
+.goal-list li { display: flex; align-items: center; gap: 6px; }
+.goal-list .mark { min-width: 2ch; color: var(--c-metal-2); }
+.goal-list .is-done { color: var(--c-metal-3); text-decoration: line-through; }
+.goal-list .is-done .mark { color: var(--c-warn); text-decoration: none; }
+.goal-bar { flex: 1; max-width: 80px; height: 6px; border: 1px solid var(--c-metal-2); background: var(--c-outline); }
+.goal-bar span { display: block; height: 100%; width: var(--w, 0%); background: var(--c-warn); }
+.chapter-reward { color: var(--c-metal-3); }
+.ending {
+  position: absolute;
+  z-index: var(--z-alert);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  width: min(360px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  overflow: auto;
+  padding: 14px;
+  text-align: center;
+  background: var(--c-wall);
+  border: var(--line) solid var(--c-black);
+  border-top: 6px solid var(--c-warn);
+  box-shadow: 4px 4px 0 var(--c-black);
+}
+.ending h2 { color: var(--c-warn); font-size: var(--fs-big); }
+.ending .kv { width: 100%; text-align: left; }
+.ending-sprite { width: 64px; height: 64px; image-rendering: pixelated; }

@@ -310,15 +310,38 @@ export function validateZones(data, items, game) {
   return data;
 }
 
+const GOAL_KINDS = new Set(['sold', 'rate', 'built', 'orders', 'autoOrders', 'bundled', 'reputation', 'zones', 'earnRate']);
+
+export function validateChapters(data, items, machines) {
+  rejectForbiddenKeys(data, 'chapters');
+  assert(isObj(data) && Array.isArray(data.chapters) && data.chapters.length > 0 && data.chapters.length <= 50, 'chapters 오류');
+  const ids = new Set();
+  for (const ch of data.chapters) {
+    const where = `챕터 ${short(ch?.id)}`;
+    assert(ID_RE.test(ch.id) && !ids.has(ch.id), `${where}: id 오류/중복`);
+    ids.add(ch.id);
+    assert(isStr(ch.name, 16) && isStr(ch.text, 40), `${where}: name/text 오류`);
+    assert(Array.isArray(ch.goals) && ch.goals.length > 0 && ch.goals.length <= 4, `${where}: goals 오류`);
+    for (const g of ch.goals) {
+      assert(isObj(g) && GOAL_KINDS.has(g.kind) && isInt(g.n, 1, 1e7), `${where}: 목표 오류`);
+      if (g.kind === 'sold' || g.kind === 'rate') assert(Object.hasOwn(items, g.item), `${where}: 목표 품목 오류`);
+      if (g.kind === 'built') assert(Object.hasOwn(machines, g.machine), `${where}: 목표 기계 오류`);
+    }
+    assert(isObj(ch.reward) && isInt(ch.reward.money, 0, 1e9), `${where}: reward 오류`);
+    validateParts(ch.reward.parts, `${where}.reward.parts`, items);
+  }
+  return data.chapters;
+}
+
 /** 시뮬레이션이 쓰는 규칙 묶음. 순수 데이터 + 조회용 색인. */
-export function buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones }) {
+export function buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones, chapters }) {
   const recipesByStation = Object.create(null);
   for (const id of Object.keys(machines)) recipesByStation[id] = [];
   for (const r of recipes) for (const s of r.stations) recipesByStation[s].push(r);
-  return { game, items, machines, recipes, recipesByStation, tutorial, progression, orders, zones };
+  return { game, items, machines, recipes, recipesByStation, tutorial, progression, orders, zones, chapters };
 }
 
-export const DATA_FILES = ['palette', 'game', 'items', 'machines', 'recipes', 'tutorial', 'progression', 'orders', 'zones'];
+export const DATA_FILES = ['palette', 'game', 'items', 'machines', 'recipes', 'tutorial', 'progression', 'orders', 'zones', 'chapters'];
 
 export function validateAll(raw) {
   const palette = validatePalette(raw.palette);
@@ -330,7 +353,8 @@ export function validateAll(raw) {
   const tutorial = validateTutorial(raw.tutorial, items, machines, orders);
   const progression = validateProgression(raw.progression, { recipes, machines, items, tutorial });
   const zones = validateZones(raw.zones, items, game);
-  return { palette, rules: buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones }) };
+  const chapters = validateChapters(raw.chapters, items, machines);
+  return { palette, rules: buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones, chapters }) };
 }
 
 async function fetchJson(url) {

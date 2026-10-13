@@ -35,7 +35,7 @@
         <button type="button" data-panel="orders" aria-expanded="false" aria-controls="panel-orders">주문</button>
         <button type="button" data-panel="recipes" aria-expanded="false" aria-controls="panel-recipes">레시피</button>
         <button type="button" data-panel="build" aria-expanded="false" aria-controls="panel-build">건설</button>
-        <button type="button" data-panel="stats" aria-expanded="false" aria-controls="panel-stats">통계</button>
+        <button type="button" data-panel="stats" aria-expanded="false" aria-controls="panel-stats">목표</button>
         <button type="button" data-ui="overlay" aria-pressed="false" title="병목 보기 (O)">병목</button>
         <button type="button" data-panel="help" aria-expanded="false" aria-controls="panel-help">도움말</button>
         <button type="button" data-panel="info" aria-expanded="false" aria-controls="panel-info">정보</button>
@@ -79,6 +79,15 @@
         <button type="button" id="bp-name-cancel">취소</button>
       </div>
     </div>
+
+    <!-- 엔딩: 마지막 장을 끝내면 한 번 (목표 패널에서 다시 볼 수 있다) -->
+    <section class="ending" id="ending" role="dialog" aria-labelledby="ending-title" hidden>
+      <canvas id="ending-sprite" class="ending-sprite" width="16" height="16" aria-hidden="true"></canvas>
+      <h2 id="ending-title">버거 제국 완성!</h2>
+      <p>손으로 굽던 패티 한 장이 스스로 돌아가는 공장이 됐다.</p>
+      <dl class="kv" id="ending-stats"></dl>
+      <button type="button" class="wide-btn build-confirm" id="btn-ending-close">계속 키우기</button>
+    </section>
 
     <p class="banner" id="banner" role="status" aria-live="polite" hidden></p>
 
@@ -178,9 +187,17 @@
 
     <section class="panel panel-stats" id="panel-stats" aria-labelledby="panel-stats-title" hidden>
       <header class="panel-head">
-        <h2 id="panel-stats-title">통계</h2>
+        <h2 id="panel-stats-title">목표 · 통계</h2>
         <button type="button" class="panel-close" data-close>닫기</button>
       </header>
+      <section class="chapter" id="chapter-box" aria-labelledby="chapter-name">
+        <p class="chapter-head"><span class="chapter-name" id="chapter-name"></span><span class="muted" id="chapter-count"></span></p>
+        <p class="muted" id="chapter-text"></p>
+        <ul class="goal-list" id="goal-list"></ul>
+        <p class="chapter-reward" id="chapter-reward"></p>
+        <button type="button" class="wide-btn" id="btn-ending" hidden>엔딩 다시 보기</button>
+      </section>
+      <h3 class="info-sub">통계</h3>
       <p class="stat-headline"><span class="muted">최근 5분 수익</span> <strong id="stats-earned">0</strong></p>
       <canvas class="earn-chart" id="earn-chart" width="122" height="40" role="img" aria-label="최근 5분 10초 단위 수익 막대 그래프"></canvas>
       <p class="chart-axis"><span>5분 전</span><span id="earn-hover" class="muted">막대를 누르면 값</span><span>지금</span></p>

@@ -16,6 +16,7 @@ import { createOrders, updateOrders } from './orders.js';
 import { TILE, getTile, setTile } from './grid.js';
 import { createPower, updatePower } from './power.js';
 import { zoneMult } from './zones.js';
+import { createChapters, updateChapters } from './chapters.js';
 
 export const NO_INPUT = Object.freeze({
   moveX: 0, moveY: 0, interactPressed: false, interactHeld: false, dropPressed: false,
@@ -48,7 +49,7 @@ export function createWorld(rules) {
   }
 
   return {
-    version: 9,
+    version: 10,
     rng: 20261013, // 난수 씨앗 (rng.js)
     tick: 0,
     time: 0,
@@ -75,6 +76,7 @@ export function createWorld(rules) {
     market: createMarket(),
     orders: createOrders(),
     tutorial: createTutorial(rules.progression.start.tutorial),
+    chapters: createChapters(),
     // 렌더/사운드가 읽고 비우는 일회성 사건 목록
     events: [],
   };
@@ -119,6 +121,7 @@ export function stepWorld(world, input, dt, rules) {
   // 1초마다 기계 상태 기록 (최근 60초 가동률)
   if (world.tick % rules.game.ticksPerSecond === 0) {
     for (const st of world.stations) if (st.hist !== undefined) sampleHistory(st);
+    updateChapters(world, rules);
   }
   updateMarket(world, rules, dt);
   updateOrders(world, rules, dt);

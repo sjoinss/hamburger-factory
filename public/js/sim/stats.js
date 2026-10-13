@@ -6,7 +6,8 @@ export const BUCKETS = 30;
 export const HISTORY_SECONDS = 60;
 
 export function createStats() {
-  return { sold: {}, earned: 0, built: {}, timeline: [] };
+  // orders: 끝낸 주문 수 (done 완료, failed 실패, auto 인식기가 맡긴 것, bundled 묶음 납품)
+  return { sold: {}, earned: 0, built: {}, timeline: [], orders: { done: 0, failed: 0, auto: 0, bundled: 0 } };
 }
 
 function bucket(world) {
@@ -54,6 +55,15 @@ export function perMinute(world) {
   const span = Math.min(60, Math.max(BUCKET_SECONDS, world.time));
   for (const v of Object.values(out)) for (const k of Object.keys(v)) v[k] = Math.round((v[k] * 60) / span);
   return out;
+}
+
+/** 최근 60초 수익 (분당) */
+export function earnedPerMinute(world) {
+  const since = world.time - 60;
+  let sum = 0;
+  for (const b of world.stats.timeline) if (b.t0 + BUCKET_SECONDS > since) sum += b.earned;
+  const span = Math.min(60, Math.max(BUCKET_SECONDS, world.time));
+  return Math.round((sum * 60) / span);
 }
 
 /** 기계 상태 기록 (초마다 한 글자: r 가동, i 대기, b 막힘) */

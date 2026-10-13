@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "chapters": [
+    {
+      "id": "open",
+      "name": "1장 개업",
+      "text": "손으로 만든 햄버거를 팔아 가게 문을 연다",
+      "goals": [
+        { "kind": "sold", "item": "burger", "n": 5 }
+      ],
+      "reward": { "money": 30, "parts": {} }
+    },
+    {
+      "id": "kitchen",
+      "name": "2장 자동 주방",
+      "text": "사람 손 없이 햄버거가 나오는 주방",
+      "goals": [
+        { "kind": "built", "machine": "burger_assembler", "n": 1 },
+        { "kind": "rate", "item": "burger", "n": 4 }
+      ],
+      "reward": { "money": 100, "parts": { "iron_plate": 20, "gear": 5 } }
+    },
+    {
+      "id": "regulars",
+      "name": "3장 단골 가게",
+      "text": "주문을 제때 처리해서 평판을 쌓는다",
+      "goals": [
+        { "kind": "orders", "n": 10 },
+        { "kind": "reputation", "n": 10 }
+      ],
+      "reward": { "money": 200, "parts": { "iron_plate": 20 } }
+    },
+    {
+      "id": "expand",
+      "name": "4장 공장 확장",
+      "text": "옆 구역을 사서 라인을 늘린다",
+      "goals": [
+        { "kind": "zones", "n": 1 },
+        { "kind": "rate", "item": "burger", "n": 12 }
+      ],
+      "reward": { "money": 300, "parts": { "motor": 4, "wire": 10 } }
+    },
+    {
+      "id": "sets",
+      "name": "5장 세트 메뉴",
+      "text": "버거·감자튀김·콜라를 세트로 판다",
+      "goals": [
+        { "kind": "sold", "item": "set", "n": 10 },
+        { "kind": "bundled", "n": 5 }
+      ],
+      "reward": { "money": 500, "parts": { "sensor": 2, "circuit": 1 } }
+    },
+    {
+      "id": "auto",
+      "name": "6장 완전 자동",
+      "text": "가만히 있어도 주문이 처리되는 공장",
+      "goals": [
+        { "kind": "autoOrders", "n": 30 },
+        { "kind": "earnRate", "n": 300 }
+      ],
+      "reward": { "money": 1000, "parts": {} }
+    },
+    {
+      "id": "empire",
+      "name": "7장 버거 제국",
+      "text": "분당 햄버거 60개를 파는 거대한 공장",
+      "goals": [
+        { "kind": "rate", "item": "burger", "n": 60 },
+        { "kind": "reputation", "n": 100 }
+      ],
+      "reward": { "money": 0, "parts": {} }
+    }
+  ]
+}

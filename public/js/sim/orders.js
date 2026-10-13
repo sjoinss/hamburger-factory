@@ -60,6 +60,10 @@ function finish(world, rules, order, done, bundled = false) {
   order.leaveAt = world.time + rules.orders.leaveSeconds;
   world.reputation += done ? kind.repDone : kind.repFail;
   const reward = done ? Math.round(order.reward * (bundled ? rules.orders.bundleBonus : 1)) : 0;
+  const tally = world.stats.orders;
+  tally[done ? 'done' : 'failed'] += 1;
+  if (done && order.auto) tally.auto += 1;
+  if (done && bundled) tally.bundled += 1;
   if (done) {
     world.money += reward;
     world.stats.earned += reward;

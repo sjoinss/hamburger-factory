@@ -117,6 +117,15 @@ function restore(rules, s) {
   restoreMarket(w, s.market, c);
   restoreOrders(rules, w, s.orders, c);
   restoreTutorial(rules, w, s.tutorial);
+  if (isObj(s.chapters)) {
+    const ended = s.chapters.ended === true;
+    w.chapters = {
+      index: int(s.chapters.index, 0, rules.chapters.length, 0),
+      ended,
+      endedAt: ended && s.chapters.endedAt !== null ? num(s.chapters.endedAt, 0, 1e9, w.time) : null,
+    };
+    if (w.chapters.index >= rules.chapters.length) w.chapters.ended = true;
+  }
   w.stationsVersion += 1;
   return { world: w, dropped };
 }
@@ -321,6 +330,8 @@ function restoreStats(rules, w, raw, c) {
   st.sold = c.counts(raw.sold);
   st.earned = num(raw.earned, 0, 1e12, 0);
   st.built = c.counts(raw.built, (k) => Object.hasOwn(rules.machines, k));
+  const o = isObj(raw.orders) ? raw.orders : {};
+  st.orders = { done: int(o.done, 0, 1e9, 0), failed: int(o.failed, 0, 1e9, 0), auto: int(o.auto, 0, 1e9, 0), bundled: int(o.bundled, 0, 1e9, 0) };
   st.timeline = (Array.isArray(raw.timeline) ? raw.timeline.slice(-BUCKETS) : [])
     .filter((b) => isObj(b) && fin(b.t0))
     .map((b) => ({ t0: b.t0, produced: c.counts(b.produced), consumed: c.counts(b.consumed), sold: c.counts(b.sold), earned: num(b.earned, 0, 1e12, 0) }));

@@ -24,6 +24,7 @@ function autoWorld() {
   w.stats.sold.burger = 60;
   run(w, 1);
   Object.assign(w.player, { x: 15.5, y: 10.5, prevX: 15.5, prevY: 10.5 });
+  w.chapters.ended = true; // 챕터 보상이 돈 계산에 끼지 않게
   w.orders.timer = 1e9;
   w.parts = { ...w.parts, iron_plate: 500, gear: 200, heat_plate: 50, wire: 100, motor: 50, sensor: 20, circuit: 20 };
   return w;
