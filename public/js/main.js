@@ -190,7 +190,7 @@ async function boot() {
   });
   if (saved.error) hud.banner(saved.error, 4);
   else if (saved.world) {
-    hud.banner(saved.dropped ? `이어서 하기 (자리가 맞지 않는 기계 ${saved.dropped}개는 뺐다)` : '이어서 하기', 2);
+    hud.banner('이어서 하기', 1.5);
   }
   if (flags.has('debug')) Object.assign(window.__game, { sound, settings });
 
@@ -345,21 +345,19 @@ async function boot() {
       }
       if (ev.type === 'zoneBought') {
         const z = rules.zones.zones.find((x) => x.id === ev.zone);
-        hud.banner(`${z.name} 매입! ${z.trait.text}`, 3);
+        hud.banner(`${z.name} 매입!`, 2);
       }
       if (ev.type === 'chapterDone') {
         const done = rules.chapters.find((c) => c.id === ev.chapter);
         const next = rules.chapters[world.chapters.index];
         hud.flashMoney();
-        hud.banner(`${done.name} 완료!${ev.reward.money ? ` +${ev.reward.money}` : ''}${next ? ` · 다음: ${next.name} (목표 메뉴)` : ''}`, 4);
+        hud.banner(`${done.name} 완료!${ev.reward.money ? ` +${ev.reward.money}` : ''}`, 3);
       }
       if (ev.type === 'ending') chapterView.showEnding();
-      if (ev.type === 'orderFailed') hud.banner('주문 시간 초과: 손님이 떠났다 (평판 하락)', 3);
+      if (ev.type === 'orderFailed') hud.banner('손님이 떠났다', 2);
       if (ev.type === 'orderNew' && panels.current() === 'orders') orderBoard.forceRender();
       if (ev.type === 'unlocked') {
-        const names = ev.machines.map((id) => rules.machines[id].name).join(', ');
-        const parts = Object.entries(ev.parts).map(([id, n]) => `${rules.items[id].name} ${n}`).join(', ');
-        hud.banner(`새 기계: ${names}${parts ? ` · 부품 받음: ${parts}` : ''}`);
+        hud.banner(`새 기계 ${ev.machines.length}개!`, 3);
       }
       if (ev.type === 'unlocked' || ev.type === 'built' || ev.type === 'removed') {
         if (panels.current() === 'build') build.renderPanel();

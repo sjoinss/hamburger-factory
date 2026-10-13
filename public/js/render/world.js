@@ -252,7 +252,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
     for (const z of rules.zones.zones) {
       if (world.zonesBought.includes(z.id)) continue;
       const cx = sx((z.x + z.w / 2) * ts);
-      const lines = [`${z.name} (잠김)`, z.trait.text, '건설 메뉴에서 매입'];
+      const lines = [`${z.name} (잠김)`, z.trait.text];
       lines.forEach((t, i) => {
         const cy = sy(mid) + (i - 1) * 16 * k;
         ctx.fillStyle = bank.color('K');

@@ -90,11 +90,11 @@ export function createOrderBoard({ world, rules, bank, onAssigned }) {
       const open = enabled ? openOrders(world) : [];
       empty.hidden = open.length > 0;
       empty.textContent = enabled
-        ? '손님을 기다리는 중. 만든 물건은 출고구에서 주문을 먼저 채우고, 남으면 시세로 팔린다.'
-        : '아직 주문이 없다. 만든 물건은 출고구에서 팔린다. (햄버거 15개를 팔면 주문서가 열린다)';
+        ? '손님 기다리는 중'
+        : '아직 주문 없음';
       list.replaceChildren(...open.map(row));
       rate.hidden = !enabled;
-      rate.textContent = `평판 ${world.reputation} · 손님이 ${Math.round(spawnInterval(world, rules))}초마다 온다`;
+      rate.textContent = `손님 ${Math.round(spawnInterval(world, rules))}초마다`;
 
       const mk = world.market;
       if (world.features.includes('market') && mk.headline) {

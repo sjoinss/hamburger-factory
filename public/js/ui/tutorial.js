@@ -56,7 +56,7 @@ export function createTutorialCard({ rules, world, onRestart }) {
         text.textContent = step.text;
       } else if (key === 'done') {
         count.textContent = '완료';
-        text.textContent = "레시피는 레시피북, 다음 목표는 상단 '목표'에서";
+        text.textContent = '';
       }
     },
   };

@@ -96,7 +96,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
   function finishSelect(a, b) {
     const bp = captureBlueprint(world, rules, a.x, a.y, b.x, b.y);
     if (!bp) {
-      flash('고른 영역에 통째로 들어온 지은 기계가 없다');
+      flash('고른 영역에 기계 없음');
       mode.a = null;
       updateConfirmLabel();
       return;
@@ -130,12 +130,12 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     }
     const res = removeMachine(world, rules, cursor.x, cursor.y);
     if (res.ok) {
-      flash(`${rules.machines[res.station.type].name} 철거: 부품을 돌려받았다`);
+      flash(`${rules.machines[res.station.type].name} 철거`);
       renderPanel();
     } else if (res.reason === 'items') {
-      flash(`안에 든 물건 ${res.count}개를 받을 손이 모자라다 (빈손 ${res.free}칸)`);
+      flash(`손이 모자라다 (${res.count}개)`);
     } else {
-      flash('철거할 수 있는 기계가 없다 (처음 있던 작업대는 철거 불가)');
+      flash('철거할 수 없다');
     }
   }
 
@@ -187,7 +187,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     const locked = Object.values(rules.machines).filter((m) => m.cost).length - world.unlocked.machines.length;
     lockedNote.hidden = locked <= 0;
     lockedNote.textContent = world.unlocked.machines.length === 0
-      ? '아직 지을 수 있는 기계가 없다. 첫 햄버거를 팔면 열린다.'
+      ? '첫 햄버거를 팔면 열린다'
       : `잠긴 기계 ${locked}개`;
   }
 
@@ -364,7 +364,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
       const p = preview();
       if (!p) return null;
       if (p.kind === 'select') {
-        if (!mode.a) return { text: touch ? '청사진: 영역을 끌거나, 모서리를 탭하고 시작점' : '청사진: 영역을 끌어서 고르기 (또는 Enter 로 두 모서리)' };
+        if (!mode.a) return { text: touch ? '청사진: 영역 끌기' : '청사진: 영역 끌기' };
         return { text: `청사진: ${p.w}×${p.h} 영역 · ${touch ? '여기까지 저장' : '끌기를 놓거나 Enter'}` };
       }
       if (p.kind === 'paste') {

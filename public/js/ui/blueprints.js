@@ -101,7 +101,7 @@ export function createBlueprints({ world, rules, bank, onPaste, onCapture, flash
       return;
     }
     list.push(bp);
-    if (store()) flash(`청사진 '${bp.name}' 저장: 건설 메뉴에서 붙여넣기`);
+    if (store()) flash(`청사진 '${bp.name}' 저장`);
     render();
   }
   $('bp-name-ok').addEventListener('click', commitName);

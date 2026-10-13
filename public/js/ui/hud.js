@@ -66,8 +66,8 @@ export function machineStatusText(station, rules, world = null) {
     if (station.output.length > 0) return `다 자람: ${crop} ${station.output.length}개 수확 가능`;
     return `자라는 중 ${Math.floor(farmGrowth(rules, station) * 100)}%`;
   }
-  if (kind === 'splitter') return '뒤에서 받아 왼쪽·오른쪽으로 번갈아 보냄';
-  if (kind === 'merger') return '세 방향에서 받아 앞으로 보냄';
+  if (kind === 'splitter') return '좌우로 번갈아 나눔';
+  if (kind === 'merger') return '모아서 앞으로';
   if (station.status === 'running') {
     const r = machineRecipe(rules, station);
     return `가동 중 ${r ? Math.floor((station.progress / r.seconds) * 100) : 0}%`;
@@ -110,7 +110,7 @@ export function describeInteraction(act, rules, touch, world = null) {
       };
     case 'blocked': {
       const where = act.machine ? `${act.machine.name}: ` : '';
-      if (act.reason === 'full') return { blocked: true, text: `${where}손이 꽉 찼다. ${dropKey}로 하나 내려놓기` };
+      if (act.reason === 'full') return { blocked: true, text: `${where}손이 꽉 찼다 (${dropKey})` };
       if (act.reason === 'belt-busy') return { blocked: true, text: `${where}벨트 가운데가 차 있다` };
       if (act.reason === 'belt-empty') return { blocked: true, text: '' };
       if (act.reason === 'bag') return { blocked: true, text: `${where}주문 묶음은 손으로 집지 않는다` };

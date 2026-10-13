@@ -127,7 +127,7 @@ export function createInspector({ world, rules, bank }) {
       const order = orderById(world, m.orderId);
       gateOrderInfo.textContent = order
         ? `${m.auto ? '인식기가 맡긴 ' : ''}주문 #${order.id}: ${Object.entries(order.items).map(([id, n]) => `${rules.items[id].name} ${m.orderSent[id] ?? 0}/${n}`).join(', ')}`
-        : "주문서에서 '게이트에 맡기기' 를 누르면 그 주문을 내보낸다.";
+        : '맡은 주문 없음';
     }
   }
 
