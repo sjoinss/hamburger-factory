@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "tracks": {
     "start": [
       { "text": "생고기 상자에서 고기 꺼내기", "target": { "station": "crate", "item": "raw_meat" }, "done": { "have": "raw_meat" } },
@@ -52,6 +52,22 @@
       { "text": "가만히 기다리기: 인식기가 주문을 맡긴다", "target": { "ui": "orders" }, "done": { "order": "auto" } },
       { "text": "출고구 앞에 합류 포장기 (묶음 보너스)", "target": { "ui": "build" }, "done": { "built": "bundler" } },
       { "text": "주문을 묶음으로 납품하기", "target": { "ui": "orders" }, "done": { "order": "bundle" } }
+    ],
+    "pizza": [
+      { "text": "토마토밭 짓기", "target": { "ui": "build" }, "done": { "built": "tomato_field" } },
+      { "text": "소스 냄비로 토마토 소스 만들기", "target": { "ui": "build" }, "done": { "made": "sauce_pot" } },
+      { "text": "치즈 통: 입고구에서 우유를 들여온다", "target": { "ui": "build" }, "done": { "made": "cheese_vat" } },
+      { "text": "피자 오븐: 반죽 + 소스 + 치즈", "target": { "ui": "build" }, "done": { "made": "pizza_oven" } }
+    ],
+    "chicken": [
+      { "text": "염지통: 생닭 + 물", "target": { "ui": "build" }, "done": { "made": "brine_tank" } },
+      { "text": "치킨 튀김기로 치킨 만들기", "target": { "ui": "build" }, "done": { "made": "chicken_fryer" } },
+      { "text": "소시지 기계: 다진고기 2개", "target": { "ui": "build" }, "done": { "made": "sausage_maker" } },
+      { "text": "핫도그 조립기: 번 + 소시지", "target": { "ui": "build" }, "done": { "made": "hotdog_assembler" } }
+    ],
+    "dessert": [
+      { "text": "부품 조립기: 모터 + 철판 2 → 냉동 유닛", "target": { "ui": "build" }, "done": { "built": "freezer" } },
+      { "text": "냉동고: 우유 + 시럽 → 아이스크림", "target": { "ui": "build" }, "done": { "made": "freezer" } }
     ]
   }
 }

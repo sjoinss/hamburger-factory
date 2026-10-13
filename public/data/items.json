@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "items": {
     "raw_meat"       : { "name": "생고기", "sprite": "rawMeat", "price": 0, "category": "food" },
     "ground_meat"    : { "name": "다진고기", "sprite": "groundMeat", "price": 1, "category": "food" },
@@ -28,6 +28,18 @@
     "set"            : { "name": "세트", "sprite": "setMeal", "price": 40, "category": "food" },
     "sensor"         : { "name": "센서", "sprite": "sensor", "price": 0, "category": "part" },
     "circuit"        : { "name": "제어 회로", "sprite": "circuit", "price": 0, "category": "part" },
-    "order_bag"      : { "name": "주문 묶음", "sprite": "orderBag", "price": 0, "category": "bundle" }
+    "order_bag"      : { "name": "주문 묶음", "sprite": "orderBag", "price": 0, "category": "bundle" },
+    "tomato"         : { "name": "토마토", "sprite": "tomato", "price": 0, "category": "food" },
+    "tomato_sauce"   : { "name": "토마토 소스", "sprite": "tomatoSauce", "price": 0, "category": "food" },
+    "milk"           : { "name": "우유", "sprite": "milk", "price": 0, "category": "food" },
+    "cheese"         : { "name": "치즈", "sprite": "cheese", "price": 0, "category": "food" },
+    "pizza"          : { "name": "피자", "sprite": "pizza", "price": 30, "category": "food" },
+    "raw_chicken"    : { "name": "생닭", "sprite": "rawChicken", "price": 0, "category": "food" },
+    "brined_chicken" : { "name": "염지 닭", "sprite": "brinedChicken", "price": 0, "category": "food" },
+    "fried_chicken"  : { "name": "치킨", "sprite": "friedChicken", "price": 20, "category": "food" },
+    "sausage"        : { "name": "소시지", "sprite": "sausage", "price": 0, "category": "food" },
+    "hotdog"         : { "name": "핫도그", "sprite": "hotdog", "price": 14, "category": "food" },
+    "ice_cream"      : { "name": "아이스크림", "sprite": "iceCream", "price": 14, "category": "food" },
+    "cooling_unit"   : { "name": "냉동 유닛", "sprite": "coolingUnit", "price": 0, "category": "part" }
   }
 }

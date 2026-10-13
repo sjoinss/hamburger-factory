@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "recipes": [
     {
       "id": "chop_meat",
@@ -238,6 +238,120 @@
         "circuit": 1
       },
       "seconds": 6
+    },
+    {
+      "id": "make_sauce",
+      "verb": "끓이기",
+      "stations": ["sauce_pot"],
+      "inputs": {
+        "tomato": 2
+      },
+      "outputs": {
+        "tomato_sauce": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "make_cheese",
+      "verb": "굳히기",
+      "stations": ["cheese_vat"],
+      "inputs": {
+        "milk": 2
+      },
+      "outputs": {
+        "cheese": 1
+      },
+      "seconds": 4
+    },
+    {
+      "id": "bake_pizza",
+      "verb": "굽기",
+      "stations": ["pizza_oven"],
+      "inputs": {
+        "dough": 1,
+        "tomato_sauce": 1,
+        "cheese": 1
+      },
+      "outputs": {
+        "pizza": 1
+      },
+      "seconds": 5
+    },
+    {
+      "id": "brine_chicken",
+      "verb": "절이기",
+      "stations": ["brine_tank"],
+      "inputs": {
+        "raw_chicken": 1,
+        "water": 1
+      },
+      "outputs": {
+        "brined_chicken": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "fry_chicken",
+      "verb": "튀기기",
+      "stations": ["chicken_fryer"],
+      "inputs": {
+        "brined_chicken": 1
+      },
+      "outputs": {
+        "fried_chicken": 1
+      },
+      "seconds": 5
+    },
+    {
+      "id": "make_sausage",
+      "verb": "채우기",
+      "stations": ["sausage_maker"],
+      "inputs": {
+        "ground_meat": 2
+      },
+      "outputs": {
+        "sausage": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "assemble_hotdog",
+      "verb": "조립",
+      "stations": ["hotdog_assembler"],
+      "inputs": {
+        "bun": 1,
+        "sausage": 1
+      },
+      "outputs": {
+        "hotdog": 1
+      },
+      "seconds": 2
+    },
+    {
+      "id": "make_cooling",
+      "verb": "조립",
+      "stations": ["part_assembler"],
+      "inputs": {
+        "motor": 1,
+        "iron_plate": 2
+      },
+      "outputs": {
+        "cooling_unit": 1
+      },
+      "seconds": 6
+    },
+    {
+      "id": "freeze_ice_cream",
+      "verb": "얼리기",
+      "stations": ["freezer"],
+      "inputs": {
+        "milk": 1,
+        "syrup": 1
+      },
+      "outputs": {
+        "ice_cream": 1
+      },
+      "seconds": 5
     }
   ]
 }

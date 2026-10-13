@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "machines": {
     "crate": {
       "name": "재료 상자",
@@ -108,7 +108,7 @@
       "sprite": "supply",
       "seconds": 2,
       "outputCap": 4,
-      "supplies": ["raw_meat", "iron_ore", "coal", "syrup", "water"],
+      "supplies": ["raw_meat", "iron_ore", "coal", "syrup", "water", "milk", "raw_chicken"],
       "cost": {
         "iron_plate": 3,
         "gear": 1
@@ -465,6 +465,136 @@
         "iron_plate": 6,
         "sensor": 1,
         "motor": 1
+      }
+    },
+    "tomato_field": {
+      "name": "토마토밭",
+      "kind": "farm",
+      "size": [2, 2],
+      "sprite": "fieldTomato",
+      "crop": "tomato",
+      "growSeconds": 14,
+      "yield": 4,
+      "harvestSeconds": 0.8,
+      "cost": {
+        "iron_plate": 2
+      }
+    },
+    "sauce_pot": {
+      "name": "소스 냄비",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "saucePot",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 8,
+      "cost": {
+        "iron_plate": 3,
+        "heat_plate": 1
+      }
+    },
+    "cheese_vat": {
+      "name": "치즈 통",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "cheeseVat",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 8,
+      "cost": {
+        "iron_plate": 3,
+        "gear": 1,
+        "motor": 1
+      }
+    },
+    "pizza_oven": {
+      "name": "피자 오븐",
+      "kind": "machine",
+      "size": [2, 1],
+      "sprite": "pizzaOven",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 20,
+      "cost": {
+        "iron_plate": 6,
+        "heat_plate": 2,
+        "motor": 1
+      }
+    },
+    "brine_tank": {
+      "name": "염지통",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "brineTank",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 4,
+      "cost": {
+        "iron_plate": 3,
+        "gear": 1
+      }
+    },
+    "chicken_fryer": {
+      "name": "치킨 튀김기",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "chickenFryer",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 15,
+      "cost": {
+        "iron_plate": 4,
+        "heat_plate": 1,
+        "motor": 1
+      }
+    },
+    "sausage_maker": {
+      "name": "소시지 기계",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "sausageMaker",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 10,
+      "cost": {
+        "iron_plate": 3,
+        "gear": 2,
+        "motor": 1
+      }
+    },
+    "hotdog_assembler": {
+      "name": "핫도그 조립기",
+      "kind": "machine",
+      "size": [2, 1],
+      "sprite": "hotdogAssembler",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 10,
+      "cost": {
+        "iron_plate": 5,
+        "gear": 2,
+        "motor": 1
+      }
+    },
+    "freezer": {
+      "name": "냉동고",
+      "kind": "machine",
+      "size": [2, 1],
+      "sprite": "freezer",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "power": 25,
+      "cost": {
+        "iron_plate": 6,
+        "cooling_unit": 1
       }
     }
   }

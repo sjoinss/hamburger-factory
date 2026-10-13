@@ -61,7 +61,7 @@ public/
     input.js         키보드/마우스
     sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, rng, path, player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, chapters, world
     render/          sprites(bake/캐시), camera, world, customers, effects
-    sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, farm-potato, items, machines, storage, workshop, auto, ui
+    sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, farm-potato, items, machines, storage, workshop, auto, menu, ui
     audio/           Web Audio 합성 효과음 (파일 없음)
     ui/              상단 바/손/안내(hud), 접이식 패널, 레시피북, 튜토리얼 카드, 건설 모드(구역 매입·청사진 포함), 기계 정보, 통계, 주문서, 탭 이동, 설정(저장·소리)
 tests/               node:test
@@ -80,3 +80,4 @@ tests/               node:test
 - [x] M6 부품 공방 + 확장 (햄버거 25개: 제련로·프레스·와이어·기어 선반·부품 조립기·발전기, 전력, 구역 매입 / 40개: 감자튀김·콜라·세트)
 - [x] M7 완전 자동화 (햄버거 60개: 주문 인식기·합류 포장기, 센서·제어 회로 / 청사진, 저장·불러오기, 효과음, 평판이 오르면 손님이 더 자주 온다)
 - [x] M8 챕터 목표 (1장 개업 ~ 7장 버거 제국, 장마다 보상, 마지막 장을 끝내면 엔딩 후 샌드박스. 상단 '목표')
+- [x] M9 메뉴 확장 (햄버거 80개: 피자 — 토마토밭·소스 냄비·치즈 통·피자 오븐 / 피자 15개: 치킨·핫도그 — 염지통·치킨 튀김기·소시지 기계·핫도그 조립기 / 치킨 15개: 아이스크림 — 냉동 유닛·냉동고. 7장 푸드코트 추가)

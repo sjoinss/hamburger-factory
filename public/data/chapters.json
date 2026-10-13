@@ -8,7 +8,10 @@
       "goals": [
         { "kind": "sold", "item": "burger", "n": 5 }
       ],
-      "reward": { "money": 30, "parts": {} }
+      "reward": {
+        "money": 30,
+        "parts": {}
+      }
     },
     {
       "id": "kitchen",
@@ -18,7 +21,13 @@
         { "kind": "built", "machine": "burger_assembler", "n": 1 },
         { "kind": "rate", "item": "burger", "n": 4 }
       ],
-      "reward": { "money": 100, "parts": { "iron_plate": 20, "gear": 5 } }
+      "reward": {
+        "money": 100,
+        "parts": {
+          "iron_plate": 20,
+          "gear": 5
+        }
+      }
     },
     {
       "id": "regulars",
@@ -28,7 +37,12 @@
         { "kind": "orders", "n": 10 },
         { "kind": "reputation", "n": 10 }
       ],
-      "reward": { "money": 200, "parts": { "iron_plate": 20 } }
+      "reward": {
+        "money": 200,
+        "parts": {
+          "iron_plate": 20
+        }
+      }
     },
     {
       "id": "expand",
@@ -38,7 +52,13 @@
         { "kind": "zones", "n": 1 },
         { "kind": "rate", "item": "burger", "n": 12 }
       ],
-      "reward": { "money": 300, "parts": { "motor": 4, "wire": 10 } }
+      "reward": {
+        "money": 300,
+        "parts": {
+          "motor": 4,
+          "wire": 10
+        }
+      }
     },
     {
       "id": "sets",
@@ -48,7 +68,13 @@
         { "kind": "sold", "item": "set", "n": 10 },
         { "kind": "bundled", "n": 5 }
       ],
-      "reward": { "money": 500, "parts": { "sensor": 2, "circuit": 1 } }
+      "reward": {
+        "money": 500,
+        "parts": {
+          "sensor": 2,
+          "circuit": 1
+        }
+      }
     },
     {
       "id": "auto",
@@ -58,17 +84,38 @@
         { "kind": "autoOrders", "n": 30 },
         { "kind": "earnRate", "n": 300 }
       ],
-      "reward": { "money": 1000, "parts": {} }
+      "reward": {
+        "money": 1000,
+        "parts": {}
+      }
+    },
+    {
+      "id": "foodcourt",
+      "name": "7장 푸드코트",
+      "text": "피자·치킨·핫도그·아이스크림까지 판다",
+      "goals": [
+        { "kind": "sold", "item": "pizza", "n": 10 },
+        { "kind": "sold", "item": "fried_chicken", "n": 10 },
+        { "kind": "sold", "item": "hotdog", "n": 10 },
+        { "kind": "sold", "item": "ice_cream", "n": 10 }
+      ],
+      "reward": {
+        "money": 1500,
+        "parts": {}
+      }
     },
     {
       "id": "empire",
-      "name": "7장 버거 제국",
+      "name": "8장 버거 제국",
       "text": "분당 햄버거 60개를 파는 거대한 공장",
       "goals": [
         { "kind": "rate", "item": "burger", "n": 60 },
         { "kind": "reputation", "n": 100 }
       ],
-      "reward": { "money": 0, "parts": {} }
+      "reward": {
+        "money": 0,
+        "parts": {}
+      }
     }
   ]
 }

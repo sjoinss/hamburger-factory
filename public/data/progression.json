@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "start": {
     "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "mill_wheat", "mix_dough", "bake_bun", "assemble_burger"],
     "machines": [],
@@ -156,6 +156,70 @@
         }
       },
       "tutorial": "auto"
+    },
+    {
+      "id": "pizza",
+      "name": "피자 메뉴",
+      "when": {
+        "sold": {
+          "burger": 80
+        }
+      },
+      "unlock": {
+        "machines": ["tomato_field", "sauce_pot", "cheese_vat", "pizza_oven"],
+        "recipes": ["make_sauce", "make_cheese", "bake_pizza"],
+        "supplies": ["milk"]
+      },
+      "reward": {
+        "parts": {
+          "iron_plate": 30,
+          "heat_plate": 4,
+          "motor": 2
+        }
+      },
+      "tutorial": "pizza"
+    },
+    {
+      "id": "chicken",
+      "name": "치킨·핫도그",
+      "when": {
+        "sold": {
+          "pizza": 15
+        }
+      },
+      "unlock": {
+        "machines": ["brine_tank", "chicken_fryer", "sausage_maker", "hotdog_assembler"],
+        "recipes": ["brine_chicken", "fry_chicken", "make_sausage", "assemble_hotdog"],
+        "supplies": ["raw_chicken"]
+      },
+      "reward": {
+        "parts": {
+          "iron_plate": 30,
+          "heat_plate": 2,
+          "motor": 3
+        }
+      },
+      "tutorial": "chicken"
+    },
+    {
+      "id": "dessert",
+      "name": "디저트",
+      "when": {
+        "sold": {
+          "fried_chicken": 15
+        }
+      },
+      "unlock": {
+        "machines": ["freezer"],
+        "recipes": ["make_cooling", "freeze_ice_cream"]
+      },
+      "reward": {
+        "parts": {
+          "iron_plate": 20,
+          "cooling_unit": 1
+        }
+      },
+      "tutorial": "dessert"
     }
   ]
 }

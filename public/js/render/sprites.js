@@ -10,6 +10,7 @@ import * as customers from '../sprites/customers.js';
 import * as farm from '../sprites/farm.js';
 import * as ws from '../sprites/workshop.js';
 import * as auto from '../sprites/auto.js';
+import * as menu from '../sprites/menu.js';
 
 /** 이름 → 프레임 배열. 단일 그림도 프레임 1개짜리로 통일. */
 export const SPRITE_DEFS = {
@@ -61,6 +62,27 @@ export const SPRITE_DEFS = {
   orderBag: [auto.ORDER_BAG],
   orderReader: auto.ORDER_READER,
   bundler: auto.BUNDLER,
+  tomato: [menu.TOMATO],
+  tomatoSauce: [menu.TOMATO_SAUCE],
+  milk: [menu.MILK],
+  cheese: [menu.CHEESE],
+  pizza: [menu.PIZZA],
+  rawChicken: [menu.RAW_CHICKEN],
+  brinedChicken: [menu.BRINED_CHICKEN],
+  friedChicken: [menu.FRIED_CHICKEN],
+  sausage: [menu.SAUSAGE],
+  hotdog: [menu.HOTDOG],
+  iceCream: [menu.ICE_CREAM],
+  coolingUnit: [menu.COOLING_UNIT],
+  fieldTomato: menu.FIELD_TOMATO,
+  saucePot: menu.SAUCE_POT,
+  cheeseVat: menu.CHEESE_VAT,
+  pizzaOven: menu.PIZZA_OVEN,
+  brineTank: menu.BRINE_TANK,
+  chickenFryer: menu.CHICKEN_FRYER,
+  sausageMaker: menu.SAUSAGE_MAKER,
+  hotdogAssembler: menu.HOTDOG_ASSEMBLER,
+  freezer: menu.FREEZER,
   customer: customers.CUSTOMER,
   ...Object.fromEntries(Object.entries(customers.DIGITS).map(([k, rows]) => [`digit${k}`, [rows]])),
   playerDown: characters.PLAYER_DOWN,

@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "maxOpen": 6,
   "firstSpawnSeconds": 4,
   "spawnSeconds": 20,
@@ -27,7 +27,13 @@
         { "burger": 1, "patty": 1 },
         { "fries": 2 },
         { "cola": 2 },
-        { "burger": 1, "fries": 1, "cola": 1 }
+        { "burger": 1, "fries": 1, "cola": 1 },
+        { "pizza": 1 },
+        { "hotdog": 2 },
+        { "fried_chicken": 2 },
+        { "ice_cream": 2 },
+        { "burger": 1, "ice_cream": 1 },
+        { "hotdog": 1, "cola": 1 }
       ]
     },
     "special": {
@@ -42,7 +48,11 @@
         { "burger": 2, "patty": 2 },
         { "burger": 4 },
         { "set": 2 },
-        { "burger": 2, "fries": 2 }
+        { "burger": 2, "fries": 2 },
+        { "pizza": 2, "cola": 2 },
+        { "fried_chicken": 3 },
+        { "hotdog": 3, "cola": 1 },
+        { "pizza": 1, "fried_chicken": 1, "ice_cream": 2 }
       ]
     },
     "bulk": {
@@ -57,7 +67,11 @@
         { "burger": 12 },
         { "burger": 6, "patty": 6 },
         { "set": 4 },
-        { "cola": 8 }
+        { "cola": 8 },
+        { "pizza": 4 },
+        { "fried_chicken": 6 },
+        { "ice_cream": 8 },
+        { "hotdog": 8 }
       ]
     }
   }

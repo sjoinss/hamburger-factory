@@ -10,7 +10,8 @@ const GAP = { coin: 0.08, sizzle: 0.3, thud: 0.15, click: 0.12, build: 0.06, rem
 // 사건 → 소리
 const MADE_SOUND = {
   grill: 'sizzle', fryer: 'sizzle', oven: 'sizzle', smelter: 'sizzle',
-  press: 'thud', gear_lathe: 'thud', meat_cutter: 'thud', potato_cutter: 'thud',
+  pizza_oven: 'sizzle', chicken_fryer: 'sizzle', sauce_pot: 'sizzle',
+  press: 'thud', gear_lathe: 'thud', meat_cutter: 'thud', potato_cutter: 'thud', sausage_maker: 'thud',
 };
 
 function readSettings() {
