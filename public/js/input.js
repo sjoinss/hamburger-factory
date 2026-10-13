@@ -27,8 +27,8 @@ function isTypingTarget(el) {
 
 /**
  * @param canvas 게임 캔버스
- * @param touchUi {{ joystick, knob, interactBtn, dropBtn }} 터치 조작 요소
- * @param opts {{ deadzone, pinchStep, onTouchMode, touchDraws }} touchDraws(): 한 손가락 끌기를 카메라 대신 '그리기'로 쓸지
+ * @param touchUi {{ interactBtn, dropBtn }} 터치 조작 버튼
+ * @param opts {{ pinchStep, onTouchMode, touchDraws }} touchDraws(): 한 손가락 끌기를 카메라 대신 '그리기'로 쓸지
  */
 export function createInput(canvas, touchUi, opts) {
   const down = new Set();
@@ -41,7 +41,6 @@ export function createInput(canvas, touchUi, opts) {
   let dragDX = 0;
   let dragDY = 0;
   let zoomSteps = 0;
-  const stick = { x: 0, y: 0, pointerId: null };
 
   const press = (code) => {
     if (!down.has(code)) {
@@ -65,7 +64,6 @@ export function createInput(canvas, touchUi, opts) {
   window.addEventListener('keyup', (e) => release(e.code));
   window.addEventListener('blur', () => {
     down.clear();
-    stick.x = stick.y = 0;
   });
 
   let touchMode = false;
@@ -191,39 +189,7 @@ export function createInput(canvas, touchUi, opts) {
     wheel += Math.sign(e.deltaY);
   }, { passive: false });
 
-  // ── 터치: 가상 조이스틱 ──
-  const { joystick, knob, interactBtn, dropBtn } = touchUi;
-  const updateStick = (e) => {
-    const r = joystick.getBoundingClientRect();
-    const radius = r.width / 2;
-    let x = (e.clientX - (r.left + radius)) / radius;
-    let y = (e.clientY - (r.top + radius)) / radius;
-    const len = Math.hypot(x, y);
-    if (len > 1) { x /= len; y /= len; }
-    const dead = len < opts.deadzone;
-    stick.x = dead ? 0 : x;
-    stick.y = dead ? 0 : y;
-    knob.style.setProperty('--kx', `${Math.round(x * radius * 0.6)}px`);
-    knob.style.setProperty('--ky', `${Math.round(y * radius * 0.6)}px`);
-  };
-  const resetStick = () => {
-    stick.pointerId = null;
-    stick.x = stick.y = 0;
-    knob.style.setProperty('--kx', '0px');
-    knob.style.setProperty('--ky', '0px');
-  };
-  joystick.addEventListener('pointerdown', (e) => {
-    noteTouch(e);
-    e.preventDefault();
-    stick.pointerId = e.pointerId;
-    capture(joystick, e.pointerId);
-    updateStick(e);
-  });
-  joystick.addEventListener('pointermove', (e) => {
-    if (e.pointerId === stick.pointerId) updateStick(e);
-  });
-  joystick.addEventListener('pointerup', resetStick);
-  joystick.addEventListener('pointercancel', resetStick);
+  const { interactBtn, dropBtn } = touchUi;
 
   // ── 터치: 길게 누르는 버튼 (키보드 E/Q 와 같은 입력으로 취급) ──
   const bindHoldButton = (btn, code) => {
@@ -257,9 +223,8 @@ export function createInput(canvas, touchUi, opts) {
     isTouchMode: () => touchMode,
     /** 시뮬레이션 한 틱에 넘기는 입력. 틱마다 한 번 호출한다. */
     tickIntent() {
-      let moveX = axis('KeyA', 'KeyD');
-      let moveY = axis('KeyW', 'KeyS');
-      if (stick.x || stick.y) { moveX = stick.x; moveY = stick.y; }
+      const moveX = axis('KeyA', 'KeyD');
+      const moveY = axis('KeyW', 'KeyS');
       const intent = {
         moveX,
         moveY,

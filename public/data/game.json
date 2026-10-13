@@ -19,7 +19,6 @@
     "reach": 0.8
   },
   "touch": {
-    "joystickDeadzone": 0.2,
     "pinchStep": 1.25
   },
   "map": {

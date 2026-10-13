@@ -213,6 +213,12 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
 
   if (opts.overlay) drawOverlay();
   if (opts.selected) drawFrame(opts.selected, 'y');
+  if (opts.destination) {
+    // 탭해서 가는 곳: 칸이면 커서, 기계면 테두리
+    const d = opts.destination;
+    if (d.w) drawFrame(d, 'l');
+    else sprite('tileCursor', 0, d.x * ts, d.y * ts);
+  }
 
   // 바라보는 칸, 마우스 칸 (건설 중에는 건설 미리보기만)
   if (build) {

@@ -365,7 +365,7 @@ button[aria-expanded="true"] {
   left: 0;
   right: 0;
   bottom: 0;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: flex-end;
   padding: 0 calc(12px + var(--safe-r)) calc(12px + var(--safe-b)) calc(12px + var(--safe-l));
   pointer-events: none;
@@ -373,40 +373,6 @@ button[aria-expanded="true"] {
 .is-touch .touch-controls > * { pointer-events: auto; }
 .is-touch .prompt,
 .is-touch .toast { bottom: calc(136px + var(--safe-b)); }
-
-.joystick {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  background: var(--c-outline);
-  border: var(--line) solid var(--c-black);
-  box-shadow: inset 2px 2px 0 var(--c-oil), 3px 3px 0 var(--c-black);
-  touch-action: none;
-}
-/* 십자 홈 */
-.joystick::before,
-.joystick::after {
-  content: "";
-  position: absolute;
-  background: var(--c-black);
-}
-.joystick::before { left: 50%; top: 10px; bottom: 10px; width: 4px; margin-left: -2px; }
-.joystick::after { top: 50%; left: 10px; right: 10px; height: 4px; margin-top: -2px; }
-.joystick-knob {
-  --kx: 0px;
-  --ky: 0px;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 1;
-  width: 48px;
-  height: 48px;
-  margin: -24px 0 0 -24px;
-  background: var(--c-metal-2);
-  border: var(--line) solid var(--c-black);
-  box-shadow: inset 2px 2px 0 var(--c-metal-3), inset -2px -2px 0 var(--c-metal-1);
-  transform: translate(var(--kx), var(--ky));
-}
 
 .touch-buttons { display: flex; align-items: flex-end; gap: 10px; }
 .touch-btn { touch-action: none; }

@@ -146,7 +146,7 @@ export function validateGameConfig(g, items, machines) {
   assert(isInt(pl.carryCapacity, 1, 8), 'player.carryCapacity 오류');
   assert(isNum(pl.reach, 0.5, 1.5), 'player.reach 오류');
 
-  assert(isObj(g.touch) && isNum(g.touch.joystickDeadzone, 0, 0.9) && isNum(g.touch.pinchStep, 1.01, 4), 'touch 오류');
+  assert(isObj(g.touch) && isNum(g.touch.pinchStep, 1.01, 4), 'touch 오류');
 
   const m = g.map;
   assert(isObj(m) && isInt(m.roomWidth, 1, 512) && isInt(m.roomHeight, 1, 512) && isInt(m.wallThickness, 0, 8), 'map 오류');

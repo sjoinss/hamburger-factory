@@ -17,6 +17,7 @@ import { createInspector } from './ui/inspect.js';
 import { createStatsPanel } from './ui/stats.js';
 import { createOrderBoard } from './ui/orders.js';
 import { stationAt } from './sim/lookup.js';
+import { createWalker } from './ui/walk.js';
 
 const FONT_FAMILY = '"Galmuri11", ui-monospace, monospace';
 
@@ -135,6 +136,23 @@ async function boot() {
   };
   overlayBtn.addEventListener('click', () => setOverlay(!overlay));
 
+  // 모바일: 화면을 탭하면 그곳으로 걷는다 (기계를 탭하면 그 앞으로 가서 바라본다)
+  const walker = createWalker({ world, rules });
+  const facingStation = () => {
+    const t = facingTile(world.player, config.player.reach);
+    return stationAt(world, t.x, t.y);
+  };
+  function tapAt(x, y) {
+    const st = stationAt(world, x, y);
+    if (st) {
+      // 이미 그 기계 앞에서 바라보고 있으면 정보, 아니면 그 앞으로
+      if (!walker.active() && facingStation() === st) inspect(st);
+      else if (!walker.walkToStation(st)) hud.banner('갈 수 없는 곳', 1.5);
+      return;
+    }
+    if (!walker.walkTo(x, y)) hud.banner('갈 수 없는 곳', 1.5);
+  }
+
   const inspect = (st) => {
     inspector.select(st ? st.id : null);
     if (st) panels.open('info');
@@ -163,13 +181,10 @@ async function boot() {
   const input = createInput(
     canvas,
     {
-      joystick: document.getElementById('joystick'),
-      knob: document.getElementById('joystick-knob'),
       interactBtn: document.getElementById('btn-interact'),
       dropBtn: document.getElementById('btn-drop'),
     },
     {
-      deadzone: config.touch.joystickDeadzone,
       pinchStep: config.touch.pinchStep,
       onTouchMode: enterTouchMode,
       touchDraws: () => build.touchDraws(),
@@ -252,11 +267,11 @@ async function boot() {
     }
     for (const click of input.consumeClicks()) {
       if (!build.active()) {
-        // 건설 중이 아니면 클릭/탭 = 기계 상태 보기
-        if (click.button === 0) {
-          const t = toTile(click);
-          inspect(stationAt(world, t.x, t.y));
-        }
+        if (click.button !== 0) continue;
+        const t = toTile(click);
+        // 터치: 탭 = 이동 / 마우스: 클릭 = 기계 상태 보기 (PC 는 키보드로 걷는다)
+        if (click.touch) tapAt(t.x, t.y);
+        else inspect(stationAt(world, t.x, t.y));
         continue;
       }
       if (click.button === 2) { build.cancel(); continue; }
@@ -286,7 +301,12 @@ async function boot() {
     let steps = 0;
     while (acc >= tickDt && steps < config.maxTicksPerFrame) {
       const intent = input.tickIntent();
-      // 조이스틱으로 걷기 시작하면 카메라도 다시 따라간다.
+      if (intent.moveX || intent.moveY) walker.cancel(); // 키보드로 걸으면 탭 이동은 취소
+      else {
+        const auto = walker.intent();
+        if (auto) Object.assign(intent, auto);
+      }
+      // 걷기 시작하면 카메라도 다시 따라간다.
       if (intent.moveX || intent.moveY) camera.follow = true;
       stepWorld(world, intent, tickDt, rules);
       acc -= tickDt;
@@ -344,6 +364,7 @@ async function boot() {
 
     drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build.preview(), {
       overlay,
+      destination: walker.destination(),
       selected: panels.current() === 'info' ? inspector.selected() : null,
     });
     if (panels.current() === 'info') inspector.render();
