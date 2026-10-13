@@ -1,4 +1,6 @@
 // 튜토리얼. 트랙(start, grill …)별로 단계가 있고, 단계 조건은 이번 트랙 동안 일어난 일(log)로만 판단한다.
+// 단계 글은 목표만 짧게. 어떻게 하는지는 화살표(길잡이)와 작업 안내 한 줄로 해 보면서 알게 한다.
+import { guideTarget } from './guide.js';
 
 export function createTutorial(track) {
   return { track, active: track !== null, step: 0, finished: false, optOut: false, log: {} };
@@ -41,10 +43,15 @@ export function tutorialStepCount(world, rules) {
   return stepsOf(rules, world.tutorial).length;
 }
 
-/** 단계가 가리키는 작업대 (화살표 표시용). UI 대상이거나 아직 없으면 null. */
+/**
+ * 단계가 가리키는 기계 (화살표 표시용). 없으면 null (그때는 화면이 target.ui 메뉴를 깜박인다).
+ * target.guide: 그 품목을 만들러 지금 갈 곳 / target.station: 그 종류의 기계 (지었으면)
+ */
 export function tutorialTarget(world, rules) {
   const step = currentTutorialStep(world, rules);
-  if (!step || !step.target.station) return null;
+  if (!step) return null;
+  if (step.target.guide) return guideTarget(world, rules, step.target.guide);
+  if (!step.target.station) return null;
   const { station, item } = step.target;
   return world.stations.find((s) => s.type === station && (item === undefined || s.item === item)) ?? null;
 }

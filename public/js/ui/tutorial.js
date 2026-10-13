@@ -1,5 +1,5 @@
 // 튜토리얼 카드: 지금 할 일 한 줄 + 건너뛰기.
-import { currentTutorialStep, tutorialStepCount, skipTutorial, restartTutorial } from '../sim/tutorial.js';
+import { currentTutorialStep, tutorialStepCount, skipTutorial, restartTutorial, tutorialTarget } from '../sim/tutorial.js';
 
 const DONE_SECONDS = 4;
 
@@ -40,7 +40,9 @@ export function createTutorialCard({ rules, world, onRestart }) {
 
       const step = currentTutorialStep(world, rules);
       let key;
-      setHint(step?.target.ui ? document.querySelector(`.menu [data-panel="${step.target.ui}"], .menu [data-ui="${step.target.ui}"]`) : null);
+      // 가리킬 기계가 아직 없을 때만 메뉴 버튼을 깜박인다 (예: 아직 안 지은 기계 → 건설)
+      const showUi = step?.target.ui && !tutorialTarget(world, rules);
+      setHint(showUi ? document.querySelector(`.menu [data-panel="${step.target.ui}"], .menu [data-ui="${step.target.ui}"]`) : null);
       if (step) key = `step:${t.track}:${t.step}`;
       else if (doneTimer > 0) key = 'done';
       else key = null;

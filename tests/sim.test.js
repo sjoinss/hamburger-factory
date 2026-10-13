@@ -208,20 +208,45 @@ test('잘못된 데이터는 거부한다', () => {
   assert.throws(bad({ machines: { machines: { ...raw.machines.machines, crate: { ...raw.machines.machines.crate, kind: 'magic' } } } }));
 });
 
-test('튜토리얼: 처음엔 생고기 상자를 가리키고, 단계를 건너뛰어 해도 따라온다', () => {
+test('튜토리얼 길잡이: 든 것과 작업대 상태를 보고 다음 갈 곳을 가리킨다', () => {
   const w = createWorld(rules);
-  assert.equal(currentTutorialStep(w, rules).done.have, 'raw_meat');
-  const target = tutorialTarget(w, rules);
-  assert.equal(target.type, 'crate');
-  assert.equal(target.item, 'raw_meat');
-
-  // 순서와 다르게 양상추를 먼저 꺼내도, 고기를 꺼내는 순간 그 단계까지 한꺼번에 넘어간다
-  standAt(w, 4, 4, 'left');
-  hold(w, HARVEST);
-  assert.equal(w.tutorial.step, 0);
-  standAt(w, 3, 2, 'left');
-  hold(w, CRATE);
-  assert.equal(w.tutorial.step, 1);
+  run(w, {}, 1);
+  assert.equal(currentTutorialStep(w, rules).text, '햄버거 만들기');
+  const at = () => tutorialTarget(w, rules)?.type;
+  // 빈손: 모자란 재료가 나오는 곳 중 가장 가까운 곳 (시작 위치에서는 채소밭)
+  assert.equal(at(), 'lettuce_field');
+  Object.assign(w.player, { x: 3.5, y: 2.5 }); // 고기 상자 옆으로
+  assert.equal(at(), 'crate');
+  assert.equal(tutorialTarget(w, rules).item, 'raw_meat');
+  w.player.inventory = ['raw_meat', null];
+  assert.equal(at(), 'cutting_board', '생고기 → 도마');
+  w.player.inventory = ['ground_meat', null];
+  assert.equal(at(), 'griddle_manual', '다진고기 → 철판');
+  w.player.inventory = ['patty', null];
+  assert.equal(at(), 'assembly_table', '패티 → 조립대');
+  const table = w.stations.find((s) => s.type === 'assembly_table');
+  table.contents = ['patty'];
+  w.player.inventory = [null, null];
+  assert.equal(at(), 'lettuce_field', '패티를 올렸으면 다음 모자란 재료(양상추) 쪽');
+  table.contents = ['patty', 'lettuce_washed'];
+  assert.equal(at(), 'wheat_field', '번은 밀밭부터');
+  Object.assign(w.player, { x: 8.5, y: 8.5 });
+  w.player.inventory = ['wheat', null];
+  assert.equal(at(), 'hand_mill');
+  const dough = w.stations.find((s) => s.type === 'dough_table');
+  dough.contents = ['flour'];
+  w.player.inventory = [null, null];
+  assert.equal(at(), 'wheat_field', '밀가루가 하나 더 필요');
+  dough.contents = ['flour', 'flour'];
+  assert.equal(at(), 'dough_table', '다 올렸으면 반죽하러');
+  dough.contents = [];
+  table.contents = ['patty', 'lettuce_washed', 'bun'];
+  assert.equal(at(), 'assembly_table', '다 올렸으면 조립하러');
+  w.player.inventory = ['burger', null];
+  w.tutorial.log['have:burger'] = true; // 게임에서는 손에 들어올 때 기록된다
+  run(w, {}, 1);
+  assert.equal(currentTutorialStep(w, rules).text, '햄버거 팔기');
+  assert.equal(at(), 'counter');
 });
 
 test('튜토리얼 건너뛰기 / 다시 하기', () => {

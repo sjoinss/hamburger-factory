@@ -95,7 +95,7 @@ test('투입기: 그릴 → 벨트 → 투입기 → 조립대 (손 안 대고)'
   run(w, {}, secs(20));
   assert.deepEqual(table.contents, ['patty'], '조립대가 패티 하나만 받는다 (레시피에 하나 필요)');
   assert.equal(w.tutorial.log['fed:belt'], true);
-  assert.equal(w.tutorial.log['fed:assembly_table'], true);
+  assert.equal(w.tutorial.finished, true, '투입기로 벨트에 올리면 컨베이어 트랙 완료');
   // 두 번째 패티는 조립대가 받지 않으니 벨트 끝에서 기다린다
   const waiting = stationAt(w, 11, 7).items;
   assert.equal(waiting.length, 1);

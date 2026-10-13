@@ -237,7 +237,31 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   const goal = tutorialTarget(world, rules);
   if (goal) {
     const bob = Math.floor(world.time * 3) % 2 === 0 ? 0 : 2;
-    sprite('tutorialArrow', 0, goal.x * ts + (goal.w * ts - 9) / 2, goal.y * ts - 14 + bob);
+    const ax = goal.x * ts + (goal.w * ts - 9) / 2;
+    const ay = goal.y * ts - 14;
+    // 보이는 영역 (상단 바·터치 조작부 제외, 기기 픽셀)
+    const edge = 12 * s;
+    const left = edge;
+    const right = view.width - edge;
+    const top = (view.padTop ?? 0) + edge;
+    const bottom = view.height - (view.padBottom ?? 0) - edge;
+    const cx = sx(ax + 4.5);
+    const cy = sy(ay + 4.5);
+    if (cx >= left && cx <= right && cy >= top && cy <= bottom) {
+      sprite('tutorialArrow', 0, ax, ay + bob);
+    } else {
+      // 화면 밖이면 가장자리에서 그쪽을 가리킨다 (아래 방향 그림을 돌려서: 1 왼쪽, 2 위, 3 오른쪽)
+      const px = Math.min(right, Math.max(left, cx));
+      const py = Math.min(bottom, Math.max(top, cy));
+      const dx = cx - px;
+      const dy = cy - py;
+      const rot = Math.abs(dy) >= Math.abs(dx) ? (dy < 0 ? 2 : 0) : (dx < 0 ? 1 : 3);
+      const img = bank.get('tutorialArrow', 0, rot);
+      const nudge = bob * s * (rot === 2 || rot === 1 ? -1 : 1);
+      const ox2 = rot % 2 === 1 ? nudge : 0;
+      const oy2 = rot % 2 === 0 ? nudge : 0;
+      ctx.drawImage(img, Math.round(px - (img.width * s) / 2 + ox2), Math.round(py - (img.height * s) / 2 + oy2), img.width * s, img.height * s);
+    }
   }
 
   effects.draw(ctx, bank, sx, sy, s);

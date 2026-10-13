@@ -39,7 +39,7 @@ npm test       # 서버 보안 점검 + 시뮬레이션 + 스프라이트/팔레
 | Esc | 닫기 / 취소 | 창 닫기, 건설 끝 |
 
 화면은 게임이 전부 쓰고, 주문·레시피·건설·목표·설정 다섯 개만 상단 메뉴에 두고 하나씩 펼친다. 조작법은 설정 안에, 기계 정보는 기계를 누르면 열린다.
-처음 시작하면 튜토리얼이 한 단계씩 목표를 알려 주고, 화살표가 다음 작업대를 가리킨다 (설정에서 다시 하기).
+튜토리얼은 목표만 짧게 ("햄버거 만들기") 보여 주고, 화살표가 손에 든 것과 모자란 재료를 보고 다음 갈 곳을 가리킨다 (화면 밖이면 가장자리에서). 설정에서 다시 하기.
 
 개발용: 주소 끝에 `#debug` 를 붙이면 콘솔에서 `__game` 으로 상태를 볼 수 있고, `#touch` 를 붙이면 PC 에서 터치 화면을 미리 볼 수 있다 `#unlock` 은 모든 단계를 바로 연다 (`#debug,touch,unlock` 처럼 함께).
 
@@ -59,7 +59,7 @@ public/
     main.js          부팅, 고정 20틱 루프 + rAF 렌더 보간
     data.js          JSON 로딩/검증
     input.js         키보드/마우스
-    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, rng, path, player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, chapters, world
+    sim/             시뮬레이션 (DOM/Canvas 모름): grid, lookup, rng, path, guide(길잡이 화살표), player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, chapters, world
     render/          sprites(bake/캐시), camera, world, customers, effects
     sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, farm-potato, items, machines, storage, workshop, auto, menu, ui
     audio/           Web Audio 합성 효과음 (파일 없음)

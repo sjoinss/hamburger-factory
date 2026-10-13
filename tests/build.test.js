@@ -93,11 +93,11 @@ test('그릴에 다진고기를 넣으면 누르고 있지 않아도 패티가 �
   run(w, {}, Math.ceil(FRY_SECONDS / dt)); // 두 개째
   assert.deepEqual(grill.output, ['patty', 'patty']);
   assert.equal(grill.status, 'idle');
-  assert.equal(currentTutorialStep(w, rules).done.took, 'grill', '튜토리얼: 기계가 만들기 단계 통과');
+  assert.equal(currentTutorialStep(w, rules), null);
+  assert.equal(w.tutorial.finished, true, '튜토리얼: 그릴로 패티를 구우면 그릴 트랙 완료');
 
   press(w);
   assert.deepEqual(w.player.inventory, ['patty', null]);
-  assert.equal(w.tutorial.finished, true, '튜토리얼: 그릴 트랙 완료');
 });
 
 test('그릴은 다른 재료를 받지 않고, 입력은 정해진 만큼만 쌓인다', () => {

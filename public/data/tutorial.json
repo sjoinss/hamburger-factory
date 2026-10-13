@@ -1,73 +1,47 @@
 {
-  "version": 5,
+  "version": 6,
   "tracks": {
     "start": [
-      { "text": "생고기 상자에서 고기 꺼내기", "target": { "station": "crate", "item": "raw_meat" }, "done": { "have": "raw_meat" } },
-      { "text": "도마에서 고기 썰기", "target": { "station": "cutting_board" }, "done": { "have": "ground_meat" } },
-      { "text": "철판에서 다진고기 굽기", "target": { "station": "griddle_manual" }, "done": { "have": "patty" } },
-      { "text": "채소밭에서 양상추 수확", "target": { "station": "lettuce_field" }, "done": { "have": "lettuce" } },
-      { "text": "도마에서 양상추 손질", "target": { "station": "cutting_board" }, "done": { "have": "lettuce_washed" } },
-      { "text": "패티와 양상추를 조립대에 올리기", "target": { "station": "assembly_table" }, "done": { "placed": "lettuce_washed" } },
-      { "text": "밀밭에서 밀 수확", "target": { "station": "wheat_field" }, "done": { "have": "wheat" } },
-      { "text": "맷돌에서 밀 빻기", "target": { "station": "hand_mill" }, "done": { "have": "flour" } },
-      { "text": "반죽대에서 밀가루 2개로 반죽", "target": { "station": "dough_table" }, "done": { "have": "dough" } },
-      { "text": "화덕에서 반죽 굽기", "target": { "station": "hearth" }, "done": { "have": "bun" } },
-      { "text": "조립대에서 햄버거 조립", "target": { "station": "assembly_table" }, "done": { "have": "burger" } },
-      { "text": "출고구에 햄버거 팔기", "target": { "station": "counter" }, "done": { "sold": "burger" } }
+      { "text": "햄버거 만들기", "target": { "guide": "burger" }, "done": { "have": "burger" } },
+      { "text": "햄버거 팔기", "target": { "station": "counter" }, "done": { "sold": "burger" } }
     ],
     "grill": [
-      { "text": "건설 메뉴에서 그릴 짓기", "target": { "ui": "build" }, "done": { "built": "grill" } },
-      { "text": "그릴에 다진고기 넣기", "target": { "station": "grill" }, "done": { "made": "grill" } },
-      { "text": "그릴에서 패티 꺼내기", "target": { "station": "grill" }, "done": { "took": "grill" } }
+      { "text": "그릴 짓기", "target": { "ui": "build" }, "done": { "built": "grill" } },
+      { "text": "그릴로 패티 굽기", "target": { "station": "grill" }, "done": { "made": "grill" } }
     ],
     "conveyor": [
-      { "text": "컨베이어 몇 칸 이어서 깔기", "target": { "ui": "build" }, "done": { "built": "belt" } },
-      { "text": "그릴 옆에 투입기: 그릴 → 벨트", "target": { "station": "grill" }, "done": { "fed": "belt" } },
-      { "text": "벨트 끝에 투입기: 벨트 → 조립대", "target": { "station": "assembly_table" }, "done": { "fed": "assembly_table" } }
+      { "text": "벨트 깔기", "target": { "ui": "build" }, "done": { "built": "belt" } },
+      { "text": "투입기로 벨트에 올리기", "target": { "ui": "build" }, "done": { "fed": "belt" } }
     ],
     "automation": [
-      { "text": "입고구 짓기", "target": { "ui": "build" }, "done": { "built": "supply" } },
-      { "text": "버거 조립기 짓기", "target": { "ui": "build" }, "done": { "built": "burger_assembler" } },
-      { "text": "손 안 대고 햄버거 만들기", "target": { "ui": "stats" }, "done": { "made": "burger_assembler" } }
+      { "text": "손 안 대고 햄버거 만들기", "target": { "station": "burger_assembler", "ui": "build" }, "done": { "made": "burger_assembler" } }
     ],
     "storage": [
-      { "text": "깔때기 호퍼 짓기", "target": { "ui": "build" }, "done": { "built": "hopper" } },
-      { "text": "벨트 끝을 호퍼로 이어 재고 쌓기", "target": { "station": "hopper" }, "done": { "fed": "hopper" } },
-      { "text": "호퍼 옆에 출고 게이트 짓기", "target": { "ui": "build" }, "done": { "built": "gate" } },
-      { "text": "주문서에서 주문을 게이트에 맡기기", "target": { "ui": "orders" }, "done": { "order": "any" } }
+      { "text": "호퍼에 재고 쌓기", "target": { "station": "hopper", "ui": "build" }, "done": { "fed": "hopper" } },
+      { "text": "주문 처리하기", "target": { "ui": "orders" }, "done": { "order": "any" } }
     ],
     "workshop": [
-      { "text": "제련로 짓기", "target": { "ui": "build" }, "done": { "built": "smelter" } },
-      { "text": "프레스로 철판 만들어 호퍼에 모으기", "target": { "ui": "build" }, "done": { "made": "press" } },
-      { "text": "발전기에 석탄 넣기", "target": { "ui": "build" }, "done": { "fed": "generator" } },
-      { "text": "청사진 저장하고 붙여넣기", "target": { "ui": "build" }, "done": { "ui": "blueprint" } }
+      { "text": "철판 만들기", "target": { "station": "press", "ui": "build" }, "done": { "made": "press" } },
+      { "text": "발전기 돌리기", "target": { "station": "generator", "ui": "build" }, "done": { "fed": "generator" } },
+      { "text": "청사진 써 보기", "target": { "ui": "build" }, "done": { "ui": "blueprint" } }
     ],
     "menu": [
-      { "text": "감자밭 짓기", "target": { "ui": "build" }, "done": { "built": "potato_field" } },
-      { "text": "튀김기로 감자튀김 만들기", "target": { "ui": "build" }, "done": { "made": "fryer" } },
-      { "text": "포장기로 세트 만들기", "target": { "ui": "build" }, "done": { "made": "packer" } }
+      { "text": "감자튀김 만들기", "target": { "station": "fryer", "ui": "build" }, "done": { "made": "fryer" } },
+      { "text": "세트 만들기", "target": { "station": "packer", "ui": "build" }, "done": { "made": "packer" } }
     ],
     "auto": [
-      { "text": "출고 게이트 옆에 주문 인식기 짓기", "target": { "ui": "build" }, "done": { "built": "order_reader" } },
-      { "text": "인식기로 주문 처리하기", "target": { "ui": "orders" }, "done": { "order": "auto" } },
-      { "text": "출고구 앞에 합류 포장기 짓기", "target": { "ui": "build" }, "done": { "built": "bundler" } },
-      { "text": "주문을 묶음으로 납품하기", "target": { "ui": "orders" }, "done": { "order": "bundle" } }
+      { "text": "인식기로 주문 처리하기", "target": { "station": "order_reader", "ui": "build" }, "done": { "order": "auto" } },
+      { "text": "묶음으로 납품하기", "target": { "station": "bundler", "ui": "build" }, "done": { "order": "bundle" } }
     ],
     "pizza": [
-      { "text": "토마토밭 짓기", "target": { "ui": "build" }, "done": { "built": "tomato_field" } },
-      { "text": "소스 냄비로 토마토 소스 만들기", "target": { "ui": "build" }, "done": { "made": "sauce_pot" } },
-      { "text": "치즈 통으로 치즈 만들기", "target": { "ui": "build" }, "done": { "made": "cheese_vat" } },
-      { "text": "피자 오븐으로 피자 굽기", "target": { "ui": "build" }, "done": { "made": "pizza_oven" } }
+      { "text": "피자 굽기", "target": { "station": "pizza_oven", "ui": "build" }, "done": { "made": "pizza_oven" } }
     ],
     "chicken": [
-      { "text": "염지통으로 닭 절이기", "target": { "ui": "build" }, "done": { "made": "brine_tank" } },
-      { "text": "치킨 튀김기로 치킨 만들기", "target": { "ui": "build" }, "done": { "made": "chicken_fryer" } },
-      { "text": "소시지 만들기", "target": { "ui": "build" }, "done": { "made": "sausage_maker" } },
-      { "text": "핫도그 만들기", "target": { "ui": "build" }, "done": { "made": "hotdog_assembler" } }
+      { "text": "치킨 튀기기", "target": { "station": "chicken_fryer", "ui": "build" }, "done": { "made": "chicken_fryer" } },
+      { "text": "핫도그 만들기", "target": { "station": "hotdog_assembler", "ui": "build" }, "done": { "made": "hotdog_assembler" } }
     ],
     "dessert": [
-      { "text": "냉동고 짓기", "target": { "ui": "build" }, "done": { "built": "freezer" } },
-      { "text": "아이스크림 만들기", "target": { "ui": "build" }, "done": { "made": "freezer" } }
+      { "text": "아이스크림 만들기", "target": { "station": "freezer", "ui": "build" }, "done": { "made": "freezer" } }
     ]
   }
 }

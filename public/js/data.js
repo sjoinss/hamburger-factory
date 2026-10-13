@@ -193,10 +193,13 @@ export function validateTutorial(data, items, machines, orders) {
     assert(ID_RE.test(track) && Array.isArray(steps) && steps.length <= 100, `튜토리얼 트랙 오류: ${short(track)}`);
     for (const [i, s] of steps.entries()) {
       const where = `튜토리얼 ${track} ${i + 1}`;
-      assert(isStr(s.text, 40), `${where}: text 오류`);
+      assert(isStr(s.text, 16), `${where}: text 오류`);
       assert(isObj(s.target), `${where}: target 오류`);
-      if (s.target.ui !== undefined) assert(UI_TARGETS.has(s.target.ui), `${where}: target.ui 오류`);
-      else assert(Object.hasOwn(machines, s.target.station), `${where}: target.station 오류`);
+      const t = s.target;
+      assert(t.ui !== undefined || t.station !== undefined || t.guide !== undefined, `${where}: target 비어 있음`);
+      if (t.ui !== undefined) assert(UI_TARGETS.has(t.ui), `${where}: target.ui 오류`);
+      if (t.station !== undefined) assert(Object.hasOwn(machines, t.station), `${where}: target.station 오류`);
+      if (t.guide !== undefined) assert(Object.hasOwn(items, t.guide), `${where}: target.guide 오류`);
       if (s.target.item !== undefined) assert(Object.hasOwn(items, s.target.item), `${where}: target.item 오류`);
       assert(isObj(s.done) && Object.keys(s.done).length === 1, `${where}: done 오류`);
       const [kind, id] = Object.entries(s.done)[0];
