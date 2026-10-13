@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { SPRITE_DEFS, paletteMap, validateSprite, rotateRows, flipRows } from '../public/js/render/sprites.js';
+import { SPRITE_DEFS, TEMPLATE_SPRITES, paletteMap, validateSprite, rotateRows, flipRows, recolorRows } from '../public/js/render/sprites.js';
+import { HAIR_COLORS, SHIRT_COLORS } from '../public/js/sprites/customers.js';
 import { validatePalette } from '../public/js/data.js';
 import { loadRules } from './helpers.js';
 
@@ -17,7 +18,8 @@ test('팔레트는 32색 이하', () => {
 test('모든 스프라이트가 사각형이고 팔레트 문자만 쓴다', () => {
   const problems = [];
   for (const [name, frames] of Object.entries(SPRITE_DEFS)) {
-    frames.forEach((f, i) => problems.push(...validateSprite(`${name}[${i}]`, f, colors)));
+    const fill = TEMPLATE_SPRITES[name];
+    frames.forEach((f, i) => problems.push(...validateSprite(`${name}[${i}]`, fill ? recolorRows(f, fill) : f, colors)));
   }
   assert.deepEqual(problems, []);
 });
@@ -54,4 +56,9 @@ test('data 에 적힌 스프라이트 이름이 모두 존재한다', () => {
   for (const def of [...Object.values(rules.items), ...Object.values(rules.machines)]) {
     assert.ok(Object.hasOwn(SPRITE_DEFS, def.sprite), `없는 스프라이트: ${def.sprite}`);
   }
+});
+
+test('손님 머리/옷 색 후보는 모두 팔레트 안', () => {
+  for (const k of HAIR_COLORS) assert.ok(k in colors, k);
+  for (const [c, d] of SHIRT_COLORS) assert.ok(c in colors && d in colors, c + d);
 });

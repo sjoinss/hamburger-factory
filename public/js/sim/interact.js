@@ -3,7 +3,8 @@ import { getOccupant, isSolid } from './grid.js';
 import { stationAt } from './lookup.js';
 import { canInsertAt, insertSorted, makeBeltItem } from './conveyor.js';
 import { machineOf, canAccept, readyRecipe, missingInputs, advanceWork, workSeconds } from './station.js';
-import { sellItem } from './economy.js';
+import { receiveAtCounter } from './orders.js';
+import { store, takeFromStorage, mostStocked } from './storage.js';
 import { noteTutorial } from './tutorial.js';
 import { record, recordRecipe } from './stats.js';
 
@@ -41,8 +42,8 @@ export function findInteraction(world, rules) {
         : { ...base, action: 'blocked', reason: 'full' };
     }
     if (machine.kind === 'counter') {
-      const slot = p.inventory.findIndex((it) => it !== null && canAccept(rules, station, it));
-      if (slot !== -1) return { ...base, action: 'sell', slot, item: p.inventory[slot], price: rules.items[p.inventory[slot]].price };
+      const slot = p.inventory.findIndex((it) => it !== null && canAccept(rules, station, it, world));
+      if (slot !== -1) return { ...base, action: 'sell', slot, item: p.inventory[slot] };
       return { ...base, action: 'blocked', reason: p.inventory.some(Boolean) ? 'unsellable' : 'empty-hands' };
     }
     if (machine.kind === 'crafter') {
@@ -64,7 +65,15 @@ export function findInteraction(world, rules) {
       if (slot !== -1) return { ...base, action: 'blocked', reason: 'belt-busy' };
       return { ...base, action: 'blocked', reason: 'belt-empty' };
     }
-    if (machine.kind === 'splitter' || machine.kind === 'merger' || machine.kind === 'inserter') {
+    if (machine.kind === 'storage') {
+      // E: 든 물건 넣기 > 비어 있는 손으로 가장 많은 품목 꺼내기
+      const slot = p.inventory.findIndex((it) => it !== null && canAccept(rules, station, it));
+      if (slot !== -1) return { ...base, action: 'store', slot, item: p.inventory[slot] };
+      const top = mostStocked(station);
+      if (top && hasSpace(p)) return { ...base, action: 'unstore', item: top };
+      return { ...base, action: 'blocked', reason: top ? 'full' : 'storage-empty' };
+    }
+    if (machine.kind === 'splitter' || machine.kind === 'merger' || machine.kind === 'inserter' || machine.kind === 'gate') {
       return { ...base, action: 'blocked', reason: 'status' };
     }
     if (machine.kind === 'machine' || machine.kind === 'supply') {
@@ -130,8 +139,15 @@ function doInstant(world, rules, act) {
       return true;
     case 'sell':
       p.inventory[act.slot] = null;
-      sellItem(world, rules, act.item, act.station);
-      noteTutorial(world, 'sold', act.item);
+      receiveAtCounter(world, rules, act.item, act.station);
+      return true;
+    case 'store':
+      p.inventory[act.slot] = null;
+      store(act.station, act.item);
+      return true;
+    case 'unstore':
+      takeFromStorage(act.station, act.item);
+      giveItem(world, act.item);
       return true;
     case 'belt-take':
       act.station.items.shift();

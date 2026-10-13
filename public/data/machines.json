@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "machines": {
     "crate": {
       "name": "재료 상자",
@@ -172,6 +172,41 @@
       "cost": {
         "iron_plate": 6,
         "gear": 3
+      }
+    },
+    "hopper": {
+      "name": "깔때기 호퍼",
+      "kind": "storage",
+      "size": [2, 2],
+      "sprite": "hopper",
+      "capacity": 60,
+      "singleItem": false,
+      "cost": {
+        "iron_plate": 6,
+        "gear": 2
+      }
+    },
+    "silo": {
+      "name": "사일로",
+      "kind": "storage",
+      "size": [2, 3],
+      "sprite": "silo",
+      "capacity": 240,
+      "singleItem": true,
+      "cost": {
+        "iron_plate": 10,
+        "gear": 2
+      }
+    },
+    "gate": {
+      "name": "출고 게이트",
+      "kind": "gate",
+      "size": [1, 2],
+      "sprite": "gate",
+      "seconds": 0.5,
+      "cost": {
+        "iron_plate": 4,
+        "gear": 2
       }
     }
   }

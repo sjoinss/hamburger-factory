@@ -1,6 +1,9 @@
 // 상단 바, 손, 작업 안내, 정보 패널 갱신. 문자열은 textContent 로만 넣는다.
 import { spriteIcon } from './icons.js';
 import { machineRecipe } from '../sim/station.js';
+import { marketPrice } from '../sim/market.js';
+import { anyOrderNeeds } from '../sim/orders.js';
+import { storageTotal } from '../sim/storage.js';
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -13,7 +16,7 @@ const listNames = (rules, counts) =>
   Object.entries(counts).map(([id, n]) => (n > 1 ? `${itemName(rules, id)}×${n}` : itemName(rules, id))).join(' + ');
 
 /** 자동 기계 상태 한 줄: "가동 중 45%" / "대기: 다진고기 넣기" / "막힘: 출력 꽉 참" */
-export function machineStatusText(station, rules) {
+export function machineStatusText(station, rules, world = null) {
   const name = (id) => itemName(rules, id);
   const kind = rules.machines[station.type].kind;
   if (kind === 'inserter') {
@@ -26,6 +29,17 @@ export function machineStatusText(station, rules) {
     const m = rules.machines[station.type];
     return `들여오는 중: ${name(station.item)} ${Math.floor((station.progress / m.seconds) * 100)}%`;
   }
+  if (kind === 'gate') {
+    if (station.status === 'running') return '출고 중';
+    return {
+      unset: '대기: 내보낼 품목을 정하지 않음',
+      done: '대기: 다 보냄',
+      'no-stock': '대기: 붙은 호퍼/사일로에 재고 없음',
+      'no-source': '대기: 옆에 호퍼/사일로가 없음',
+      blocked: '막힘: 앞 칸이 받지 않음',
+    }[station.reason] ?? '대기';
+  }
+  if (kind === 'storage') return `${storageTotal(station)} / ${rules.machines[station.type].capacity}`;
   if (kind === 'splitter') return '뒤에서 받아 왼쪽·오른쪽으로 번갈아 보냄';
   if (kind === 'merger') return '세 방향에서 받아 앞으로 보냄';
   if (station.status === 'running') {
@@ -38,7 +52,7 @@ export function machineStatusText(station, rules) {
 }
 
 /** 지금 할 수 있는 작업을 한 줄 안내로. 색 대신 글로 상태를 알려 준다. */
-export function describeInteraction(act, rules, touch) {
+export function describeInteraction(act, rules, touch, world = null) {
   const key = touch ? '작업' : 'E';
   const dropKey = touch ? '내려놓기' : 'Q';
   const pct = (r) => `${Math.floor(Math.min(1, r) * 100)}%`;
@@ -54,7 +68,11 @@ export function describeInteraction(act, rules, touch) {
       const verb = act.machine.kind === 'machine' ? '넣기' : '올리기';
       return { text: `${key}: ${name(act.item)} → ${act.machine.name}에 ${verb}` };
     }
-    case 'sell': return { text: `${key}: ${name(act.item)} 납품 (+${act.price})` };
+    case 'sell':
+      if (world && anyOrderNeeds(world, act.item)) return { text: `${key}: ${name(act.item)} 주문에 넣기` };
+      return { text: `${key}: ${name(act.item)} 판매 (+${world ? marketPrice(world, rules, act.item) : rules.items[act.item].price})` };
+    case 'store': return { text: `${key}: ${name(act.item)} → ${act.machine.name}에 넣기` };
+    case 'unstore': return { text: `${key}: ${act.machine.name}에서 ${name(act.item)} 꺼내기` };
     case 'pickup': return { text: `${key}: ${name(act.item)} 줍기` };
     case 'belt-take': return { text: `${key}: 벨트에서 ${name(act.item)} 집기${act.count > 1 ? ` (${act.count}개)` : ''}` };
     case 'belt-put': return { text: `${key}: ${name(act.item)} 벨트에 올리기` };
@@ -68,7 +86,8 @@ export function describeInteraction(act, rules, touch) {
       if (act.reason === 'full') return { blocked: true, text: `${where}손이 꽉 찼다. ${dropKey}로 하나 내려놓기` };
       if (act.reason === 'belt-busy') return { blocked: true, text: `${where}벨트 가운데가 차 있다` };
       if (act.reason === 'belt-empty') return { blocked: true, text: '' };
-      if (act.reason === 'status') return { text: `${where}${machineStatusText(act.station, rules)}` };
+      if (act.reason === 'storage-empty') return { blocked: true, text: `${where}비어 있다` };
+      if (act.reason === 'status') return { text: `${where}${machineStatusText(act.station, rules, world)}` };
       if (act.reason === 'unsellable') return { blocked: true, text: `${where}지금 든 물건은 팔 수 없다` };
       if (act.reason === 'empty-hands') return { blocked: true, text: `${where}팔 물건을 들고 오기` };
       if (act.reason === 'needs') {
@@ -162,7 +181,7 @@ export function createHud({ onSpeed, bank, rules }) {
         slot.li.setAttribute('aria-label', `${i + 1}번 손: ${item ? itemName(rules, item) : '비어 있음'}`);
       });
 
-      const d = extra.buildPrompt ?? describeInteraction(extra.interaction, rules, extra.touch);
+      const d = extra.buildPrompt ?? describeInteraction(extra.interaction, rules, extra.touch, world);
       if (last.prompt !== d.text) {
         prompt.textContent = last.prompt = d.text;
         prompt.classList.toggle('is-blocked', Boolean(d.blocked));

@@ -5,6 +5,8 @@ import * as characters from '../sprites/characters.js';
 import * as items from '../sprites/items.js';
 import * as machines from '../sprites/machines.js';
 import * as ui from '../sprites/ui.js';
+import * as storage from '../sprites/storage.js';
+import * as customers from '../sprites/customers.js';
 
 /** 이름 → 프레임 배열. 단일 그림도 프레임 1개짜리로 통일. */
 export const SPRITE_DEFS = {
@@ -15,6 +17,13 @@ export const SPRITE_DEFS = {
   wall: [tiles.WALL],
   wallRust: [tiles.WALL_RUST],
   crate: [tiles.CRATE],
+  street: [tiles.STREET],
+  window: [tiles.WINDOW],
+  hopper: [storage.HOPPER],
+  silo: [storage.SILO],
+  gate: [storage.GATE],
+  customer: customers.CUSTOMER,
+  ...Object.fromEntries(Object.entries(customers.DIGITS).map(([k, rows]) => [`digit${k}`, [rows]])),
   playerDown: characters.PLAYER_DOWN,
   playerUp: characters.PLAYER_UP,
   playerRight: characters.PLAYER_RIGHT,
@@ -102,6 +111,11 @@ export function miniRows(rows, transparent = '.') {
   return out;
 }
 
+/** 문자 바꿔 끼우기 { 원래: 새 문자 } */
+export function recolorRows(rows, map) {
+  return rows.map((r) => [...r].map((ch) => map[ch] ?? ch).join(''));
+}
+
 /** palette.json → { key: hex } */
 export function paletteMap(palette) {
   const map = Object.create(null);
@@ -155,14 +169,19 @@ export function bakeSprite(rows, colors, transparent = '.') {
 }
 
 /** 시작 시 전부 구워 두고, 매 프레임에는 캐시만 꺼내 쓴다. */
+/** 손님처럼 자리 문자(팔레트 밖)를 비워 둔 템플릿 스프라이트 */
+export const TEMPLATE_SPRITES = { customer: { H: 'h', C: 'p', D: 'P' } };
+
 export function createSpriteBank(palette) {
   const colors = paletteMap(palette);
   const transparent = palette.transparent ?? '.';
   const baked = Object.create(null);
   for (const [name, frames] of Object.entries(SPRITE_DEFS)) {
-    const problems = frames.flatMap((f, i) => validateSprite(`${name}[${i}]`, f, colors, transparent));
+    const fill = TEMPLATE_SPRITES[name];
+    const filled = fill ? frames.map((f) => recolorRows(f, fill)) : frames;
+    const problems = filled.flatMap((f, i) => validateSprite(`${name}[${i}]`, f, colors, transparent));
     if (problems.length) throw new Error(`스프라이트 오류\n${problems.join('\n')}`);
-    baked[name] = frames.map((f) => bakeSprite(f, colors, transparent));
+    baked[name] = filled.map((f) => bakeSprite(f, colors, transparent));
   }
   // 회전/미리보기 변형은 처음 쓸 때 한 번만 굽는다.
   const variants = new Map();
@@ -191,6 +210,17 @@ export function createSpriteBank(palette) {
       return frames[frame % frames.length];
     },
     ghost: (name, frame = 0, rot = 0) => variant(name, frame, rot % 4, true),
+    /** 템플릿 스프라이트를 색 바꿔 굽기 (손님 머리/옷) */
+    recolor(name, frame, map) {
+      const key = `recolor|${name}|${frame}|${JSON.stringify(map)}`;
+      let canvas = variants.get(key);
+      if (!canvas) {
+        const frames = SPRITE_DEFS[name];
+        canvas = bakeSprite(recolorRows(frames[frame % frames.length], map), colors, transparent);
+        variants.set(key, canvas);
+      }
+      return canvas;
+    },
     mini: (name) => variant(name, 0, 0, false, true),
     has: (name) => Object.hasOwn(baked, name),
     frameCount: (name) => baked[name]?.length ?? 0,

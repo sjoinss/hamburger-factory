@@ -1,10 +1,11 @@
 {
-  "version": 4,
+  "version": 5,
   "start": {
     "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "assemble_burger"],
     "machines": [],
     "parts": {},
-    "tutorial": "start"
+    "tutorial": "start",
+    "features": []
   },
   "stages": [
     {
@@ -67,6 +68,27 @@
         }
       },
       "tutorial": "automation"
+    },
+    {
+      "id": "storage",
+      "name": "재고와 주문",
+      "when": {
+        "sold": {
+          "burger": 15
+        }
+      },
+      "unlock": {
+        "machines": ["hopper", "silo", "gate"],
+        "recipes": [],
+        "features": ["orders", "market"]
+      },
+      "reward": {
+        "parts": {
+          "iron_plate": 60,
+          "gear": 20
+        }
+      },
+      "tutorial": "storage"
     }
   ]
 }

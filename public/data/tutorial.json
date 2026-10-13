@@ -26,6 +26,12 @@
       { "text": "입고구 짓기 (눌러서 들여올 재료 고르기)", "target": { "ui": "build" },                        "done": { "built": "supply" } },
       { "text": "버거 조립기 짓기",                     "target": { "ui": "build" },                         "done": { "built": "burger_assembler" } },
       { "text": "손 안 대고 햄버거 만들기 (막히면 병목 보기)", "target": { "ui": "overlay" },                "done": { "made": "burger_assembler" } }
+    ],
+    "storage": [
+      { "text": "깔때기 호퍼 짓기",                    "target": { "ui": "build" },                         "done": { "built": "hopper" } },
+      { "text": "벨트 끝을 호퍼로 이어 재고 쌓기",      "target": { "station": "hopper" },                   "done": { "fed": "hopper" } },
+      { "text": "호퍼 옆에 출고 게이트 짓기",           "target": { "ui": "build" },                         "done": { "built": "gate" } },
+      { "text": "주문서에서 주문을 게이트에 맡기기",     "target": { "ui": "orders" },                        "done": { "order": "any" } }
     ]
   }
 }

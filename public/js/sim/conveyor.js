@@ -1,6 +1,12 @@
 // 컨베이어 시뮬레이션. 벨트 위 물건은 칸 안의 실제 위치(0~1)를 가진다.
 // 앞이 막히면 뒤 물건이 간격을 두고 멈추고, 그 막힘이 위쪽 벨트로 자연스럽게 번진다.
 import { stationAt, DIRS } from './lookup.js';
+import { canStore, store } from './storage.js';
+import { counterAccepts, receiveAtCounter } from './orders.js';
+import { noteTutorial } from './tutorial.js';
+
+/** 벨트가 끝에서 바로 넣을 수 있는 기계 (투입기 없이) */
+const SINK_KINDS = new Set(['storage', 'counter']);
 
 /** 물건 사이 최소 간격 (칸 단위). 1/3 보다 살짝 커서 한 칸에 최대 3개 */
 export const SPACING = 0.34;
@@ -57,6 +63,7 @@ export function conveyorNetwork(world, rules) {
 
   const nodes = world.stations.filter((s) => isConveyorKind(kindOf(rules, s)));
   const next = new Map(); // 벨트 → 다음 칸
+  const sink = new Map(); // 벨트 → 끝에서 바로 넣는 저장소/출고구
   const outputs = new Map(); // 분배기/합류기 → [{ dir, node }]
   const upstream = new Map(); // 분배기/합류기 → 이 칸으로 들어오는 벨트들
 
@@ -64,6 +71,9 @@ export function conveyorNetwork(world, rules) {
     const kind = kindOf(rules, n);
     if (kind === 'belt') {
       next.set(n.id, neighbor(world, rules, n, n.rot));
+      const [dx, dy] = DIRS[n.rot];
+      const front = stationAt(world, n.x + dx, n.y + dy);
+      if (front && SINK_KINDS.has(kindOf(rules, front))) sink.set(n.id, front);
     } else {
       const dirs = kind === 'splitter' ? [(n.rot + 3) % 4, (n.rot + 1) % 4] : [n.rot];
       outputs.set(n.id, dirs.map((dir) => ({ dir, node: neighbor(world, rules, n, dir) })));
@@ -93,15 +103,29 @@ export function conveyorNetwork(world, rules) {
     }
   }
 
-  const net = { version: world.stationsVersion, stations: world.stations, order, next, outputs, upstream };
+  const net = { version: world.stationsVersion, stations: world.stations, order, next, outputs, upstream, sink };
   netCache.set(world, net);
   return net;
 }
 
-function moveBelt(rules, belt, net, dt) {
+/** 벨트 끝 물건을 저장소/출고구에 넣는다. 못 넣으면 false (끝에서 대기) */
+function deliverToSink(world, rules, st, it) {
+  if (kindOf(rules, st) === 'storage') {
+    if (!canStore(rules, st, it.item)) return false;
+    store(st, it.item);
+    noteTutorial(world, 'fed', st.type);
+    return true;
+  }
+  if (!counterAccepts(world, rules, it.item)) return false;
+  receiveAtCounter(world, rules, it.item, st, it.tag ?? null);
+  return true;
+}
+
+function moveBelt(world, rules, belt, net, dt) {
   const v = rules.machines[belt.type].speed * dt;
   const next = net.next.get(belt.id);
   const nextIsBelt = next && kindOf(rules, next) === 'belt';
+  const sinkSt = net.sink.get(belt.id);
   const keep = [];
   let ahead = Infinity;
   for (const it of belt.items) {
@@ -115,6 +139,7 @@ function moveBelt(rules, belt, net, dt) {
           continue;
         }
       }
+      if (sinkSt && keep.length === 0 && deliverToSink(world, rules, sinkSt, it)) continue;
       target = 1; // 끝에서 대기 (다음 칸이 없거나 꽉 참)
     }
     it.pos = target;
@@ -176,7 +201,7 @@ export function updateConveyors(world, rules, dt) {
     if (n.buffer) { n.buffer.px = n.buffer.x; n.buffer.py = n.buffer.y; }
   }
   for (const n of net.order) {
-    if (kindOf(rules, n) === 'belt') moveBelt(rules, n, net, dt);
+    if (kindOf(rules, n) === 'belt') moveBelt(world, rules, n, net, dt);
     else updateRouter(rules, n, net, dt);
   }
   for (const n of net.order) {

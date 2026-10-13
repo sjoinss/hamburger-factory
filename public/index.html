@@ -84,7 +84,9 @@
         <h2 id="panel-orders-title">주문서</h2>
         <button type="button" class="panel-close" data-close>닫기</button>
       </header>
-      <p class="muted">아직 주문이 없다. 만든 물건은 출고구에서 시세로 팔린다.</p>
+      <p class="headline" id="market-headline" hidden></p>
+      <p class="muted" id="order-empty"></p>
+      <ol class="order-list" id="order-list"></ol>
     </section>
 
     <section class="panel panel-recipes" id="panel-recipes" aria-labelledby="panel-recipes-title" hidden>
@@ -162,6 +164,28 @@
         <p class="muted" id="inspect-util"></p>
         <p id="inspect-buffers"></p>
         <div class="supply-pick" id="supply-pick" role="group" aria-label="들여올 재료" hidden></div>
+        <div class="storage-box" id="storage-box" hidden>
+          <ul class="stock-list" id="stock-list"></ul>
+          <p class="muted">받을 품목</p>
+          <div class="pick-row" id="storage-filter" role="group" aria-label="받을 품목"></div>
+        </div>
+        <div class="gate-box" id="gate-box" hidden>
+          <div class="pick-row" role="group" aria-label="출고 방식">
+            <button type="button" id="gate-mode-manual">수동</button>
+            <button type="button" id="gate-mode-order">주문</button>
+          </div>
+          <div id="gate-manual">
+            <div class="pick-row" id="gate-item" role="group" aria-label="내보낼 품목"></div>
+            <div class="stepper">
+              <button type="button" id="gate-minus" aria-label="하나 줄이기">-</button>
+              <span id="gate-count">1</span>개
+              <button type="button" id="gate-plus" aria-label="하나 늘리기">+</button>
+              <button type="button" id="gate-repeat" aria-pressed="false">반복</button>
+              <button type="button" id="gate-restart">다시 보내기</button>
+            </div>
+          </div>
+          <p class="muted" id="gate-order-info"></p>
+        </div>
       </div>
       <p class="muted" id="inspect-empty">기계를 누르면 (F: 바라보는 기계) 상태가 여기 나온다.</p>
       <h3 class="info-sub">게임</h3>

@@ -8,6 +8,10 @@ import { createTutorial, updateTutorial, noteTutorial } from './tutorial.js';
 import { updateProgression } from './progression.js';
 import { updateInserter } from './inserter.js';
 import { updateConveyors } from './conveyor.js';
+import { updateGate } from './gate.js';
+import { createMarket, updateMarket } from './market.js';
+import { createOrders, updateOrders } from './orders.js';
+import { TILE, getTile, setTile } from './grid.js';
 
 export const NO_INPUT = Object.freeze({
   moveX: 0, moveY: 0, interactPressed: false, interactHeld: false, dropPressed: false,
@@ -17,7 +21,7 @@ export const NO_INPUT = Object.freeze({
 export function createWorld(rules) {
   const config = rules.game;
   const { roomWidth, roomHeight, wallThickness } = config.map;
-  const grid = createRoomGrid(roomWidth, roomHeight, wallThickness);
+  const grid = createRoomGrid(roomWidth, roomHeight, wallThickness, config.map.streetRows ?? 0);
 
   const stations = [];
   for (const def of config.stations) {
@@ -31,8 +35,17 @@ export function createWorld(rules) {
     for (let y = def.y; y < def.y + h; y++) for (let x = def.x; x < def.x + w; x++) setOccupant(grid, x, y, station.id);
   }
 
+  // 출고구 바로 뒤(아래) 벽은 손님이 주문하는 창구
+  for (const st of stations) {
+    if (rules.machines[st.type].kind !== 'counter') continue;
+    for (let x = st.x; x < st.x + st.w; x++) {
+      if (getTile(grid, x, st.y + st.h) === TILE.WALL) setTile(grid, x, st.y + st.h, TILE.WINDOW);
+    }
+  }
+
   return {
-    version: 6,
+    version: 7,
+    rng: 20261013, // 난수 씨앗 (rng.js)
     tick: 0,
     time: 0,
     money: 0,
@@ -51,6 +64,9 @@ export function createWorld(rules) {
       machines: [...rules.progression.start.machines],
     },
     stagesDone: [],
+    features: [...(rules.progression.start.features ?? [])],
+    market: createMarket(),
+    orders: createOrders(),
     tutorial: createTutorial(rules.progression.start.tutorial),
     // 렌더/사운드가 읽고 비우는 일회성 사건 목록
     events: [],
@@ -64,7 +80,9 @@ export function stepWorld(world, input, dt, rules) {
   updatePlayer(world.player, world.grid, input, dt, rules.game.player);
   updateInteraction(world, rules, input, dt);
   for (const st of world.stations) {
-    if (rules.machines[st.type].kind === 'inserter') updateInserter(world, rules, st, dt);
+    const kind = rules.machines[st.type].kind;
+    if (kind === 'inserter') updateInserter(world, rules, st, dt);
+    else if (kind === 'gate') updateGate(world, rules, st, dt);
   }
   updateConveyors(world, rules, dt);
   for (const st of world.stations) {
@@ -86,6 +104,8 @@ export function stepWorld(world, input, dt, rules) {
   if (world.tick % rules.game.ticksPerSecond === 0) {
     for (const st of world.stations) if (st.hist !== undefined) sampleHistory(st);
   }
+  updateMarket(world, rules, dt);
+  updateOrders(world, rules, dt);
   updateTutorial(world, rules);
   updateProgression(world, rules);
 }

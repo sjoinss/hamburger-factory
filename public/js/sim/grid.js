@@ -1,6 +1,7 @@
 // 격자. 순수 데이터 + 함수. DOM/Canvas 를 모른다.
 
-export const TILE = Object.freeze({ FLOOR: 'floor', WALL: 'wall' });
+// STREET: 가게 밖 길 (손님 줄), WINDOW: 출고구 뒤 창구. 둘 다 플레이어는 못 들어간다.
+export const TILE = Object.freeze({ FLOOR: 'floor', WALL: 'wall', STREET: 'street', WINDOW: 'window' });
 
 export function createGrid(width, height, fill = TILE.FLOOR) {
   return {
@@ -40,19 +41,21 @@ export function setOccupant(grid, x, y, id, solid = id !== null) {
 export function isSolid(grid, x, y) {
   if (!inBounds(grid, x, y)) return true;
   const i = y * grid.width + x;
-  return grid.tiles[i] === TILE.WALL || grid.solid[i];
+  return grid.tiles[i] !== TILE.FLOOR || grid.solid[i];
 }
 
-/** 방 하나(바닥) + 둘레 벽으로 된 시작 격자. */
-export function createRoomGrid(roomWidth, roomHeight, wallThickness) {
+/** 방 하나(바닥) + 둘레 벽 + (아래쪽) 가게 앞 길. */
+export function createRoomGrid(roomWidth, roomHeight, wallThickness, streetRows = 0) {
   const width = roomWidth + wallThickness * 2;
-  const height = roomHeight + wallThickness * 2;
+  const roomH = roomHeight + wallThickness * 2;
+  const height = roomH + streetRows;
   const grid = createGrid(width, height, TILE.FLOOR);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
+      if (y >= roomH) { setTile(grid, x, y, TILE.STREET); continue; }
       const edge =
         x < wallThickness || y < wallThickness ||
-        x >= width - wallThickness || y >= height - wallThickness;
+        x >= width - wallThickness || y >= roomH - wallThickness;
       if (edge) setTile(grid, x, y, TILE.WALL);
     }
   }

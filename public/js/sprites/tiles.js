@@ -138,3 +138,43 @@ export const CRATE = [
   '..KKKKKKKKKKKKKK',
   '................',
 ];
+
+// 가게 앞 길 (보도블록): 칸마다 이음매, 군데군데 금
+export const STREET = [
+  '2222222122222222',
+  '3333333133333333',
+  '2222222122222222',
+  '2222222122222222',
+  '2222222122222222',
+  '1111111111111111',
+  '2222222222212222',
+  '3333333333313333',
+  '2222222222212222',
+  '2222n22222212222',
+  '22222n2222212222',
+  '1111111111111111',
+  '2222212222222222',
+  '3333313333333333',
+  '2222212222222222',
+  '2222212222222222',
+];
+
+// 출고구 뒤 창구: 벽 안에 유리창 (손님이 들여다보는 곳)
+export const WINDOW = [
+  'WWWWWWWWWWWWWWWW',
+  'wKKKKKKKKKKKKKKw',
+  'wK3pppppppppp3Kw',
+  'wKp3ppppppppppKw',
+  'wKpp3pppppppppKw',
+  'wKppppppppppppKw',
+  'wKppppppppp3ppKw',
+  'wKpppppppppp3pKw',
+  'wKKKKKKKKKKKKKKw',
+  'wwwwwwwwwwwwwwww',
+  'w2222222222222ww',
+  'wwwwwwwwwwwwwwww',
+  'wwwwwwwwwwwwwwww',
+  'wwwwwwwwwwwwwwww',
+  'wwwwwwwwwwwwwwww',
+  'KKKKKKKKKKKKKKKK',
+];

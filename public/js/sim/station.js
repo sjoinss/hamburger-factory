@@ -1,4 +1,5 @@
 // 작업대/상자/출고구 상태와 규칙. 상태는 직렬화 가능한 순수 데이터.
+import { canStore } from './storage.js';
 
 /** 회전(0~3)을 반영한 크기. 홀수 회전이면 가로세로가 바뀐다. */
 export function rotatedSize(machine, rot = 0) {
@@ -30,7 +31,17 @@ export function createStation(id, def, machine) {
     station.jam = 0; // 꽉 차서 멈춘 정도 (부드럽게 0~1)
     station.idle = 0; // 비어 있는 정도 (부드럽게 0~1)
   }
-  if (machine.kind === 'machine' || machine.kind === 'supply' || machine.kind === 'inserter') station.hist = '';
+  if (machine.kind === 'machine' || machine.kind === 'supply' || machine.kind === 'inserter' || machine.kind === 'gate') station.hist = '';
+  if (machine.kind === 'storage') {
+    station.stock = {}; // { item: 수량 }
+    station.filter = null; // 받을 품목 제한
+  }
+  if (machine.kind === 'gate') {
+    // gate.js createGateMode() 와 같은 모양 (순환 import 를 피하려고 여기서 직접 만든다)
+    station.mode = { kind: 'manual', item: null, count: 1, repeat: false, sent: 0, orderId: null, orderSent: {} };
+    station.t = 0;
+    station.reason = 'unset';
+  }
   if (machine.kind === 'splitter' || machine.kind === 'merger') {
     station.buffer = null; // 지나가는 물건 하나
     station.toggle = 0; // 분배기: 다음에 먼저 보낼 쪽
@@ -64,10 +75,18 @@ function matchesRecipe(list, recipe) {
   return keys.length === Object.keys(counts).length && keys.every((id) => counts[id] === recipe.inputs[id]);
 }
 
-/** 이 작업대에 item 을 더 올릴 수 있는가 */
-export function canAccept(rules, station, item) {
+/**
+ * 이 작업대에 item 을 더 올릴 수 있는가.
+ * 출고구는 주문을 알아야 하므로 world 가 있으면 주문이 기다리는 물건도 받는다.
+ */
+export function canAccept(rules, station, item, world = null) {
   const machine = machineOf(rules, station);
-  if (machine.kind === 'counter') return (rules.items[item]?.price ?? 0) > 0;
+  if (machine.kind === 'counter') {
+    if ((rules.items[item]?.price ?? 0) > 0) return true;
+    return world !== null && world.features.includes('orders') &&
+      world.orders.list.some((o) => o.state === 'open' && (o.items[item] ?? 0) > (o.delivered[item] ?? 0));
+  }
+  if (machine.kind === 'storage') return canStore(rules, station, item);
   if (machine.kind === 'machine') {
     // 입력 버퍼: 레시피 입력의 inputBatches 배까지 쌓아 둘 수 있다.
     const counts = countItems([...station.contents, item]);

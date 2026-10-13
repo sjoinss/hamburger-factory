@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "tileSize": 16,
   "ticksPerSecond": 20,
   "maxTicksPerFrame": 20,
@@ -25,7 +25,8 @@
   "map": {
     "roomWidth": 16,
     "roomHeight": 12,
-    "wallThickness": 1
+    "wallThickness": 1,
+    "streetRows": 2
   },
   "playerStart": { "x": 8, "y": 8 },
   "stations": [

@@ -15,6 +15,7 @@ import { createTutorialCard } from './ui/tutorial.js';
 import { createBuildMode } from './ui/build.js';
 import { createInspector } from './ui/inspect.js';
 import { createStatsPanel } from './ui/stats.js';
+import { createOrderBoard } from './ui/orders.js';
 import { stationAt } from './sim/lookup.js';
 
 const FONT_FAMILY = '"Galmuri11", ui-monospace, monospace';
@@ -115,6 +116,12 @@ async function boot() {
   build = createBuildMode({ world, rules, bank, panels });
   const inspector = createInspector({ world, rules, bank });
   const statsPanel = createStatsPanel({ world, rules, bank });
+  const orderBoard = createOrderBoard({
+    world,
+    rules,
+    bank,
+    onAssigned: () => hud.banner('출고 게이트에 맡겼다', 2),
+  });
 
   // 병목 보기 (O 키 / 상단 '병목' 버튼)
   let overlay = false;
@@ -286,6 +293,12 @@ async function boot() {
     for (const ev of world.events) {
       effects.push(ev);
       if (ev.type === 'sold') hud.flashMoney();
+      if (ev.type === 'orderDone') {
+        hud.flashMoney();
+        hud.banner(`주문 완료 +${ev.reward}`, 2);
+      }
+      if (ev.type === 'orderFailed') hud.banner('주문 시간 초과: 손님이 떠났다 (평판 하락)', 3);
+      if (ev.type === 'orderNew' && panels.current() === 'orders') orderBoard.forceRender();
       if (ev.type === 'unlocked') {
         const names = ev.machines.map((id) => rules.machines[id].name).join(', ');
         const parts = Object.entries(ev.parts).map(([id, n]) => `${rules.items[id].name} ${n}`).join(', ');
@@ -329,6 +342,7 @@ async function boot() {
     });
     if (panels.current() === 'info') inspector.render();
     if (panels.current() === 'stats') statsPanel.render(now);
+    if (panels.current() === 'orders') orderBoard.render(now);
 
     fpsFrames++;
     fpsTime += realDt;

@@ -2,6 +2,9 @@
 import { stationById } from '../sim/lookup.js';
 import { utilization, HISTORY_SECONDS } from '../sim/stats.js';
 import { setSupplyItem } from '../sim/station.js';
+import { storageTotal, setStorageFilter } from '../sim/storage.js';
+import { setGateManual, gateSources } from '../sim/gate.js';
+import { orderById } from '../sim/orders.js';
 import { spriteIcon } from './icons.js';
 import { machineStatusText } from './hud.js';
 
@@ -26,6 +29,107 @@ export function createInspector({ world, rules, bank }) {
   const pick = $('supply-pick');
   let selectedId = null;
   let pickFor = null;
+  const storageBox = $('storage-box');
+  const stockList = $('stock-list');
+  const filterRow = $('storage-filter');
+  const gateBox = $('gate-box');
+  const gateItemRow = $('gate-item');
+  const gateCount = $('gate-count');
+  const gateRepeat = $('gate-repeat');
+  const gateManual = $('gate-manual');
+  const gateOrderInfo = $('gate-order-info');
+  const modeManual = $('gate-mode-manual');
+  const modeOrder = $('gate-mode-order');
+
+  /** 고를 수 있는 품목: 파는 물건 + (있으면) 저장소에 든 물건 */
+  const choosable = (extra = []) => {
+    const ids = new Set(Object.keys(rules.items).filter((id) => rules.items[id].price > 0));
+    for (const id of extra) ids.add(id);
+    return [...ids].filter((id) => rules.items[id].category === 'food');
+  };
+
+  /** 아이콘 버튼 줄 (같은 목록이면 다시 만들지 않고 눌림 상태만 바꾼다) */
+  function itemButtons(row, ids, current, onPick, withAll = false) {
+    const key = (withAll ? 'all|' : '') + ids.join(',');
+    if (row.dataset.key !== key) {
+      row.dataset.key = key;
+      const make = (id) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.item = id ?? '';
+        if (id) b.append(spriteIcon(bank, rules.items[id].sprite));
+        const label = document.createElement('span');
+        label.textContent = id ? rules.items[id].name : '전체';
+        b.append(label);
+        b.addEventListener('click', () => onPick(id));
+        return b;
+      };
+      row.replaceChildren(...(withAll ? [make(null)] : []), ...ids.map(make));
+    }
+    for (const b of row.children) b.setAttribute('aria-pressed', String((b.dataset.item || null) === (current ?? null)));
+  }
+
+  // 게이트 조작 (선택된 게이트에 적용)
+  const selGate = () => {
+    const st = selectedId === null ? null : stationById(world, selectedId);
+    return st && rules.machines[st.type].kind === 'gate' ? st : null;
+  };
+  const manual = (patch) => {
+    const g = selGate();
+    if (!g) return;
+    const m = g.mode.kind === 'manual' ? g.mode : { item: null, count: 1, repeat: false };
+    const next = { item: m.item, count: m.count, repeat: m.repeat, ...patch };
+    setGateManual(g, next.item, next.count, next.repeat);
+  };
+  modeManual.addEventListener('click', () => manual({}));
+  modeOrder.addEventListener('click', () => {
+    const g = selGate();
+    if (g && g.mode.kind !== 'order') g.mode = { ...g.mode, kind: 'order', orderId: null, orderSent: {} };
+  });
+  $('gate-minus').addEventListener('click', () => manual({ count: (selGate()?.mode.count ?? 1) - 1 }));
+  $('gate-plus').addEventListener('click', () => manual({ count: (selGate()?.mode.count ?? 1) + 1 }));
+  gateRepeat.addEventListener('click', () => manual({ repeat: !selGate()?.mode.repeat }));
+  $('gate-restart').addEventListener('click', () => manual({}));
+
+  function renderStorage(st) {
+    const m = rules.machines[st.type];
+    storageBox.hidden = false;
+    const rows = Object.entries(st.stock).sort((a, b) => b[1] - a[1]);
+    const key = JSON.stringify(rows);
+    if (stockList.dataset.key !== key) {
+      stockList.dataset.key = key;
+      stockList.replaceChildren(...(rows.length ? rows : [[null, 0]]).map(([id, n]) => {
+        const li = document.createElement('li');
+        if (id) li.append(spriteIcon(bank, rules.items[id].sprite));
+        const label = document.createElement('span');
+        label.textContent = id ? `${rules.items[id].name} ${n}` : '비어 있음';
+        li.append(label);
+        return li;
+      }));
+    }
+    status.textContent = `${storageTotal(st)} / ${m.capacity}${m.singleItem ? ' (한 가지 품목만)' : ''}`;
+    itemButtons(filterRow, choosable(Object.keys(st.stock)), st.filter, (id) => setStorageFilter(rules, st, id), true);
+  }
+
+  function renderGate(st) {
+    gateBox.hidden = false;
+    const m = st.mode;
+    modeManual.setAttribute('aria-pressed', String(m.kind === 'manual'));
+    modeOrder.setAttribute('aria-pressed', String(m.kind === 'order'));
+    gateManual.hidden = m.kind !== 'manual';
+    const stocked = gateSources(world, rules, st).flatMap((src) => Object.keys(src.stock));
+    if (m.kind === 'manual') {
+      itemButtons(gateItemRow, choosable(stocked), m.item, (id) => manual({ item: id }));
+      gateCount.textContent = String(m.count);
+      gateRepeat.setAttribute('aria-pressed', String(m.repeat));
+      gateOrderInfo.textContent = m.item ? `보낸 수 ${m.sent} / ${m.count}${m.repeat ? ' (반복)' : ''}` : '';
+    } else {
+      const order = orderById(world, m.orderId);
+      gateOrderInfo.textContent = order
+        ? `주문 #${order.id}: ${Object.entries(order.items).map(([id, n]) => `${rules.items[id].name} ${m.orderSent[id] ?? 0}/${n}`).join(', ')}`
+        : "주문서에서 '게이트에 맡기기' 를 누르면 그 주문을 내보낸다.";
+    }
+  }
 
   function renderSupplyPick(st) {
     const machine = rules.machines[st.type];
@@ -96,6 +200,10 @@ export function createInspector({ world, rules, bank }) {
         buffers.textContent = parts.join(' / ');
       }
       renderSupplyPick(st);
+      storageBox.hidden = true;
+      gateBox.hidden = true;
+      if (machine.kind === 'storage') renderStorage(st);
+      if (machine.kind === 'gate') renderGate(st);
     },
   };
 }

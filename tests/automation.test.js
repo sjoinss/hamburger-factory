@@ -91,7 +91,8 @@ test('입고 → 햄버거 → 판매까지 사람 손 없이 흐른다', () => 
   run(w, secs(120));
   const burgers = w.stats.sold.burger - 6;
   assert.ok(burgers >= 10, `2분 동안 판 햄버거 ${burgers}개`);
-  assert.equal(w.money - money0, burgers * rules.items.burger.price);
+  // 15개를 넘기면 시장/주문이 열려 시세가 ±20% 움직인다
+  assert.ok(w.money - money0 >= burgers * rules.items.burger.price * 0.8, `수입 ${w.money - money0}`);
   assert.equal(w.tutorial.log['made:burger_assembler'], true, '튜토리얼: 기계가 햄버거를 만듦');
 
   // 통계: 분당 생산/판매가 잡힌다

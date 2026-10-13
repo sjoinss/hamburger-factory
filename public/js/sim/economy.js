@@ -1,8 +1,7 @@
 // 돈과 판매. 지금은 고정 시세 (시세 변동은 M5).
 import { record, recordEarned } from './stats.js';
 
-export function sellItem(world, rules, item, station) {
-  const price = rules.items[item].price;
+export function sellItem(world, rules, item, station, price = rules.items[item].price) {
   world.money += price;
   world.stats.sold[item] = (world.stats.sold[item] ?? 0) + 1;
   world.stats.earned += price;

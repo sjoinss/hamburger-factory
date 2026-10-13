@@ -13,6 +13,7 @@ export function updateProgression(world, rules) {
     const u = world.unlocked;
     for (const id of stage.unlock.machines ?? []) if (!u.machines.includes(id)) u.machines.push(id);
     for (const id of stage.unlock.recipes ?? []) if (!u.recipes.includes(id)) u.recipes.push(id);
+    for (const f of stage.unlock.features ?? []) if (!world.features.includes(f)) world.features.push(f);
     const parts = stage.reward?.parts ?? {};
     for (const [id, n] of Object.entries(parts)) world.parts[id] = (world.parts[id] ?? 0) + n;
 

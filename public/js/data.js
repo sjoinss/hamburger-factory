@@ -1,7 +1,8 @@
 // data/*.json 로딩과 검증. 데이터 파일도 신뢰하지 않고 형태와 상호 참조를 확인한다.
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter']);
+const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate']);
+const FEATURES = new Set(['orders', 'market']);
 const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger']);
 const ITEM_CATEGORIES = new Set(['food', 'part']);
 const ID_RE = /^[a-z][a-z0-9_]{0,31}$/;
@@ -68,6 +69,10 @@ export function validateMachines(data, items) {
       assert(Array.isArray(m.supplies) && m.supplies.length > 0, `기계 ${id}: supplies 오류`);
       for (const item of m.supplies) assert(Object.hasOwn(items, item), `기계 ${id}: 없는 입고 품목 ${short(item)}`);
     }
+    if (m.kind === 'storage') {
+      assert(isInt(m.capacity, 1, 100000) && typeof m.singleItem === 'boolean', `기계 ${id}: 저장소 capacity/singleItem 오류`);
+    }
+    if (m.kind === 'gate') assert(isNum(m.seconds, 0.05, 60), `기계 ${id}: 게이트 seconds 오류`);
     if (CONVEYOR_KINDS.has(m.kind)) {
       assert(isNum(m.speed, 0.1, 20), `기계 ${id}: 벨트 speed 오류`);
       assert(m.size[0] === 1 && m.size[1] === 1, `기계 ${id}: 벨트류는 1×1`);
@@ -141,6 +146,7 @@ export function validateGameConfig(g, items, machines) {
 
   const m = g.map;
   assert(isObj(m) && isInt(m.roomWidth, 1, 512) && isInt(m.roomHeight, 1, 512) && isInt(m.wallThickness, 0, 8), 'map 오류');
+  assert(isInt(m.streetRows ?? 0, 0, 8), 'map.streetRows 오류');
   const w = m.roomWidth + m.wallThickness * 2;
   const h = m.roomHeight + m.wallThickness * 2;
 
@@ -160,9 +166,9 @@ export function validateGameConfig(g, items, machines) {
 // done 조건: 아이템 기준(have/placed/sold) 또는 기계 기준(built/made/took)
 const DONE_ITEM_KINDS = new Set(['have', 'placed', 'sold']);
 const DONE_MACHINE_KINDS = new Set(['built', 'made', 'took', 'fed']);
-const UI_TARGETS = new Set(['build', 'overlay']);
+const UI_TARGETS = new Set(['build', 'overlay', 'orders']);
 
-export function validateTutorial(data, items, machines) {
+export function validateTutorial(data, items, machines, orders) {
   rejectForbiddenKeys(data, 'tutorial');
   assert(isObj(data?.tracks), 'tutorial.tracks 오류');
   for (const [track, steps] of Object.entries(data.tracks)) {
@@ -177,7 +183,8 @@ export function validateTutorial(data, items, machines) {
       assert(isObj(s.done) && Object.keys(s.done).length === 1, `${where}: done 오류`);
       const [kind, id] = Object.entries(s.done)[0];
       const ok = (DONE_ITEM_KINDS.has(kind) && Object.hasOwn(items, id)) ||
-        (DONE_MACHINE_KINDS.has(kind) && Object.hasOwn(machines, id));
+        (DONE_MACHINE_KINDS.has(kind) && Object.hasOwn(machines, id)) ||
+        (kind === 'order' && (id === 'any' || Object.hasOwn(orders.kinds, id)));
       assert(ok, `${where}: done 조건 오류`);
     }
   }
@@ -203,6 +210,7 @@ export function validateProgression(data, { recipes, machines, items, tutorial }
   const start = data?.start;
   validateUnlockLists(start, 'progression.start', recipeIds, machines);
   assert(Array.isArray(start.recipes) && Array.isArray(start.machines), 'progression.start 목록 오류');
+  assert(Array.isArray(start.features ?? []) && (start.features ?? []).every((f) => FEATURES.has(f)), 'progression.start.features 오류');
   validateParts(start.parts, 'progression.start.parts', items);
   assert(start.tutorial === null || Object.hasOwn(tutorial, start.tutorial), 'progression.start.tutorial 오류');
 
@@ -217,6 +225,7 @@ export function validateProgression(data, { recipes, machines, items, tutorial }
       assert(Object.hasOwn(items, item) && isInt(n, 1, 1e6), `단계 ${st.id}: when.sold 오류`);
     }
     validateUnlockLists(st.unlock, `단계 ${st.id}.unlock`, recipeIds, machines);
+    assert((st.unlock.features ?? []).every((f) => FEATURES.has(f)), `단계 ${st.id}: features 오류`);
     for (const id of st.unlock.machines ?? []) assert(machines[id].cost, `단계 ${st.id}: 지을 수 없는 기계 ${id}`);
     if (st.reward !== undefined) validateParts(st.reward.parts ?? {}, `단계 ${st.id}.reward.parts`, items);
     if (st.tutorial !== undefined) assert(Object.hasOwn(tutorial, st.tutorial), `단계 ${st.id}: tutorial 오류`);
@@ -224,15 +233,42 @@ export function validateProgression(data, { recipes, machines, items, tutorial }
   return data;
 }
 
+export function validateOrders(data, items) {
+  rejectForbiddenKeys(data, 'orders');
+  assert(isObj(data), 'orders.json 형식 오류');
+  assert(isInt(data.maxOpen, 1, 12), 'orders.maxOpen 오류');
+  for (const k of ['firstSpawnSeconds', 'spawnSeconds', 'leaveSeconds']) assert(isNum(data[k], 0.1, 3600), `orders.${k} 오류`);
+  const mk = data.market;
+  assert(isObj(mk) && isNum(mk.shiftSeconds, 1, 3600) && isNum(mk.easePerSecond, 0.001, 1), 'orders.market 오류');
+  assert(Array.isArray(mk.range) && isNum(mk.range[0], 0.1, 1) && isNum(mk.range[1], 1, 10), 'orders.market.range 오류');
+  assert(isObj(data.kinds) && Object.keys(data.kinds).length > 0, 'orders.kinds 오류');
+  for (const [id, k] of Object.entries(data.kinds)) {
+    const where = `주문 종류 ${id}`;
+    assert(ID_RE.test(id) && id !== 'any', `${where}: id 오류`);
+    assert(isStr(k.name, 8) && isNum(k.weight, 0, 100), `${where}: name/weight 오류`);
+    assert(Array.isArray(k.rewardMul) && isNum(k.rewardMul[0], 0.1, 20) && isNum(k.rewardMul[1], k.rewardMul[0], 20), `${where}: rewardMul 오류`);
+    assert(k.deadline === null || isNum(k.deadline, 5, 86400), `${where}: deadline 오류`);
+    assert(isInt(k.repDone, -100, 100) && isInt(k.repFail, -100, 100), `${where}: rep 오류`);
+    assert(Array.isArray(k.templates) && k.templates.length > 0, `${where}: templates 오류`);
+    for (const t of k.templates) {
+      assert(isObj(t) && Object.keys(t).length > 0, `${where}: 빈 주문`);
+      for (const [item, n] of Object.entries(t)) {
+        assert(Object.hasOwn(items, item) && items[item].price > 0 && isInt(n, 1, 999), `${where}: 주문 품목 오류 ${short(item)}`);
+      }
+    }
+  }
+  return data;
+}
+
 /** 시뮬레이션이 쓰는 규칙 묶음. 순수 데이터 + 조회용 색인. */
-export function buildRules({ game, items, machines, recipes, tutorial, progression }) {
+export function buildRules({ game, items, machines, recipes, tutorial, progression, orders }) {
   const recipesByStation = Object.create(null);
   for (const id of Object.keys(machines)) recipesByStation[id] = [];
   for (const r of recipes) for (const s of r.stations) recipesByStation[s].push(r);
-  return { game, items, machines, recipes, recipesByStation, tutorial, progression };
+  return { game, items, machines, recipes, recipesByStation, tutorial, progression, orders };
 }
 
-export const DATA_FILES = ['palette', 'game', 'items', 'machines', 'recipes', 'tutorial', 'progression'];
+export const DATA_FILES = ['palette', 'game', 'items', 'machines', 'recipes', 'tutorial', 'progression', 'orders'];
 
 export function validateAll(raw) {
   const palette = validatePalette(raw.palette);
@@ -240,9 +276,10 @@ export function validateAll(raw) {
   const machines = validateMachines(raw.machines, items);
   const recipes = validateRecipes(raw.recipes, items, machines);
   const game = validateGameConfig(raw.game, items, machines);
-  const tutorial = validateTutorial(raw.tutorial, items, machines);
+  const orders = validateOrders(raw.orders, items);
+  const tutorial = validateTutorial(raw.tutorial, items, machines, orders);
   const progression = validateProgression(raw.progression, { recipes, machines, items, tutorial });
-  return { palette, rules: buildRules({ game, items, machines, recipes, tutorial, progression }) };
+  return { palette, rules: buildRules({ game, items, machines, recipes, tutorial, progression, orders }) };
 }
 
 async function fetchJson(url) {

@@ -7,6 +7,8 @@ import { isConveyorKind } from '../sim/conveyor.js';
 import { inserterArmPhase } from '../sim/inserter.js';
 import { DIRS } from '../sim/lookup.js';
 import { utilization } from '../sim/stats.js';
+import { storageTotal, mostStocked } from '../sim/storage.js';
+import { drawCustomers } from './customers.js';
 import { viewOrigin } from './camera.js';
 
 /** 칸 좌표 → 고정 난수. 바닥 얼룩/균열 위치를 매번 같게 만든다. */
@@ -19,6 +21,8 @@ function tileHash(x, y) {
 function tileSprite(type, x, y) {
   const h = tileHash(x, y);
   if (type === TILE.WALL) return h % 7 === 0 ? 'wallRust' : 'wall';
+  if (type === TILE.STREET) return 'street';
+  if (type === TILE.WINDOW) return 'window';
   const light = (x + y) % 2 === 0;
   if (light) return h % 13 === 0 ? 'floorLightCrack' : 'floorLight';
   return h % 17 === 0 ? 'floorDarkOil' : 'floorDark';
@@ -133,7 +137,17 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
 
       const bx = st.x * ts;
       const by = st.y * ts;
-      if (machine.kind === 'inserter') {
+      if (machine.kind === 'storage') {
+        // 많이 쌓인 품목 아이콘 + 오른쪽 세로 눈금 (꽉 차면 빨강)
+        const top = mostStocked(st);
+        if (top) itemSprite(top, bx + (st.w * ts) / 2 - 8, by + 2);
+        const ratio = storageTotal(st) / machine.capacity;
+        const gx = bx + st.w * ts - 5;
+        const gh = st.h * ts - 12;
+        fillPx('K', gx, by + 4, 3, gh);
+        const fh = Math.round((gh - 2) * ratio);
+        fillPx(ratio >= 1 ? 'R' : 'G', gx + 1, by + 4 + (gh - 1 - fh), 1, fh);
+      } else if (machine.kind === 'inserter') {
         // 팔: 뒤(집기) → 가운데 → 앞(놓기). 든 물건은 집게 끝에 작게.
         const phase = inserterArmPhase(rules, st);
         sprite(machine.armSprite, phase, bx, by - 2, st.rot);
@@ -155,7 +169,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
         if (st.w === 1) itemSprite(st.contents[st.contents.length - 1], bx, by - 1);
         else st.contents.forEach((it, i) => itemSprite(it, bx - 1 + i * 9, by - 1));
       }
-      if (machine.kind === 'machine' || machine.kind === 'inserter') {
+      if (machine.kind === 'machine' || machine.kind === 'inserter' || machine.kind === 'gate') {
         // 상태등: 오른쪽 위. 가동 = 깜박이는 초록 사각, 대기 = 노랑 점, 막힘 = 빨강 X
         const lamp = { running: 'lampRunning', idle: 'lampIdle', blocked: 'lampBlocked' }[st.status];
         sprite(lamp, animFrame, bx + st.w * ts - 6, by + 1);
@@ -187,6 +201,11 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
     ctx.fillStyle = bank.color('G');
     ctx.fillRect(sx(bx + 1), sy(by + 1), Math.round((w - 2) * Math.min(1, ratio)) * s, 2 * s);
   }
+
+  drawCustomers(ctx, world, rules, bank, {
+    image: (img, px, py) => ctx.drawImage(img, sx(px), sy(py), img.width * s, img.height * s),
+    fill: (key, px, py, w, h) => fillPx(key, px, py, w, h),
+  });
 
   if (opts.overlay) drawOverlay();
   if (opts.selected) drawFrame(opts.selected, 'y');
