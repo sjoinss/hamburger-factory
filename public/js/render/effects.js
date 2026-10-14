@@ -16,7 +16,8 @@ export function createEffects(tileSize, fontFamily) {
       for (const e of list) e.t += dt;
       list = list.filter((e) => e.t < COIN_SECONDS);
     },
-    draw(ctx, bank, sx, sy, s) {
+    /** still: 움직임 줄이기 (떠오르지 않고 제자리에 잠깐 보인다) */
+    draw(ctx, bank, sx, sy, s, still = false) {
       if (list.length === 0) return;
       // 픽셀 폰트는 12px 배수에서만 선명하다.
       const k = Math.max(1, Math.floor(s / 2));
@@ -24,7 +25,7 @@ export function createEffects(tileSize, fontFamily) {
       ctx.textBaseline = 'top';
       for (const e of list) {
         // 프레임 스왑처럼 2px 단위로 끊어서 올라간다.
-        const rise = Math.floor((e.t / COIN_SECONDS) * 12 / 2) * 2;
+        const rise = still ? 0 : Math.floor((e.t / COIN_SECONDS) * 12 / 2) * 2;
         const x = e.x - 4;
         const y = e.y - 10 - rise;
         const coin = bank.get('coin');

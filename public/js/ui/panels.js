@@ -1,4 +1,17 @@
 // 접이식 패널. 한 번에 하나만 열고, 닫으면 게임 화면으로 포커스를 돌려준다.
+// 키보드로 열면 (B, F, 메뉴 버튼에서 Enter/Space) 패널 안 첫 버튼으로 포커스를 옮긴다. 마우스로 열면 그대로.
+
+const FOCUSABLE = 'button:not([data-close]), input:not([type="file"]), select, [tabindex="0"]';
+
+/** 보이는 첫 조작 요소 (내용은 다음 프레임에 그려지는 패널도 있어서 잠깐 뒤에 찾는다) */
+function focusInside(panel) {
+  setTimeout(() => {
+    if (panel.hidden) return;
+    const target = [...panel.querySelectorAll(FOCUSABLE)].find((el) => !el.disabled && el.offsetParent !== null)
+      ?? panel.querySelector('[data-close]');
+    target?.focus({ preventScroll: true });
+  }, 60);
+}
 
 export function createPanels({ onOpen, returnFocus }) {
   const buttons = new Map();
@@ -16,8 +29,12 @@ export function createPanels({ onOpen, returnFocus }) {
     returnFocus();
   }
 
-  function open(name) {
-    if (current === name) return;
+  /** opts.focus: 키보드로 열었으면 true */
+  function open(name, opts = {}) {
+    if (current === name) {
+      if (opts.focus) focusInside(panelOf(name));
+      return;
+    }
     if (current) {
       panelOf(current).hidden = true;
       buttons.get(current)?.setAttribute('aria-expanded', 'false');
@@ -27,11 +44,13 @@ export function createPanels({ onOpen, returnFocus }) {
     // 메뉴 버튼이 없는 패널도 있다 (기계 정보: 기계를 누르면 열린다)
     buttons.get(name)?.setAttribute('aria-expanded', 'true');
     onOpen?.(name);
+    if (opts.focus) focusInside(panelOf(name));
   }
 
-  const toggle = (name) => (current === name ? close() : open(name));
+  const toggle = (name, opts) => (current === name ? close() : open(name, opts));
 
-  for (const [name, btn] of buttons) btn.addEventListener('click', () => toggle(name));
+  // detail === 0: 마우스가 아니라 키보드(Enter/Space)로 누른 클릭
+  for (const [name, btn] of buttons) btn.addEventListener('click', (e) => toggle(name, { focus: e.detail === 0 }));
   for (const btn of document.querySelectorAll('.panel [data-close]')) btn.addEventListener('click', close);
 
   window.addEventListener('keydown', (e) => {
@@ -41,7 +60,7 @@ export function createPanels({ onOpen, returnFocus }) {
       e.preventDefault();
       close();
     } else if (e.code === 'KeyB' && !e.repeat) {
-      toggle('build');
+      toggle('build', { focus: true });
     }
   });
 

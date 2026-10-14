@@ -236,6 +236,8 @@ button[aria-expanded="true"] {
 .keys-touch { display: none; }
 .is-touch .keys-touch { display: grid; }
 .is-touch .keys-desktop { display: none; }
+/* 진동처럼 터치 화면에서만 의미 있는 설정 */
+body:not(.is-touch) .touch-only { display: none; }
 .wide-btn { width: 100%; margin-top: 10px; }
 
 /* 레시피북 */
@@ -354,6 +356,9 @@ button[aria-expanded="true"] {
   50%, 100% { color: var(--c-light); }
 }
 .stat dd.flash { animation: money-flash 0.3s steps(1) 2; }
+/* 움직임 줄이기 (설정 또는 기기 설정): 깜박이지 않고 노란 버튼으로만 표시 */
+.reduce-motion .menu button.is-hint { animation: none; background: var(--c-warn); }
+.reduce-motion .stat dd.flash { animation: none; }
 
 /* ── 터치 조작: 터치가 감지되거나 거친 포인터 기기에서만 ─── */
 .touch-controls { display: none; }

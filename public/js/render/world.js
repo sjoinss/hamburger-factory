@@ -85,7 +85,7 @@ function stationProgress(rules, station) {
  * @param alpha 틱 사이 보간 비율 0~1
  * @param hover 마우스가 가리키는 칸 {x,y} 또는 null
  * @param build 건설/철거 미리보기 (ui/build.js preview()) 또는 null
- * @param opts {{ overlay: boolean, selected: station|null, flow: { path, ends }|null }}
+ * @param opts {{ overlay: boolean, selected: station|null, flow: { path, ends }|null, reduceMotion: boolean }}
  */
 export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build, opts = {}) {
   const config = rules.game;
@@ -276,7 +276,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   // 튜토리얼 목표 화살표: 2프레임으로 위아래 까딱
   const goal = tutorialTarget(world, rules);
   if (goal) {
-    const bob = Math.floor(world.time * 3) % 2 === 0 ? 0 : 2;
+    const bob = opts.reduceMotion || Math.floor(world.time * 3) % 2 === 0 ? 0 : 2;
     const ax = goal.x * ts + (goal.w * ts - 9) / 2;
     const ay = goal.y * ts - 14;
     // 보이는 영역 (상단 바·터치 조작부 제외, 기기 픽셀)
@@ -304,10 +304,11 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
     }
   }
 
-  effects.draw(ctx, bank, sx, sy, s);
+  effects.draw(ctx, bank, sx, sy, s, opts.reduceMotion);
 
   // 전력 부족: 형광등이 이따금 깜박 (점무늬로 어둡게, 팔레트 밖 색 없음)
-  if (world.power && world.power.ratio < 1 && Math.floor(world.time * 10) % 17 === 0) {
+  // (움직임 줄이기: 깜박이지 않는다. 상단 바 전력 표시로만)
+  if (!opts.reduceMotion && world.power && world.power.ratio < 1 && Math.floor(world.time * 10) % 17 === 0) {
     const dim = bank.get('overlayDim');
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (shown[y * grid.width + x]) ctx.drawImage(dim, ox + x * cell, oy + y * cell, cell, cell);
   }

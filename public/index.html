@@ -5,8 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14100e">
   <!-- 정적 호스팅(GitHub Pages)처럼 응답 헤더를 못 바꾸는 곳에서도 같은 정책을 쓰도록. frame-ancestors 는 헤더(server.js)에서만 적용된다. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; base-uri 'none'; form-action 'none'; worker-src 'self'; manifest-src 'self'">
   <title>햄버거 공장</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="햄버거 공장">
   <link rel="stylesheet" href="css/ui.css">
   <script type="module" src="js/main.js"></script>
 </head>
@@ -154,6 +160,9 @@
       <button type="button" class="wide-btn" id="btn-mute" aria-pressed="false">음소거</button>
       <label class="slider"><span>전체</span><input type="range" id="vol-master" min="0" max="100" step="5"><output id="vol-master-out"></output></label>
       <label class="slider"><span>효과음</span><input type="range" id="vol-sfx" min="0" max="100" step="5"><output id="vol-sfx-out"></output></label>
+      <h3 class="info-sub">화면</h3>
+      <button type="button" class="wide-btn" id="btn-motion" aria-pressed="false">움직임 줄이기</button>
+      <button type="button" class="wide-btn touch-only" id="btn-vibrate" aria-pressed="true" hidden>진동</button>
       <h3 class="info-sub">조작</h3>
       <dl class="kv keys-desktop">
         <div><dt>WASD</dt><dd>이동</dd></div>
@@ -165,6 +174,7 @@
         <div><dt>B</dt><dd>건설 (R 회전, X 철거)</dd></div>
         <div><dt>F / 클릭</dt><dd>기계 상태 보기</dd></div>
         <div><dt>O</dt><dd>병목 보기</dd></div>
+        <div><dt>Ctrl+Z</dt><dd>되돌리기</dd></div>
         <div><dt>Esc</dt><dd>창 닫기 / 건설 끝</dd></div>
       </dl>
       <dl class="kv keys-touch">

@@ -19,6 +19,7 @@ const MIME = {
   '.woff2': 'font/woff2',
   '.woff': 'font/woff',
   '.png': 'image/png',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8',
 };
@@ -27,7 +28,7 @@ const SECURITY_HEADERS = {
   'Content-Security-Policy':
     "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; " +
     "font-src 'self'; connect-src 'self'; media-src 'self' blob:; base-uri 'none'; " +
-    "form-action 'none'; frame-ancestors 'none'",
+    "form-action 'none'; frame-ancestors 'none'; worker-src 'self'; manifest-src 'self'",
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'no-referrer',
   'X-Frame-Options': 'DENY',

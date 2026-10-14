@@ -22,6 +22,8 @@ import { createSound } from './audio/sound.js';
 import { createSettings, readSavedGame } from './ui/settings.js';
 import { createAway } from './ui/away.js';
 import { beltFlow } from './sim/flow.js';
+import { createPrefs, VIBRATE } from './ui/prefs.js';
+import { registerServiceWorker } from './ui/pwa.js';
 import { replaceWorld } from './sim/save.js';
 import { ownedBounds } from './sim/zones.js';
 import { createChapterView } from './ui/chapters.js';
@@ -104,6 +106,7 @@ async function boot() {
   const saved = readSavedGame(rules);
   if (saved.world) replaceWorld(world, saved.world);
   const sound = createSound();
+  const prefs = createPrefs();
   const camera = createCamera(config.camera);
   // 개발용: 주소 끝에 #debug 를 붙이면 콘솔에서 상태를 볼 수 있다.
   const effects = createEffects(ts, FONT_FAMILY);
@@ -156,9 +159,9 @@ async function boot() {
     if (!walker.walkTo(x, y)) hud.banner('갈 수 없는 곳', 1.5);
   }
 
-  const inspect = (st) => {
+  const inspect = (st, opts) => {
     inspector.select(st ? st.id : null);
-    if (st) panels.open('info');
+    if (st) panels.open('info', opts);
   };
   let hover = null;
   let mouseWasDown = false;
@@ -180,6 +183,7 @@ async function boot() {
     world,
     rules,
     sound,
+    prefs,
     banner: (text, s) => hud.banner(text, s),
     onReplace: (next) => {
       replaceWorld(world, next ?? createWorld(rules));
@@ -205,6 +209,7 @@ async function boot() {
   const coarse = window.matchMedia('(pointer: coarse)').matches || flags.has('touch');
   const enterTouchMode = () => {
     hud.setTouchMode(true);
+    prefs.setTouch(true);
     setZoom(camera, config.camera.mobileZoom);
     view.scale = pixelScale(camera, view.dpr);
   };
@@ -269,7 +274,7 @@ async function boot() {
     if (input.consumePress('KeyO')) setOverlay(!overlay);
     if (input.consumePress('KeyF')) {
       const t = facingTile(world.player, config.player.reach);
-      inspect(stationAt(world, t.x, t.y));
+      inspect(stationAt(world, t.x, t.y), { focus: true });
     }
     if (build.active()) {
       if (input.consumePress('KeyR')) build.rotate();
@@ -350,6 +355,7 @@ async function boot() {
     for (const ev of world.events) {
       effects.push(ev);
       sound.event(ev);
+      if (VIBRATE[ev.type]) prefs.vibrate(VIBRATE[ev.type]);
       if (ev.type === 'sold') hud.flashMoney();
       if (ev.type === 'orderDone') {
         hud.flashMoney();
@@ -420,6 +426,7 @@ async function boot() {
       fontFamily: FONT_FAMILY,
       selected,
       flow: flowCache.flow,
+      reduceMotion: prefs.reducedMotion(),
     });
     if (panels.current() === 'info') inspector.render();
     if (panels.current() === 'stats') {
@@ -438,6 +445,8 @@ async function boot() {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+  // 다 불러온 뒤에: 오프라인용 캐시 (불러온 파일 목록을 그대로 넘긴다)
+  registerServiceWorker();
 }
 
 boot();

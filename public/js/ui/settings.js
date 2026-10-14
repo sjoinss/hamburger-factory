@@ -35,7 +35,7 @@ export function readSavedGame(rules) {
 
 const clock = (d) => d.toTimeString().slice(0, 8);
 
-export function createSettings({ world, rules, sound, onReplace, banner }) {
+export function createSettings({ world, rules, sound, prefs, onReplace, banner }) {
   const $ = (id) => document.getElementById(id);
   const status = $('save-status');
   const fileInput = $('import-file');
@@ -135,6 +135,25 @@ export function createSettings({ world, rules, sound, onReplace, banner }) {
     });
   }
   renderSound();
+
+  // ── 화면: 움직임 줄이기, 진동 ──
+  const motionBtn = $('btn-motion');
+  const vibrateBtn = $('btn-vibrate');
+  function renderPrefs() {
+    motionBtn.setAttribute('aria-pressed', String(prefs.reducedMotion()));
+    vibrateBtn.hidden = !prefs.canVibrate();
+    vibrateBtn.setAttribute('aria-pressed', String(prefs.vibrateOn()));
+    vibrateBtn.textContent = prefs.vibrateOn() ? '진동 켜짐' : '진동 꺼짐';
+  }
+  motionBtn.addEventListener('click', () => {
+    prefs.set({ reduceMotion: !prefs.reducedMotion() });
+    renderPrefs();
+  });
+  vibrateBtn.addEventListener('click', () => {
+    prefs.set({ vibrate: !prefs.vibrateOn() });
+    renderPrefs();
+  });
+  renderPrefs();
 
   return { saveNow, setStatus: (text) => { status.textContent = text; } };
 }

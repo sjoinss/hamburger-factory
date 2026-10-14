@@ -99,3 +99,17 @@ test('ETag 조건부 요청은 304', async () => {
   });
   assert.equal(res.statusCode, 304);
 });
+
+test('PWA: 매니페스트·서비스 워커·아이콘을 맞는 형식으로 응답하고, CSP 가 막지 않는다', async () => {
+  const mf = await request('GET', '/manifest.webmanifest');
+  assert.equal(mf.status, 200);
+  assert.match(mf.headers['content-type'], /application\/manifest\+json/);
+  const sw = await request('GET', '/sw.js');
+  assert.equal(sw.status, 200);
+  assert.match(sw.headers['content-type'], /text\/javascript/);
+  const icon = await request('HEAD', '/icons/icon-192.png');
+  assert.equal(icon.status, 200);
+  const csp = mf.headers['content-security-policy'];
+  assert.match(csp, /worker-src 'self'/);
+  assert.match(csp, /manifest-src 'self'/);
+});
