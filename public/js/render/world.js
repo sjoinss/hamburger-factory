@@ -126,9 +126,16 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
     }
   }
 
+  // 화면에 걸친 기계만 그린다 (위로 내민 완성품·칸을 넘는 벨트 물건 때문에 한 칸 여유)
+  const vx0 = x0 - 1;
+  const vy0 = y0 - 1;
+  const vx1 = Math.floor((view.width - ox) / cell) + 1;
+  const vy1 = Math.floor((view.height - oy) / cell) + 1;
+  const visible = world.stations.filter((st) => st.x + st.w > vx0 && st.x <= vx1 && st.y + st.h > vy0 && st.y <= vy1);
+
   // 바닥층: 컨베이어류 (납작해서 y 정렬 없이 먼저). 갈빗살은 벨트 속도로 흐른다.
   const flat = [];
-  for (const st of world.stations) {
+  for (const st of visible) {
     const m = rules.machines[st.type];
     if (!isConveyorKind(m.kind)) continue;
     flat.push(st);
@@ -154,7 +161,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   const p = world.player;
   const px = p.prevX + (p.x - p.prevX) * alpha;
   const py = p.prevY + (p.y - p.prevY) * alpha;
-  const drawables = world.stations
+  const drawables = visible
     .filter((st) => !isConveyorKind(rules.machines[st.type].kind))
     .map((st) => ({ sortY: st.y + st.h, st }));
   drawables.push({ sortY: py + 0.3, player: true });
@@ -226,7 +233,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   }
 
   // 작업 진행 막대 (색 + 길이. 정확한 %는 안내 문구에 텍스트로)
-  for (const st of world.stations) {
+  for (const st of visible) {
     const ratio = stationProgress(rules, st);
     if (ratio === null) continue;
     const w = st.w * ts - 2;
@@ -318,7 +325,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
    * 벨트는 부드럽게 한 막힘 정도, 기계는 최근 5초 상태 기록으로 판단해 깜박임을 줄인다.
    */
   function drawOverlay() {
-    for (const st of world.stations) {
+    for (const st of visible) {
       const kind = rules.machines[st.type].kind;
       let state = null;
       if (kind === 'belt') state = st.jam > 0.5 ? 'jam' : st.idle > 0.8 ? 'idle' : null;

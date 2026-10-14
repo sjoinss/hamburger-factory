@@ -8,9 +8,20 @@ const BROKEN_KEY = 'hamburger-factory:save-broken';
 const AUTOSAVE_MS = 30_000;
 const CONFIRM_MS = 3000;
 
+/** 읽기만 (없거나 막히면 null) */
+function getItem(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * 부팅할 때 저장된 게임을 읽는다.
- * @returns {{ world?, dropped?, error? }} 저장이 없으면 빈 객체
+ * - 옛 형식이면 바꾸기 전 원본을 따로 남겨 둔다 (변환에 문제가 있어도 되돌릴 수 있게).
+ * - 전에 못 읽어서 옮겨 둔 저장(예: 더 새 버전에서 만든 저장)을 지금은 읽을 수 있고 더 최근 것이면 그쪽으로.
+ * @returns {{ world?, dropped?, savedAt?, error? }} 저장이 없으면 빈 객체
  */
 export function readSavedGame(rules) {
   let text = null;
@@ -19,18 +30,51 @@ export function readSavedGame(rules) {
   } catch {
     return { error: '이 브라우저에서는 저장을 쓸 수 없다' };
   }
-  if (!text) return {};
-  try {
-    return loadWorld(rules, text);
-  } catch (err) {
+  const brokenText = getItem(BROKEN_KEY);
+  let broken = null;
+  if (brokenText) {
+    try {
+      broken = loadWorld(rules, brokenText);
+    } catch {
+      broken = null; // 아직도 못 읽으면 그대로 둔다
+    }
+  }
+  let res = null;
+  let error = null;
+  if (text) {
+    try {
+      res = loadWorld(rules, text);
+    } catch (err) {
+      error = err;
+    }
+  }
+  if (broken && (!res || (broken.savedAt ?? 0) > (res.savedAt ?? 0))) {
+    try {
+      localStorage.setItem(SAVE_KEY, brokenText);
+      localStorage.removeItem(BROKEN_KEY);
+    } catch {
+      /* 다음에 다시 */
+    }
+    return { ...broken, recovered: true };
+  }
+  if (error) {
     try {
       localStorage.setItem(BROKEN_KEY, text);
       localStorage.removeItem(SAVE_KEY);
     } catch {
       /* 옮기지 못해도 새 게임은 시작한다 */
     }
-    return { error: `저장을 불러오지 못해 새로 시작: ${err.message}` };
+    return { error: `저장을 불러오지 못해 새로 시작: ${error.message}` };
   }
+  if (!res) return {};
+  if (res.migratedFrom !== null) {
+    try {
+      localStorage.setItem(`${SAVE_KEY}-v${res.migratedFrom}`, text);
+    } catch {
+      /* 공간이 없으면 원본 보관은 건너뛴다 */
+    }
+  }
+  return res;
 }
 
 const clock = (d) => d.toTimeString().slice(0, 8);

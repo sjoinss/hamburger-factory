@@ -201,7 +201,7 @@ async function boot() {
   const away = createAway({ world, rules, hud });
   if (saved.error) hud.banner(saved.error, 4);
   else if (saved.world) {
-    hud.banner('이어서 하기', 1.5);
+    hud.banner(saved.recovered ? '전에 못 읽은 저장을 되살렸다' : '이어서 하기', saved.recovered ? 3 : 1.5);
     if (saved.savedAt) away.start((Date.now() - saved.savedAt) / 1000);
   }
   if (flags.has('debug')) Object.assign(window.__game, { sound, settings, away });

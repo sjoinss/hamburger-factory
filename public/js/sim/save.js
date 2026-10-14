@@ -16,6 +16,27 @@ export const SAVE_MAX_CHARS = 5_000_000;
 const LIMIT = { list: 64, orders: 30, ground: 200, packs: 20, log: 300 };
 
 /**
+ * 저장 형식 변환. MIGRATIONS[n] 은 버전 n 의 world 를 n+1 형식으로 바꾼 새 객체를 돌려준다.
+ * 저장 형식을 바꿀 때: SAVE_VERSION 을 올리고 여기에 한 단계를 더한다 (옛 단계는 지우지 않는다).
+ * 변환 뒤에도 restore 가 값을 하나하나 다시 확인하므로, 변환은 모양만 맞춰 주면 된다.
+ * 지금까지는 바뀐 적이 없다 (새 항목은 없으면 기본값이라 변환이 필요 없었다).
+ */
+export const MIGRATIONS = Object.freeze({});
+
+/** 옛 버전 저장 → 지금 버전. 중간 단계가 없으면 Error */
+export function migrateSave(data, migrations = MIGRATIONS, target = SAVE_VERSION) {
+  let { version, world } = data;
+  while (version < target) {
+    const step = migrations[version];
+    if (typeof step !== 'function') throw new Error(`저장 버전 ${version} 을 읽을 수 없다`);
+    world = step(world);
+    if (!isObj(world)) throw new Error('저장 변환 실패');
+    version += 1;
+  }
+  return { ...data, version, world };
+}
+
+/**
  * 저장할 문자열. 격자와 캐시 번호는 구역·기계로 다시 만들 수 있으니 넣지 않는다.
  * savedAt: 저장한 시각 (ms, 자리 비운 시간 계산용. 시뮬레이션은 실제 시계를 모르므로 밖에서 준다)
  */
@@ -68,11 +89,15 @@ export function loadWorld(rules, text) {
     throw new Error('저장 파일을 읽을 수 없다 (JSON 아님)');
   }
   if (!isObj(data) || data.format !== SAVE_FORMAT) throw new Error('햄버거 공장 저장 파일이 아니다');
-  if (!Number.isInteger(data.version) || data.version < 1 || data.version > SAVE_VERSION) {
-    throw new Error('지원하지 않는 저장 버전');
-  }
+  if (!Number.isInteger(data.version) || data.version < 1) throw new Error('지원하지 않는 저장 버전');
+  if (data.version > SAVE_VERSION) throw new Error('더 새 버전의 게임에서 만든 저장 (새로고침해 보세요)');
   if (!isObj(data.world)) throw new Error('저장 데이터가 망가졌다');
-  return { ...restore(rules, data.world), savedAt: fin(data.savedAt) && data.savedAt > 0 ? data.savedAt : null };
+  const current = migrateSave(data);
+  return {
+    ...restore(rules, current.world),
+    savedAt: fin(data.savedAt) && data.savedAt > 0 ? data.savedAt : null,
+    migratedFrom: data.version < SAVE_VERSION ? data.version : null,
+  };
 }
 
 function restore(rules, s) {
