@@ -85,7 +85,7 @@ export function createSettings({ world, rules, sound, prefs, onReplace, banner }
   const fileInput = $('import-file');
   const newBtn = $('btn-new');
   const muteBtn = $('btn-mute');
-  const sliders = { master: $('vol-master'), sfx: $('vol-sfx') };
+  const sliders = { master: $('vol-master'), sfx: $('vol-sfx'), music: $('vol-music') };
   let confirmUntil = 0;
 
   function saveNow() {

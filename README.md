@@ -45,6 +45,8 @@ npm test       # 서버 보안 점검 + 시뮬레이션 + 스프라이트/팔레
 | 상단 '설정' | 상단 '설정' | 저장(30초 자동)·내보내기·불러오기·새로 시작, 소리, 움직임 줄이기, 진동(터치) (다시 열거나 탭으로 돌아오면 비운 시간만큼, 최대 10분 돌아간다) |
 | Esc | 닫기 / 취소 | 창 닫기, 건설 끝 |
 
+처음 열면 타이틀 화면(로고 + 시작/이어서 하기)이 뜨고, 누를 때까지 게임은 멈춰 있다. 게임 시간 10분이 하루이고, 하루가 끝나면 그날 판매·수익·주문을 한 줄로 알린다 (목표 창에 '지난 하루').
+
 화면은 게임이 전부 쓰고, 주문·레시피·건설·목표·설정 다섯 개만 상단 메뉴에 두고 하나씩 펼친다. 조작법은 설정 안에, 기계 정보는 기계를 누르면 열린다.
 튜토리얼은 목표만 짧게 ("햄버거 만들기") 보여 주고, 화살표가 손에 든 것과 모자란 재료를 보고 다음 갈 곳을 가리킨다 (화면 밖이면 가장자리에서). 설정에서 다시 하기.
 
@@ -67,10 +69,10 @@ public/
     main.js          부팅, 고정 20틱 루프 + rAF 렌더 보간
     data.js          JSON 로딩/검증
     input.js         키보드/마우스
-    sim/             시뮬레이션 (DOM/Canvas 모름): grid, upgrade(기계 업그레이드), undo(되돌리기), presets(기계 설정 복사), flow(벨트 흐름), lookup, rng, path, guide(길잡이 화살표), player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, chapters, world
+    sim/             시뮬레이션 (DOM/Canvas 모름): grid, day(하루 결산), upgrade(기계 업그레이드), undo(되돌리기), presets(기계 설정 복사), flow(벨트 흐름), lookup, rng, path, guide(길잡이 화살표), player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, chapters, world
     render/          sprites(bake/캐시), camera, world, customers, effects
     sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, farm-potato, items, machines, storage, workshop, auto, menu, ui
-    audio/           Web Audio 합성 효과음 (파일 없음)
+    audio/           Web Audio 합성 효과음 + 배경음악 (파일 없음, 설정에서 음악 음량)
     ui/              상단 바/손/안내(hud), 화면 설정(prefs), 서비스 워커 등록(pwa), 자리 비운 동안(away), 접이식 패널, 레시피북, 튜토리얼 카드, 건설 모드(구역 매입·청사진 포함), 기계 정보, 통계, 주문서, 탭 이동, 설정(저장·소리·조작)
 tests/               node:test
 tools/make-icons.mjs 앱 아이콘 PNG 만들기 (Node 내장 zlib)
@@ -94,3 +96,4 @@ tools/make-icons.mjs 앱 아이콘 PNG 만들기 (Node 내장 zlib)
 - [x] M11 편의 기능 (되돌리기 Ctrl+Z, 기계 설정 복사·붙이기, 벨트 흐름 보기, 자리 비운 동안 진행)
 - [x] M12 모바일·접근성 (홈 화면 추가·오프라인, 움직임 줄이기, 진동, 키보드로 연 창은 첫 버튼에 포커스, 1024/1280/1440 화면 점검)
 - [x] M13 유지보수 (브라우저 스모크 테스트, 화면 밖 기계 그리지 않기, 저장 형식 변환 틀, 못 읽은 저장 보관·되살리기, 기획서 갱신)
+- [x] M14 마무리 (타이틀 화면과 톱니바퀴 햄버거 로고, 배경음악, 하루 결산)

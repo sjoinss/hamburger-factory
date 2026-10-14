@@ -1,8 +1,25 @@
-// 효과음: 파일 없이 Web Audio API 로 합성한다. 첫 사용자 입력(클릭·키·터치) 뒤에만 AudioContext 를 연다.
+// 효과음 + 배경음악: 파일 없이 Web Audio API 로 합성한다. 첫 사용자 입력(클릭·키·터치) 뒤에만 AudioContext 를 연다.
 // 시뮬레이션 사건(world.events)을 받아 소리로 바꾼다. 같은 소리가 몰리면 솎아 낸다 (4배속에서도 시끄럽지 않게).
 
 const KEY = 'hamburger-factory:sound';
-const DEFAULTS = Object.freeze({ muted: false, master: 0.35, sfx: 0.7 });
+const DEFAULTS = Object.freeze({ muted: false, master: 0.35, sfx: 0.7, music: 0.4 });
+
+// ── 배경음악: 잔잔한 칩튠 8마디 반복 (C - Am - F - G - C - Em - F - G) ──
+const BPM = 92;
+const STEP = 60 / BPM / 2; // 8분음표
+// 멜로디 (MIDI 번호, 0 = 쉼, -1 = 앞 음을 끈다). 한 마디 8칸
+const MELODY = [
+  76, -1, 79, -1, 81, 79, 76, -1,
+  72, -1, -1, 0, 74, 76, 72, -1,
+  69, -1, 72, -1, 74, 72, 69, -1,
+  67, -1, -1, 0, 0, 74, 72, 74,
+  76, -1, 79, -1, 84, -1, 81, 79,
+  76, -1, -1, 0, 79, 76, 74, -1,
+  72, -1, 74, 76, 74, -1, 72, 69,
+  72, -1, -1, -1, 0, 0, 0, 0,
+];
+const ROOTS = [48, 45, 41, 43, 48, 40, 41, 43];
+const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
 
 /** 같은 소리 사이 최소 간격 (초) */
 const GAP = { coin: 0.08, sizzle: 0.3, thud: 0.15, click: 0.12, build: 0.06, remove: 0.06, bell: 0.4, warn: 0.6, dingdong: 0.3, fanfare: 1, tape: 0.2, beep: 0.3 };
@@ -19,7 +36,7 @@ function readSettings() {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     const vol = (v, d) => (typeof v === 'number' && v >= 0 && v <= 1 ? v : d);
     if (!raw || typeof raw !== 'object') return { ...DEFAULTS };
-    return { muted: raw.muted === true, master: vol(raw.master, DEFAULTS.master), sfx: vol(raw.sfx, DEFAULTS.sfx) };
+    return { muted: raw.muted === true, master: vol(raw.master, DEFAULTS.master), sfx: vol(raw.sfx, DEFAULTS.sfx), music: vol(raw.music, DEFAULTS.music) };
   } catch {
     return { ...DEFAULTS };
   }
@@ -30,6 +47,10 @@ export function createSound() {
   let ctx = null;
   let master = null;
   let sfx = null;
+  let music = null;
+  let musicTimer = null;
+  let nextNote = 0;
+  let step = 0;
   let humGain = null;
   let noise = null;
   const last = {};
@@ -48,11 +69,77 @@ export function createSound() {
     const t = ctx.currentTime;
     master.gain.setTargetAtTime(settings.muted ? 0 : settings.master, t, 0.02);
     sfx.gain.setTargetAtTime(settings.sfx, t, 0.02);
+    music.gain.setTargetAtTime(settings.music, t, 0.05);
+    syncMusic();
   }
+
+  // ── 배경음악 스케줄러: 조금 앞까지 음을 미리 예약한다 (타이머가 늦어도 박자가 흔들리지 않게) ──
+  function note(freq, at, dur, type, vol, dest = music) {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, at);
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(vol, at + 0.01);
+    g.gain.setValueAtTime(vol, at + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    osc.connect(g).connect(dest);
+    osc.start(at);
+    osc.stop(at + dur + 0.02);
+  }
+  function scheduleMusic() {
+    while (nextNote < ctx.currentTime + 0.3) {
+      const i = step % MELODY.length;
+      const bar = Math.floor(i / 8);
+      const beat = i % 8;
+      const m = MELODY[i];
+      if (m > 0) {
+        let len = 1;
+        while (MELODY[(i + len) % MELODY.length] === -1) len++;
+        note(hz(m), nextNote, STEP * len * 0.95, 'square', 0.035, musicLead);
+      }
+      const root = ROOTS[bar];
+      if (beat === 0 || beat === 4) note(hz(root), nextNote, STEP * 1.8, 'triangle', 0.12);
+      if (beat === 6) note(hz(root + 7), nextNote, STEP * 1.6, 'triangle', 0.09);
+      if (beat % 2 === 1) {
+        const src = ctx.createBufferSource();
+        src.buffer = noise;
+        const f = ctx.createBiquadFilter();
+        f.type = 'highpass';
+        f.frequency.value = 7000;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.012, nextNote);
+        g.gain.exponentialRampToValueAtTime(0.0001, nextNote + 0.04);
+        src.connect(f).connect(g).connect(music);
+        src.start(nextNote, Math.random() * 0.5);
+        src.stop(nextNote + 0.06);
+      }
+      nextNote += STEP;
+      step += 1;
+    }
+  }
+  let musicLead = null;
+  /** 들릴 때만 돌린다 (음소거·음량 0·탭 숨김이면 멈춘다) */
+  function syncMusic() {
+    const on = ctx && ctx.state === 'running' && !settings.muted && settings.master > 0 && settings.music > 0 && !document.hidden;
+    if (on && !musicTimer) {
+      nextNote = ctx.currentTime + 0.1;
+      musicTimer = setInterval(scheduleMusic, 100);
+    } else if (!on && musicTimer) {
+      clearInterval(musicTimer);
+      musicTimer = null;
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return;
+    if (document.hidden) ctx.suspend().catch(() => {});
+    else ctx.resume().then(syncMusic).catch(() => {});
+    syncMusic();
+  });
 
   function start() {
     if (ctx) {
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if (ctx.state === 'suspended' && !document.hidden) ctx.resume().then(syncMusic).catch(() => {});
       return;
     }
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -63,10 +150,20 @@ export function createSound() {
       ctx = null;
       return;
     }
+    ctx.addEventListener?.('statechange', syncMusic);
     master = ctx.createGain();
     sfx = ctx.createGain();
     master.gain.value = 0;
     sfx.connect(master);
+    music = ctx.createGain();
+    music.gain.value = 0;
+    music.connect(master);
+    // 멜로디는 네모파가 날카롭지 않게 한 번 뭉갠다
+    const soft = ctx.createBiquadFilter();
+    soft.type = 'lowpass';
+    soft.frequency.value = 1800;
+    soft.connect(music);
+    musicLead = soft;
     master.connect(ctx.destination);
     // 흰 소음 1초 (지글·쿵 소리 재료)
     noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);

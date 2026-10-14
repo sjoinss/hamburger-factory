@@ -84,6 +84,16 @@
       </div>
     </div>
 
+    <!-- 타이틀: 처음 열 때 한 번 (누를 때까지 멈춰 있다) -->
+    <section class="title" id="title" role="dialog" aria-labelledby="title-name" hidden>
+      <div class="title-card">
+        <canvas id="title-logo" class="title-logo" width="32" height="32" aria-hidden="true"></canvas>
+        <h2 id="title-name">햄버거 공장</h2>
+        <p class="muted" id="title-info" hidden></p>
+        <button type="button" class="wide-btn build-confirm" id="btn-title-start">시작</button>
+      </div>
+    </section>
+
     <!-- 엔딩: 마지막 장을 끝내면 한 번 (목표 패널에서 다시 볼 수 있다) -->
     <section class="ending" id="ending" role="dialog" aria-labelledby="ending-title" hidden>
       <canvas id="ending-sprite" class="ending-sprite" width="16" height="16" aria-hidden="true"></canvas>
@@ -160,6 +170,7 @@
       <button type="button" class="wide-btn" id="btn-mute" aria-pressed="false">음소거</button>
       <label class="slider"><span>전체</span><input type="range" id="vol-master" min="0" max="100" step="5"><output id="vol-master-out"></output></label>
       <label class="slider"><span>효과음</span><input type="range" id="vol-sfx" min="0" max="100" step="5"><output id="vol-sfx-out"></output></label>
+      <label class="slider"><span>음악</span><input type="range" id="vol-music" min="0" max="100" step="5"><output id="vol-music-out"></output></label>
       <h3 class="info-sub">화면</h3>
       <button type="button" class="wide-btn" id="btn-motion" aria-pressed="false">움직임 줄이기</button>
       <button type="button" class="wide-btn touch-only" id="btn-vibrate" aria-pressed="true" hidden>진동</button>
@@ -204,6 +215,7 @@
       <button type="button" class="wide-btn" data-ui="overlay" aria-pressed="false">병목 보기<span class="key-hint"> (O)</span></button>
       <h3 class="info-sub">통계</h3>
       <p class="stat-headline"><span class="muted">최근 5분 수익</span> <strong id="stats-earned">0</strong></p>
+      <p class="muted" id="stats-day" hidden></p>
       <canvas class="earn-chart" id="earn-chart" width="122" height="40" role="img" aria-label="최근 5분 10초 단위 수익 막대 그래프"></canvas>
       <p class="chart-axis"><span>5분 전</span><span id="earn-hover" class="muted">막대를 누르면 값</span><span>지금</span></p>
       <table class="rate-table">

@@ -120,6 +120,7 @@ export const SPRITE_DEFS = {
   gear: [items.GEAR],
   flour: [items.FLOUR],
   dough: [items.DOUGH],
+  logo: [ui.LOGO],
   tileCursor: [ui.TILE_CURSOR],
   tileTarget: [ui.TILE_TARGET],
   tutorialArrow: [ui.TUTORIAL_ARROW],

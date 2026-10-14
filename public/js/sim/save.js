@@ -8,6 +8,7 @@ import { canInsertAt, insertSorted, makeBeltItem } from './conveyor.js';
 import { BUCKETS, HISTORY_SECONDS } from './stats.js';
 import { FEATURES } from '../data.js';
 import { upgradable } from './upgrade.js';
+import { createDay } from './day.js';
 
 export const SAVE_FORMAT = 'hamburger-factory-save';
 export const SAVE_VERSION = 1;
@@ -155,6 +156,21 @@ function restore(rules, s) {
       challenge: int(s.chapters.challenge, 0, 1e6, 0),
     };
     if (w.chapters.index >= rules.chapters.length) w.chapters.ended = true;
+  }
+  if (isObj(s.day)) {
+    const d = s.day;
+    const b = isObj(d.base) ? d.base : {};
+    const n = (v) => num(v, 0, 1e12, 0);
+    const last = isObj(d.last) ? d.last : null;
+    w.day = {
+      n: int(d.n, 1, 1e6, 1),
+      start: num(d.start, 0, w.time, 0),
+      base: { sold: n(b.sold), earned: n(b.earned), done: n(b.done), failed: n(b.failed) },
+      last: last && { day: int(last.day, 1, 1e6, 1), sold: n(last.sold), earned: num(last.earned, -1e12, 1e12, 0), orders: n(last.orders), failed: n(last.failed) },
+    };
+  } else {
+    // 하루가 생기기 전 저장: 불러온 때부터 첫날
+    w.day = createDay(w);
   }
   if (isObj(s.records)) {
     w.records = {

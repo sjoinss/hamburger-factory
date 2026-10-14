@@ -605,6 +605,31 @@ button:disabled { opacity: 1; color: var(--c-oil); background: var(--c-floor-dar
 .ending .kv { width: 100%; text-align: left; }
 .ending-sprite { width: 64px; height: 64px; image-rendering: pixelated; }
 
+/* 타이틀: 밝은 바닥색 위에 엔딩과 같은 카드 */
+.title {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-alert);
+  display: grid;
+  place-items: center;
+  background: var(--c-floor);
+}
+.title-card {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  width: min(320px, calc(100% - 32px));
+  padding: 18px 16px 16px;
+  text-align: center;
+  background: var(--c-wall);
+  border: var(--line) solid var(--c-black);
+  border-top: 6px solid var(--c-warn);
+  box-shadow: 4px 4px 0 var(--c-black);
+}
+.title-card h2 { color: var(--c-warn); font-size: 36px; line-height: 1.2; }
+.title-logo { width: 128px; height: 128px; image-rendering: pixelated; }
+.title-card button { width: 100%; min-height: 44px; }
+
 /* 좁은 화면: 플레이 시간은 빼고 (목표 → 엔딩에서 볼 수 있다) 돈·평판·전력 + 속도를 한 줄에 */
 @media (max-width: 599px) {
   .stat-time { display: none; }

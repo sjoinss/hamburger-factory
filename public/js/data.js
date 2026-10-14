@@ -158,6 +158,7 @@ export function validateGameConfig(g, items, machines) {
 
   assert(isObj(g.touch) && isNum(g.touch.pinchStep, 1.01, 4), 'touch 오류');
 
+  assert(isNum(g.dayMinutes, 1, 1440), 'dayMinutes 오류');
   assert(isObj(g.away) && isNum(g.away.minSeconds, 1, 3600) && isNum(g.away.maxSeconds, g.away.minSeconds, 86400), 'away 오류');
 
   const up = g.upgrades;

@@ -14,7 +14,7 @@ import { createRecipeBook } from './ui/recipebook.js';
 import { createTutorialCard } from './ui/tutorial.js';
 import { createBuildMode } from './ui/build.js';
 import { createInspector } from './ui/inspect.js';
-import { createStatsPanel } from './ui/stats.js';
+import { createStatsPanel, daySummaryText } from './ui/stats.js';
 import { createOrderBoard } from './ui/orders.js';
 import { stationAt } from './sim/lookup.js';
 import { createWalker } from './ui/walk.js';
@@ -24,6 +24,7 @@ import { createAway } from './ui/away.js';
 import { beltFlow } from './sim/flow.js';
 import { createPrefs, VIBRATE } from './ui/prefs.js';
 import { registerServiceWorker } from './ui/pwa.js';
+import { createTitle } from './ui/title.js';
 import { replaceWorld } from './sim/save.js';
 import { ownedBounds } from './sim/zones.js';
 import { createChapterView } from './ui/chapters.js';
@@ -199,11 +200,15 @@ async function boot() {
   });
   // 자리 비운 동안 진행 (저장한 뒤 지난 시간만큼)
   const away = createAway({ world, rules, hud });
-  if (saved.error) hud.banner(saved.error, 4);
-  else if (saved.world) {
-    hud.banner(saved.recovered ? '전에 못 읽은 저장을 되살렸다' : '이어서 하기', saved.recovered ? 3 : 1.5);
-    if (saved.savedAt) away.start((Date.now() - saved.savedAt) / 1000);
-  }
+  // 자리 비운 시간·안내는 타이틀에서 시작을 누른 뒤에
+  const awaySeconds = saved.world && saved.savedAt ? (Date.now() - saved.savedAt) / 1000 : 0;
+  const greet = () => {
+    if (saved.error) hud.banner(saved.error, 4);
+    else if (saved.world) {
+      hud.banner(saved.recovered ? '전에 못 읽은 저장을 되살렸다' : '이어서 하기', saved.recovered ? 3 : 1.5);
+      if (awaySeconds) away.start(awaySeconds);
+    }
+  };
   if (flags.has('debug')) Object.assign(window.__game, { sound, settings, away });
 
   const coarse = window.matchMedia('(pointer: coarse)').matches || flags.has('touch');
@@ -229,7 +234,18 @@ async function boot() {
   resizeCanvas(camera);
   new ResizeObserver(() => resizeCanvas(camera)).observe(stage);
   if (coarse) enterTouchMode();
-  setSpeed(1);
+  // 타이틀: 시작을 누를 때까지 멈춰 둔다
+  setSpeed(0);
+  const title = createTitle({
+    world,
+    bank,
+    hasSave: Boolean(saved.world),
+    onStart: () => {
+      setSpeed(1);
+      greet();
+      canvas.focus({ preventScroll: true });
+    },
+  });
 
   // 탭이 백그라운드로 가면 멈추고, 돌아오면 숨어 있던 시간만큼 빨리 돌린다 (일시정지 중이었으면 그대로).
   let acc = 0;
@@ -257,7 +273,7 @@ async function boot() {
     last = now;
 
     // ── 화면 조작 (게임 속도와 무관하게 실제 시간 기준) ──
-    if (input.consumePress('Space')) setSpeed(state.speed === 0 ? (state.speedBeforeHidden || 1) : 0);
+    if (input.consumePress('Space') && !title.isOpen()) setSpeed(state.speed === 0 ? (state.speedBeforeHidden || 1) : 0);
     if (state.speed !== 0) state.speedBeforeHidden = state.speed;
     if (input.consumePress('KeyC')) camera.follow = true;
 
@@ -371,6 +387,7 @@ async function boot() {
         hud.flashMoney();
         hud.banner(`${done.name} 완료!${ev.reward.money ? ` +${ev.reward.money}` : ''}`, 3);
       }
+      if (ev.type === 'dayEnd') hud.banner(`${ev.day}일째 끝 · ${daySummaryText(ev)}`, 4);
       if (ev.type === 'challengeDone') {
         hud.flashMoney();
         hud.banner(`도전 ${ev.level} 완료! +${ev.reward.money}`, 3);

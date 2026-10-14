@@ -138,7 +138,12 @@ async function openPage(hash, { mobile = false, script }) {
   let ready = false;
   for (let i = 0; i < 100 && !ready; i++) {
     await sleep(100);
-    ready = await evaluate('Boolean(window.__game && window.__game.world.tick > 20)').catch(() => false);
+    // 타이틀이 떠 있으면 시작을 누른다 (누를 때까지 게임은 멈춰 있다)
+    ready = await evaluate(`(() => {
+      const title = document.getElementById('title');
+      if (title && !title.hidden) document.getElementById('btn-title-start').click();
+      return Boolean(window.__game && window.__game.world.tick > 20);
+    })()`).catch(() => false);
   }
   const fatal = await evaluate("document.getElementById('stage-msg').hidden ? null : document.getElementById('stage-msg').textContent");
   const result = ready ? await evaluate(`(async () => { ${script} })()`) : null;
@@ -162,7 +167,7 @@ const PLAY = `
   const built = [placeMachine(g.world, g.rules, 'grill', 3, 9, 0).ok, placeMachine(g.world, g.rules, 'belt', 3, 10, 0).ok];
   const t0 = g.world.tick;
   await wait(600);
-  return { built, ticking: g.world.tick > t0, stations: g.world.stations.length, canvas: document.getElementById('game').width > 0 };
+  return { built, ticking: g.world.tick > t0, stations: g.world.stations.length, canvas: document.getElementById('game').width > 0, titleHidden: document.getElementById('title').hidden };
 `;
 
 test('PC 화면: 콘솔 에러 없이 뜨고, 메뉴를 열고 기계를 지을 수 있다', { skip: SKIP, timeout: 60000 }, async () => {
@@ -172,6 +177,7 @@ test('PC 화면: 콘솔 에러 없이 뜨고, 메뉴를 열고 기계를 지을 
   assert.deepEqual(r.errors, []);
   assert.deepEqual(r.result.built, [true, true]);
   assert.ok(r.result.ticking && r.result.canvas);
+  assert.ok(r.result.titleHidden, '시작을 누르면 타이틀이 닫힌다');
 });
 
 test('모바일 화면 (390×844, 터치): 콘솔 에러 없이 뜬다', { skip: SKIP, timeout: 60000 }, async () => {

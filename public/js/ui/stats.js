@@ -1,5 +1,13 @@
-// 통계 패널: 최근 5분 수익 막대 그래프 (10초 단위) + 품목별 분당 표.
+// 통계 패널: 최근 5분 수익 막대 그래프 (10초 단위) + 지난 하루 결산 + 품목별 분당 표.
 import { perMinute, BUCKET_SECONDS, BUCKETS } from '../sim/stats.js';
+
+/** 하루 결산 한 줄 (배너와 통계 패널이 같이 쓴다) */
+export function daySummaryText(d) {
+  const parts = [`판매 ${d.sold}`, `수익 ${d.earned >= 0 ? '+' : ''}${d.earned}`];
+  if (d.orders) parts.push(`주문 ${d.orders}건`);
+  if (d.failed) parts.push(`놓친 주문 ${d.failed}`);
+  return parts.join(' · ');
+}
 import { spriteIcon } from './icons.js';
 
 const BAR_W = 3; // 막대 3px + 간격 1px (도트 단위)
@@ -12,6 +20,7 @@ export function createStatsPanel({ world, rules, bank }) {
   const earnedEl = document.getElementById('stats-earned');
   const hoverEl = document.getElementById('earn-hover');
   const body = document.getElementById('rate-body');
+  const dayEl = document.getElementById('stats-day');
   let hoverIndex = null;
   let lastRender = -Infinity;
 
@@ -92,6 +101,9 @@ export function createStatsPanel({ world, rules, bank }) {
       lastRender = nowMs;
       const data = series();
       earnedEl.textContent = String(data.reduce((a, d) => a + d.earned, 0));
+      const last = world.day?.last;
+      dayEl.hidden = !last;
+      if (last) dayEl.textContent = `지난 하루 (${last.day}일째): ${daySummaryText(last)}`;
       drawChart(data);
       hoverEl.textContent = hoverText(data);
       renderTable();

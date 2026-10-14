@@ -99,3 +99,38 @@ export const OVERLAY_IDLE = Array.from({ length: 16 }, (_, y) =>
 // 정전 깜박임: 한 칸 걸러 검정 (반투명 대신)
 export const OVERLAY_DIM = Array.from({ length: 16 }, (_, y) =>
   Array.from({ length: 16 }, (_, x) => ((x + y) % 2 === 0 ? 'K' : '.')).join(''));
+
+// 로고 32×32: 공장 톱니바퀴 가운데에 햄버거. 톱니·테두리는 계산으로 찍고, 햄버거는 아이템 도트를 그대로 얹는다.
+import { BURGER } from './items.js';
+export const LOGO = (() => {
+  const N = 32;
+  const c = 15.5;
+  const grid = Array.from({ length: N }, () => Array(N).fill('.'));
+  const TEETH = 8;
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const d = Math.hypot(x - c, y - c);
+      const a = Math.atan2(y - c, x - c);
+      // 톱니: 바퀴 둘레 8개, 각 톱니는 각도 폭 안에서만 바깥으로 튀어나온다
+      const phase = (((a / (2 * Math.PI)) * TEETH) % 1 + 1) % 1;
+      const tooth = Math.abs(phase - 0.5) < 0.2;
+      if (d <= 10.5) grid[y][x] = 'y';
+      else if (d <= 13) grid[y][x] = d <= 11.5 ? '3' : '2';
+      else if (d <= 15.5 && tooth) grid[y][x] = '2';
+    }
+  }
+  // 바깥 테두리: 모양 밖과 맞닿은 칸
+  const out = grid.map((r) => [...r]);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      if (grid[y][x] === '.') continue;
+      const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (grid[y + dy]?.[x + dx] ?? '.') === '.');
+      if (edge) out[y][x] = 'k';
+    }
+  }
+  // 노란 원판과 쇠 테 사이 그늘
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (out[y][x] === 'y' && Math.hypot(x - c, y - c) > 9.6) out[y][x] = 'o';
+  // 햄버거 (16×16) 가운데
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (BURGER[y][x] !== '.') out[y + 8][x + 8] = BURGER[y][x];
+  return out.map((r) => r.join(''));
+})();

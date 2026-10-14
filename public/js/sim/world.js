@@ -17,6 +17,7 @@ import { TILE, getTile, setTile } from './grid.js';
 import { createPower, updatePower } from './power.js';
 import { zoneMult } from './zones.js';
 import { speedMult } from './upgrade.js';
+import { createDay, updateDay } from './day.js';
 import { createChapters, createRecords, updateChapters } from './chapters.js';
 
 export const NO_INPUT = Object.freeze({
@@ -79,6 +80,7 @@ export function createWorld(rules) {
     tutorial: createTutorial(rules.progression.start.tutorial),
     chapters: createChapters(),
     records: createRecords(),
+    day: createDay(),
     // 렌더/사운드가 읽고 비우는 일회성 사건 목록
     events: [],
   };
@@ -124,6 +126,7 @@ export function stepWorld(world, input, dt, rules) {
   if (world.tick % rules.game.ticksPerSecond === 0) {
     for (const st of world.stations) if (st.hist !== undefined) sampleHistory(st);
     updateChapters(world, rules);
+    updateDay(world, rules);
   }
   updateMarket(world, rules, dt);
   updateOrders(world, rules, dt);
