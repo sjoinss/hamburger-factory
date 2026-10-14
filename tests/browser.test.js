@@ -136,21 +136,25 @@ async function openPage(hash, { mobile = false, script }) {
   };
   // 게임이 뜨고 시뮬레이션이 돌 때까지
   let ready = false;
+  let titleClicked = false;
   for (let i = 0; i < 100 && !ready; i++) {
     await sleep(100);
     // 타이틀이 떠 있으면 시작을 누른다 (누를 때까지 게임은 멈춰 있다)
-    ready = await evaluate(`(() => {
+    const state = await evaluate(`(() => {
       const title = document.getElementById('title');
-      if (title && !title.hidden) document.getElementById('btn-title-start').click();
-      return Boolean(window.__game && window.__game.world.tick > 20);
-    })()`).catch(() => false);
+      const shown = Boolean(title && !title.hidden);
+      if (shown) document.getElementById('btn-title-start').click();
+      return { shown, ready: Boolean(window.__game && window.__game.world.tick > 20) };
+    })()`).catch(() => ({ shown: false, ready: false }));
+    titleClicked ||= state.shown;
+    ready = state.ready;
   }
   const fatal = await evaluate("document.getElementById('stage-msg').hidden ? null : document.getElementById('stage-msg').textContent");
   const result = ready ? await evaluate(`(async () => { ${script} })()`) : null;
   await sleep(300);
   off();
   await cdp.send('Target.closeTarget', { targetId });
-  return { ready, fatal, errors, result };
+  return { ready, fatal, errors, result, titleClicked };
 }
 
 // 메뉴를 하나씩 열어 보고, 몇 초 돌린 뒤 기계·벨트를 지어 보고, 상태를 돌려준다
@@ -186,4 +190,12 @@ test('모바일 화면 (390×844, 터치): 콘솔 에러 없이 뜬다', { skip:
   assert.ok(r.ready, '게임이 뜨지 않음');
   assert.deepEqual(r.errors, []);
   assert.ok(r.result.ticking);
+});
+
+test('이어서 할 때는 타이틀 없이 바로 공장으로 (앞 시험이 탭을 닫으며 저장해 둔 공장)', { skip: SKIP, timeout: 60000 }, async () => {
+  const r = await openPage('debug', { script: "return { grill: window.__game.world.stations.some((s) => s.type === 'grill' && s.x === 3 && s.y === 9) };" });
+  assert.ok(r.ready, '게임이 뜨지 않음');
+  assert.equal(r.titleClicked, false, '타이틀이 뜨면 안 된다');
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.result.grill, '앞에서 지은 그릴이 그대로');
 });

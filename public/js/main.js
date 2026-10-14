@@ -236,18 +236,18 @@ async function boot() {
   resizeCanvas(camera);
   new ResizeObserver(() => resizeCanvas(camera)).observe(stage);
   if (coarse) enterTouchMode();
-  // 타이틀: 시작을 누를 때까지 멈춰 둔다
-  setSpeed(0);
-  const title = createTitle({
-    world,
-    bank,
-    hasSave: Boolean(saved.world),
-    onStart: () => {
-      setSpeed(1);
-      greet();
-      canvas.focus({ preventScroll: true });
-    },
-  });
+  // 타이틀: 처음 시작할 때만 (시작을 누를 때까지 멈춰 둔다). 이어서 할 때는 건너뛰고 바로 공장으로
+  const begin = () => {
+    setSpeed(1);
+    greet();
+    canvas.focus({ preventScroll: true });
+  };
+  let title = { isOpen: () => false };
+  if (saved.world) begin();
+  else {
+    setSpeed(0);
+    title = createTitle({ bank, onStart: begin });
+  }
 
   // 탭이 백그라운드로 가면 멈추고, 돌아오면 숨어 있던 시간만큼 빨리 돌린다 (일시정지 중이었으면 그대로).
   let acc = 0;

@@ -84,12 +84,11 @@
       </div>
     </div>
 
-    <!-- 타이틀: 처음 열 때 한 번 (누를 때까지 멈춰 있다) -->
+    <!-- 타이틀: 새로 시작할 때만 (누를 때까지 멈춰 있다. 이어서 할 때는 건너뛴다) -->
     <section class="title" id="title" role="dialog" aria-labelledby="title-name" hidden>
       <div class="title-card">
         <canvas id="title-logo" class="title-logo" width="32" height="32" aria-hidden="true"></canvas>
         <h2 id="title-name">햄버거 공장</h2>
-        <p class="muted" id="title-info" hidden></p>
         <button type="button" class="wide-btn build-confirm" id="btn-title-start">시작</button>
       </div>
     </section>

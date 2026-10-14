@@ -83,10 +83,19 @@ export function spawnInterval(world, rules) {
   return Math.max(cfg.minSpawnSeconds, cfg.spawnSeconds - Math.max(0, world.reputation) * cfg.repSpawnStep);
 }
 
-export function updateOrders(world, rules, dt) {
+/**
+ * @param customers false 면 손님이 멈춘다: 새 손님이 오지 않고, 와 있는 주문의 남은 시간도 줄지 않는다
+ *   (자리 비운 동안 빨리 돌릴 때. 공장은 그대로 돌아서 와 있는 주문은 채울 수 있다)
+ */
+export function updateOrders(world, rules, dt, customers = true) {
   if (!world.features.includes('orders')) return;
   const cfg = rules.orders;
   const o = world.orders;
+  if (!customers) {
+    for (const order of openOrders(world)) if (order.deadline !== null) order.deadline += dt;
+    o.list = o.list.filter((x) => x.state === 'open' || world.time < x.leaveAt);
+    return;
+  }
   if (o.timer === null) o.timer = cfg.firstSpawnSeconds;
   o.timer -= dt;
   if (o.timer <= 0) {

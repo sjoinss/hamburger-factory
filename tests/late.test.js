@@ -258,3 +258,21 @@ test('분배기·합류기는 들어온 벨트만큼 흘려보낸다 (병목이 
   assert.ok(fast > plain * 1.5, '고속 벨트가 더 많이 나른다');
   assert.ok(throughput('fast_belt', 'merger') > fast * 0.95, '고속 벨트에서 온 물건은 고속으로');
 });
+
+test('자리 비운 동안 (손님 멈춤): 새 손님이 오지 않고, 와 있는 주문의 남은 시간도 줄지 않는다', () => {
+  const w = worldAt(25);
+  w.orders.timer = 0;
+  stepWorld(w, NO_INPUT, dt, rules);
+  const order = w.orders.list.find((o) => o.state === 'open' && o.deadline !== null) ?? w.orders.list[0];
+  if (order.deadline === null) order.deadline = w.time + 30;
+  const left = order.deadline - w.time;
+  const count = w.orders.list.length;
+  w.orders.timer = 0;
+  for (let i = 0; i < secs(120); i++) stepWorld(w, NO_INPUT, dt, rules, { customers: false });
+  assert.equal(w.orders.list.length, count, '새 손님 없음');
+  assert.equal(order.state, 'open', '시간이 다 돼 떠나지 않는다');
+  assert.ok(Math.abs(order.deadline - w.time - left) < 1e-6, '남은 시간 그대로');
+  // 돌아오면 다시 흐른다
+  stepWorld(w, NO_INPUT, dt, rules);
+  assert.ok(w.orders.list.length > count, '손님이 다시 온다');
+});

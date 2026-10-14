@@ -86,8 +86,11 @@ export function createWorld(rules) {
   };
 }
 
-/** 고정 타임스텝 한 번. input 은 순수 데이터. */
-export function stepWorld(world, input, dt, rules) {
+/**
+ * 고정 타임스텝 한 번. input 은 순수 데이터.
+ * opts.customers: false 면 손님이 오지 않는다 (자리 비운 동안 따라잡기)
+ */
+export function stepWorld(world, input, dt, rules, opts = {}) {
   world.tick += 1;
   world.time += dt;
   updatePlayer(world.player, world.grid, input, dt, rules.game.player);
@@ -129,7 +132,7 @@ export function stepWorld(world, input, dt, rules) {
     updateDay(world, rules);
   }
   updateMarket(world, rules, dt);
-  updateOrders(world, rules, dt);
+  updateOrders(world, rules, dt, opts.customers !== false);
   updateTutorial(world, rules);
   updateProgression(world, rules);
 }
