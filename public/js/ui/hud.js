@@ -1,6 +1,6 @@
 // 상단 바, 손, 작업 안내, 정보 패널 갱신. 문자열은 textContent 로만 넣는다.
 import { spriteIcon } from './icons.js';
-import { machineRecipe, farmGrowth } from '../sim/station.js';
+import { machineRecipe, farmGrowth, stationRecipes } from '../sim/station.js';
 import { marketPrice } from '../sim/market.js';
 import { anyOrderNeeds } from '../sim/orders.js';
 import { storageTotal } from '../sim/storage.js';
@@ -70,12 +70,13 @@ export function machineStatusText(station, rules, world = null) {
   }
   if (kind === 'splitter') return '좌우로 번갈아 나눔';
   if (kind === 'merger') return '모아서 앞으로';
+  if (kind === 'sorter') return station.filter ? `${name(station.filter)}만 왼쪽으로, 나머지는 앞으로` : '품목을 정하면 그것만 왼쪽으로';
   if (station.status === 'running') {
     const r = machineRecipe(rules, station);
     return `가동 중 ${r ? Math.floor((station.progress / r.seconds) * 100) : 0}%`;
   }
   if (station.status === 'blocked') return '막힘: 출력 꽉 참';
-  const inputs = new Set(rules.recipesByStation[station.type].flatMap((r) => Object.keys(r.inputs)));
+  const inputs = new Set(stationRecipes(rules, station).flatMap((r) => Object.keys(r.inputs)));
   return `대기: ${[...inputs].map(name).join(', ')} 넣기`;
 }
 

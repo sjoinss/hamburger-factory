@@ -1,9 +1,9 @@
 // data/*.json 로딩과 검증. 데이터 파일도 신뢰하지 않고 형태와 상호 참조를 확인한다.
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate', 'farm', 'generator', 'reader', 'bundler']);
+const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'sorter', 'inserter', 'storage', 'gate', 'farm', 'generator', 'reader', 'bundler']);
 export const FEATURES = new Set(['orders', 'market', 'power', 'zones', 'blueprints', 'upgrades']);
-const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger']);
+const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger', 'sorter']);
 // bundle: 합류 포장기가 만드는 주문 묶음 (출고구에서만 의미가 있다)
 const ITEM_CATEGORIES = new Set(['food', 'part', 'material', 'bundle']);
 const ID_RE = /^[a-z][a-z0-9_]{0,31}$/;

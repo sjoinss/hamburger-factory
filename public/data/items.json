@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "items": {
     "raw_meat"       : { "name": "생고기", "sprite": "rawMeat", "price": 0, "category": "food", "buy": 3 },
     "ground_meat"    : { "name": "다진고기", "sprite": "groundMeat", "price": 1, "category": "food" },
@@ -40,6 +40,12 @@
     "sausage"        : { "name": "소시지", "sprite": "sausage", "price": 0, "category": "food" },
     "hotdog"         : { "name": "핫도그", "sprite": "hotdog", "price": 14, "category": "food" },
     "ice_cream"      : { "name": "아이스크림", "sprite": "iceCream", "price": 14, "category": "food" },
-    "cooling_unit"   : { "name": "냉동 유닛", "sprite": "coolingUnit", "price": 0, "category": "part" }
+    "cooling_unit"   : { "name": "냉동 유닛", "sprite": "coolingUnit", "price": 0, "category": "part" },
+    "cheeseburger"   : { "name": "치즈버거", "sprite": "cheeseburger", "price": 18, "category": "food" },
+    "double_burger"  : { "name": "더블버거", "sprite": "doubleBurger", "price": 18, "category": "food" },
+    "bacon_burger"   : { "name": "베이컨버거", "sprite": "baconBurger", "price": 22, "category": "food" },
+    "pork"           : { "name": "돼지고기", "sprite": "pork", "price": 0, "category": "food", "buy": 3 },
+    "bacon"          : { "name": "베이컨", "sprite": "bacon", "price": 0, "category": "food" },
+    "wedges"         : { "name": "웨지감자", "sprite": "wedges", "price": 10, "category": "food" }
   }
 }

@@ -33,7 +33,8 @@ export function captureBlueprint(world, rules, ax, ay, bx, by) {
       const e = { type: st.type, x: st.x - minX, y: st.y - minY, rot: st.rot };
       const kind = rules.machines[st.type].kind;
       if (kind === 'supply') e.item = st.item;
-      if (kind === 'storage' && st.filter) e.filter = st.filter;
+      if ((kind === 'storage' || kind === 'sorter') && st.filter) e.filter = st.filter;
+      if (kind === 'machine' && st.recipe) e.recipe = st.recipe;
       if (kind === 'gate' && st.mode.kind === 'manual' && st.mode.item) {
         e.gate = { item: st.mode.item, count: st.mode.count, repeat: st.mode.repeat };
       }
@@ -99,6 +100,7 @@ export function pasteBlueprint(world, rules, bp, ox, oy) {
     const st = res.station;
     if (e.item) applySettings(world, rules, st, { item: e.item });
     if (e.filter) applySettings(world, rules, st, { filter: e.filter });
+    if (e.recipe) applySettings(world, rules, st, { recipe: e.recipe });
     if (e.gate) applySettings(world, rules, st, { gate: e.gate });
   }
   noteTutorial(world, 'ui', 'blueprint');
@@ -135,6 +137,7 @@ export function validateBlueprint(rules, raw) {
     const clean = { type: e.type, x: e.x, y: e.y, rot: e.rot };
     if (isItem(e.item)) clean.item = e.item;
     if (isItem(e.filter)) clean.filter = e.filter;
+    if (typeof e.recipe === 'string' && rules.recipesByStation[e.type].some((r) => r.id === e.recipe)) clean.recipe = e.recipe;
     if (e.gate && isItem(e.gate.item) && Number.isInteger(e.gate.count)) {
       clean.gate = { item: e.gate.item, count: Math.max(1, Math.min(999, e.gate.count)), repeat: e.gate.repeat === true };
     }

@@ -1,14 +1,15 @@
 // 기계 설정 (입고 품목, 저장소 필터, 게이트 방식): 읽어 두었다가 다른 같은 종류 기계에 그대로 옮긴다.
 // 설정 복사·붙이기, 철거 되돌리기, 청사진 붙여넣기가 함께 쓴다.
-import { setSupplyItem } from './station.js';
+import { setSupplyItem, setMachineRecipe } from './station.js';
 import { setStorageFilter } from './storage.js';
 import { setGateManual } from './gate.js';
 
-const SETTING_KINDS = new Set(['supply', 'storage', 'gate']);
+const SETTING_KINDS = new Set(['supply', 'storage', 'gate', 'sorter']);
 
-/** 설정이 있는 기계 종류인가 (supply | storage | gate, 아니면 null) */
+/** 설정이 있는 기계 종류인가 (supply | storage | gate | sorter | machine(만들 것이 여럿), 아니면 null) */
 export function settingsKind(rules, type) {
   const kind = rules.machines[type].kind;
+  if (kind === 'machine') return rules.recipesByStation[type].length > 1 ? 'machine' : null;
   return SETTING_KINDS.has(kind) ? kind : null;
 }
 
@@ -16,7 +17,8 @@ export function settingsKind(rules, type) {
 export function readSettings(rules, st) {
   const kind = settingsKind(rules, st.type);
   if (kind === 'supply') return { item: st.item };
-  if (kind === 'storage') return { filter: st.filter ?? null };
+  if (kind === 'storage' || kind === 'sorter') return { filter: st.filter ?? null };
+  if (kind === 'machine') return { recipe: st.recipe ?? null };
   if (kind === 'gate') {
     if (st.mode.kind === 'order') return { gateOrder: true };
     return { gate: { item: st.mode.item, count: st.mode.count, repeat: st.mode.repeat } };
@@ -30,6 +32,12 @@ export function applySettings(world, rules, st, s) {
   if (!kind || !s) return false;
   if (kind === 'supply') return s.item !== undefined && setSupplyItem(rules, st, s.item, world);
   if (kind === 'storage') return s.filter !== undefined && setStorageFilter(rules, st, s.filter);
+  if (kind === 'sorter') {
+    if (s.filter === undefined || (s.filter !== null && !Object.hasOwn(rules.items, s.filter))) return false;
+    st.filter = s.filter;
+    return true;
+  }
+  if (kind === 'machine') return s.recipe !== undefined && setMachineRecipe(rules, st, s.recipe);
   if (s.gateOrder) {
     if (st.mode.kind !== 'order') st.mode = { ...st.mode, kind: 'order', orderId: null, orderSent: {} };
     return true;

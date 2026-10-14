@@ -142,6 +142,11 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
     const frames = bank.frameCount(m.sprite);
     const frame = frames > 1 ? Math.floor((world.time * m.speed * ts) / 2) % frames : 0;
     sprite(m.sprite, frame, st.x * ts, st.y * ts, st.rot);
+    // 선별기: 정한 품목을 창에 작게
+    if (m.kind === 'sorter' && st.filter) {
+      const img = bank.mini(rules.items[st.filter].sprite);
+      ctx.drawImage(img, sx(st.x * ts + 4), sy(st.y * ts + 4), img.width * s, img.height * s);
+    }
   }
   // 벨트 위 물건: 절반 크기 아이콘, 틱 사이 보간
   const miniAt = (it) => {

@@ -92,7 +92,7 @@ export function findInteraction(world, rules) {
       if (top && hasSpace(p)) return { ...base, action: 'unstore', item: top };
       return { ...base, action: 'blocked', reason: top ? 'full' : 'storage-empty' };
     }
-    if (machine.kind === 'splitter' || machine.kind === 'merger' || machine.kind === 'inserter' || machine.kind === 'gate' ||
+    if (machine.kind === 'splitter' || machine.kind === 'merger' || machine.kind === 'sorter' || machine.kind === 'inserter' || machine.kind === 'gate' ||
       machine.kind === 'reader' || machine.kind === 'bundler') {
       return { ...base, action: 'blocked', reason: 'status' };
     }

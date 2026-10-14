@@ -11,7 +11,7 @@ export function createPower() {
 function drawing(rules, st) {
   const kind = rules.machines[st.type].kind;
   if (kind === 'belt') return st.items.length > 0;
-  if (kind === 'splitter' || kind === 'merger') return st.buffer !== null;
+  if (kind === 'splitter' || kind === 'merger' || kind === 'sorter') return st.buffer !== null;
   return st.status === 'running';
 }
 

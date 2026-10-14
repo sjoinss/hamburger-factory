@@ -13,13 +13,15 @@ const SINK_KINDS = new Set(['storage', 'counter', 'generator', 'bundler']);
 export const SPACING = 0.34;
 const EPS = 1e-6;
 
-export const isConveyorKind = (kind) => kind === 'belt' || kind === 'splitter' || kind === 'merger';
+/** 한 번에 하나씩 담아 넘기는 칸: 분배기·합류기·선별기 */
+export const isRouterKind = (kind) => kind === 'splitter' || kind === 'merger' || kind === 'sorter';
+export const isConveyorKind = (kind) => kind === 'belt' || isRouterKind(kind);
 const kindOf = (rules, st) => rules.machines[st.type].kind;
 
 /** item 이 dir 방향으로 움직이며 node 로 들어올 수 있는가 */
 function acceptsFrom(rules, node, dir) {
   const kind = kindOf(rules, node);
-  if (kind === 'splitter') return dir === node.rot;
+  if (kind === 'splitter' || kind === 'sorter') return dir === node.rot; // 뒤에서만 받는다
   return dir !== (node.rot + 2) % 4; // 벨트/합류기: 정면으로 거슬러 들어오는 것만 안 됨
 }
 
@@ -76,7 +78,8 @@ export function conveyorNetwork(world, rules) {
       const front = stationAt(world, n.x + dx, n.y + dy);
       if (front && SINK_KINDS.has(kindOf(rules, front))) sink.set(n.id, front);
     } else {
-      const dirs = kind === 'splitter' ? [(n.rot + 3) % 4, (n.rot + 1) % 4] : [n.rot];
+      // 분배기: 왼쪽·오른쪽 / 선별기: [왼쪽(정한 품목), 앞(나머지)] / 합류기: 앞
+      const dirs = kind === 'splitter' ? [(n.rot + 3) % 4, (n.rot + 1) % 4] : kind === 'sorter' ? [(n.rot + 3) % 4, n.rot] : [n.rot];
       outputs.set(n.id, dirs.map((dir) => ({ dir, node: neighbor(world, rules, n, dir) })));
       upstream.set(n.id, []);
     }
@@ -181,7 +184,9 @@ function updateRouter(rules, router, net, dt) {
     router.buffer.pos = Math.min(1, router.buffer.pos + v);
     if (router.buffer.pos >= 1 - EPS) {
       const outs = net.outputs.get(router.id);
-      const order = kind === 'splitter' ? [outs[router.toggle], outs[1 - router.toggle]] : outs;
+      // 선별기는 갈 곳이 하나로 정해진다 (막히면 기다린다. 다른 쪽으로 새지 않게)
+      const order = kind === 'splitter' ? [outs[router.toggle], outs[1 - router.toggle]]
+        : kind === 'sorter' ? [router.buffer.item === router.filter ? outs[0] : outs[1]] : outs;
       for (const o of order) {
         if (!o?.node) continue;
         const pos = entryPos(o.node, o.dir);

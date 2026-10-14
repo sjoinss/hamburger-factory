@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "tracks": {
     "start": [
       { "text": "햄버거 만들기", "target": { "guide": "burger" }, "done": { "have": "burger" } },
@@ -46,6 +46,10 @@
     "upgrade": [
       { "text": "기계 업그레이드", "target": { "station": "burger_assembler" }, "done": { "ui": "upgrade" } },
       { "text": "고속 벨트 깔기", "target": { "ui": "build" }, "done": { "built": "fast_belt" } }
+    ],
+    "variety": [
+      { "text": "치즈버거 팔기", "target": { "station": "burger_assembler" }, "done": { "sold": "cheeseburger" } },
+      { "text": "선별기 깔기", "target": { "ui": "build" }, "done": { "built": "sorter" } }
     ]
   }
 }

@@ -62,8 +62,9 @@ export function createStation(id, def, machine) {
     station.t = 0;
     station.hist = '';
   }
-  if (machine.kind === 'splitter' || machine.kind === 'merger') {
+  if (machine.kind === 'splitter' || machine.kind === 'merger' || machine.kind === 'sorter') {
     station.buffer = null; // 지나가는 물건 하나
+    if (machine.kind === 'sorter') station.filter = null; // 왼쪽으로 뺄 품목 (없으면 모두 앞으로)
     station.toggle = 0; // 분배기: 다음에 먼저 보낼 쪽
     station.rr = 0; // 합류기: 다음에 먼저 받을 입구
   }
@@ -76,6 +77,33 @@ export function createStation(id, def, machine) {
 }
 
 export const machineOf = (rules, station) => rules.machines[station.type];
+
+/** 이 기계가 지금 만들 수 있는 레시피들: 만들 것을 정했으면 그것 하나, 아니면 전부 (재료가 먼저 다 찬 것) */
+export function stationRecipes(rules, station) {
+  const all = rules.recipesByStation[station.type];
+  return station.recipe ? all.filter((r) => r.id === station.recipe) : all;
+}
+
+/**
+ * 자동 기계의 만들 것을 정한다 (null = 자동). 새 레시피에 안 쓰이는 재료는 출력 칸으로 내보낸다
+ * (투입기가 다른 곳으로 빼 갈 수 있게. 기계 안에 갇히지 않게).
+ */
+export function setMachineRecipe(rules, station, recipeId) {
+  if (machineOf(rules, station).kind !== 'machine') return false;
+  if (recipeId !== null && !rules.recipesByStation[station.type].some((r) => r.id === recipeId)) return false;
+  station.recipe = recipeId;
+  if (recipeId === null) return true;
+  const r = rules.recipesByStation[station.type].find((x) => x.id === recipeId);
+  const keep = [];
+  for (const id of station.contents) {
+    const used = keep.filter((x) => x === id).length;
+    if (used < (r.inputs[id] ?? 0) * machineOf(rules, station).inputBatches) keep.push(id);
+    else station.output.push(id);
+  }
+  station.contents = keep;
+  station.progress = 0;
+  return true;
+}
 
 function countItems(list) {
   const counts = Object.create(null);
@@ -112,7 +140,7 @@ export function canAccept(rules, station, item, world = null) {
   if (machine.kind === 'machine') {
     // 입력 버퍼: 레시피 입력의 inputBatches 배까지 쌓아 둘 수 있다.
     const counts = countItems([...station.contents, item]);
-    return rules.recipesByStation[station.type].some((r) =>
+    return stationRecipes(rules, station).some((r) =>
       Object.entries(counts).every(([id, n]) => n <= (r.inputs[id] ?? 0) * machine.inputBatches));
   }
   if (machine.kind !== 'crafter' || station.output.length > 0) return false;
@@ -163,7 +191,7 @@ export function advanceWork(rules, station, dt) {
 /** 입력 버퍼에 한 번 돌릴 만큼 재료가 있는 레시피 */
 export function machineRecipe(rules, station) {
   const counts = countItems(station.contents);
-  return rules.recipesByStation[station.type].find((r) =>
+  return stationRecipes(rules, station).find((r) =>
     Object.entries(r.inputs).every(([id, n]) => (counts[id] ?? 0) >= n)) ?? null;
 }
 

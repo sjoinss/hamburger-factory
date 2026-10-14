@@ -1,7 +1,8 @@
 // 선택한 기계 정보: 상태, 최근 60초 가동률, 버퍼, 입고구 품목 설정.
 import { stationById } from '../sim/lookup.js';
 import { utilization, HISTORY_SECONDS } from '../sim/stats.js';
-import { setSupplyItem } from '../sim/station.js';
+import { setSupplyItem, setMachineRecipe } from '../sim/station.js';
+import { producible } from '../sim/market.js';
 import { storageTotal, setStorageFilter } from '../sim/storage.js';
 import { setGateManual, gateSources } from '../sim/gate.js';
 import { orderById } from '../sim/orders.js';
@@ -46,6 +47,46 @@ export function createInspector({ world, rules, bank }) {
   const upgradeCost = $('upgrade-cost');
   const upgradeBtn = $('btn-upgrade');
   const UPGRADE_REASON = { max: '최고 등급', money: '돈 부족', parts: '부품 부족' };
+  const recipePick = $('recipe-pick');
+  const sorterPick = $('sorter-pick');
+
+  /** 만들 것: 해금된 레시피가 둘 이상인 자동 기계만. '자동' = 재료가 먼저 다 찬 것 */
+  function renderRecipePick(st) {
+    const m = rules.machines[st.type];
+    const list = m.kind === 'machine'
+      ? rules.recipesByStation[st.type].filter((r) => world.unlocked.recipes.includes(r.id))
+      : [];
+    recipePick.hidden = list.length < 2;
+    if (recipePick.hidden) return;
+    const key = `${st.id}|${list.map((r) => r.id).join(',')}`;
+    if (recipePick.dataset.key !== key) {
+      recipePick.dataset.key = key;
+      const make = (r) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.recipe = r?.id ?? '';
+        const out = r ? Object.keys(r.outputs)[0] : null;
+        if (out) b.append(spriteIcon(bank, rules.items[out].sprite));
+        const label = document.createElement('span');
+        label.textContent = out ? rules.items[out].name : '자동';
+        b.append(label);
+        b.addEventListener('click', () => setMachineRecipe(rules, st, r?.id ?? null));
+        return b;
+      };
+      recipePick.replaceChildren(make(null), ...list.map(make));
+    }
+    for (const b of recipePick.children) b.setAttribute('aria-pressed', String((b.dataset.recipe || null) === (st.recipe ?? null)));
+  }
+
+  /** 선별기: 왼쪽으로 뺄 품목. 지금 만들 수 있거나 들여올 수 있는 것 중에서 */
+  function renderSorterPick(st) {
+    sorterPick.hidden = rules.machines[st.type].kind !== 'sorter';
+    if (sorterPick.hidden) return;
+    const ids = new Set([...producible(world, rules), ...world.unlocked.supplies]);
+    for (const type of world.unlocked.machines) if (rules.machines[type].kind === 'farm') ids.add(rules.machines[type].crop);
+    const list = Object.keys(rules.items).filter((id) => ids.has(id) && rules.items[id].category !== 'bundle');
+    itemButtons(sorterPick, list, st.filter, (id) => { st.filter = id; }, '정하지 않음');
+  }
   const presetBox = $('preset-box');
   const copyBtn = $('btn-preset-copy');
   const pasteBtn = $('btn-preset-paste');
@@ -113,9 +154,10 @@ export function createInspector({ world, rules, bank }) {
     return [...ids];
   };
 
-  /** 아이콘 버튼 줄 (같은 목록이면 다시 만들지 않고 눌림 상태만 바꾼다) */
+  /** 아이콘 버튼 줄 (같은 목록이면 다시 만들지 않고 눌림 상태만 바꾼다). withAll: '전체' 버튼 (글자를 주면 그 글자로) */
   function itemButtons(row, ids, current, onPick, withAll = false) {
-    const key = (withAll ? 'all|' : '') + ids.join(',');
+    const allLabel = typeof withAll === 'string' ? withAll : '전체';
+    const key = (withAll ? `${allLabel}|` : '') + ids.join(',');
     if (row.dataset.key !== key) {
       row.dataset.key = key;
       const make = (id) => {
@@ -124,7 +166,7 @@ export function createInspector({ world, rules, bank }) {
         b.dataset.item = id ?? '';
         if (id) b.append(spriteIcon(bank, rules.items[id].sprite));
         const label = document.createElement('span');
-        label.textContent = id ? rules.items[id].name : '전체';
+        label.textContent = id ? rules.items[id].name : allLabel;
         b.append(label);
         b.addEventListener('click', () => onPick(id));
         return b;
@@ -246,7 +288,7 @@ export function createInspector({ world, rules, bank }) {
         bars.forEach((b) => b.style.setProperty('--w', '0%'));
         buffers.textContent = '';
       } else {
-        status.textContent = st.hist !== undefined || ['splitter', 'merger', 'farm'].includes(machine.kind)
+        status.textContent = st.hist !== undefined || ['splitter', 'merger', 'sorter', 'farm'].includes(machine.kind)
           ? machineStatusText(st, rules)
           : '';
         if (st.hist !== undefined) {
@@ -275,6 +317,8 @@ export function createInspector({ world, rules, bank }) {
       }
       renderSupplyPick(st);
       renderUpgrade(st);
+      renderRecipePick(st);
+      renderSorterPick(st);
       renderPreset(st);
       storageBox.hidden = true;
       gateBox.hidden = true;

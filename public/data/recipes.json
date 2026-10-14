@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "recipes": [
     {
       "id": "chop_meat",
@@ -350,6 +350,74 @@
       },
       "outputs": {
         "ice_cream": 1
+      },
+      "seconds": 5
+    },
+    {
+      "id": "assemble_cheeseburger",
+      "verb": "조립",
+      "stations": ["burger_assembler"],
+      "inputs": {
+        "bun": 1,
+        "patty": 1,
+        "cheese": 1,
+        "lettuce_washed": 1
+      },
+      "outputs": {
+        "cheeseburger": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "assemble_double",
+      "verb": "조립",
+      "stations": ["burger_assembler"],
+      "inputs": {
+        "bun": 1,
+        "patty": 2,
+        "lettuce_washed": 1
+      },
+      "outputs": {
+        "double_burger": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "smoke_bacon",
+      "verb": "훈연",
+      "stations": ["smoker"],
+      "inputs": {
+        "pork": 1
+      },
+      "outputs": {
+        "bacon": 2
+      },
+      "seconds": 6
+    },
+    {
+      "id": "assemble_bacon",
+      "verb": "조립",
+      "stations": ["burger_assembler"],
+      "inputs": {
+        "bun": 1,
+        "patty": 1,
+        "bacon": 1,
+        "lettuce_washed": 1
+      },
+      "outputs": {
+        "bacon_burger": 1
+      },
+      "seconds": 3
+    },
+    {
+      "id": "bake_wedges",
+      "verb": "굽기",
+      "stations": ["oven"],
+      "inputs": {
+        "potato_stick": 2
+      },
+      "outputs": {
+        "wedges": 1
       },
       "seconds": 5
     }

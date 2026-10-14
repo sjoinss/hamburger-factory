@@ -4,7 +4,7 @@ import { blank, plot, rect, frame } from './draw.js';
 // ── 아이템 (16x16) ──
 
 /** 둥근 덩어리 (workshop.js 와 같은 방식) */
-function lump(cx, cy, r, body, dark, hi) {
+export function lump(cx, cy, r, body, dark, hi) {
   let s = blank(16, 16);
   const pts = [];
   for (let y = 0; y < 16; y++) {
@@ -131,7 +131,7 @@ export const COOLING_UNIT = (() => {
 
 // ── 기계 ──
 
-function box(top = 3, w = 16) {
+export function box(top = 3, w = 16) {
   let r = blank(w, 16);
   r = rect(r, 0, top, w, 15 - top, '1');
   r = rect(r, 1, top + 1, w - 2, 1, '2');
@@ -139,7 +139,7 @@ function box(top = 3, w = 16) {
   r = rect(r, 1, 15, w - 1, 1, 'K');
   return r;
 }
-const frames3 = (make) => [0, 1, 2].map(make);
+export const frames3 = (make) => [0, 1, 2].map(make);
 
 // 소스 냄비: 끓는 빨간 냄비
 export const SAUCE_POT = frames3((f) => {

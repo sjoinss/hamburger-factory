@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "start": {
     "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "mill_wheat", "mix_dough", "bake_bun", "assemble_burger"],
     "machines": [],
@@ -241,6 +241,26 @@
         }
       },
       "tutorial": "upgrade"
+    },
+    {
+      "id": "variety",
+      "name": "메뉴 변형",
+      "when": {
+        "sold": {
+          "burger": 120
+        }
+      },
+      "unlock": {
+        "machines": ["smoker", "sorter"],
+        "recipes": ["assemble_cheeseburger", "assemble_double", "smoke_bacon", "assemble_bacon", "bake_wedges"],
+        "supplies": ["pork"]
+      },
+      "reward": {
+        "parts": {
+          "sensor": 2
+        }
+      },
+      "tutorial": "variety"
     }
   ]
 }

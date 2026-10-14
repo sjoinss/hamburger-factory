@@ -11,6 +11,7 @@ import * as farm from '../sprites/farm.js';
 import * as ws from '../sprites/workshop.js';
 import * as auto from '../sprites/auto.js';
 import * as menu from '../sprites/menu.js';
+import * as deep from '../sprites/deep.js';
 
 /** 이름 → 프레임 배열. 단일 그림도 프레임 1개짜리로 통일. */
 export const SPRITE_DEFS = {
@@ -83,6 +84,14 @@ export const SPRITE_DEFS = {
   sausageMaker: menu.SAUSAGE_MAKER,
   hotdogAssembler: menu.HOTDOG_ASSEMBLER,
   freezer: menu.FREEZER,
+  cheeseburger: [deep.CHEESEBURGER],
+  doubleBurger: [deep.DOUBLE_BURGER],
+  baconBurger: [deep.BACON_BURGER],
+  pork: [deep.PORK],
+  bacon: [deep.BACON],
+  wedges: [deep.WEDGES],
+  smoker: deep.SMOKER,
+  sorter: [machines.SORTER],
   customer: customers.CUSTOMER,
   ...Object.fromEntries(Object.entries(customers.DIGITS).map(([k, rows]) => [`digit${k}`, [rows]])),
   playerDown: characters.PLAYER_DOWN,

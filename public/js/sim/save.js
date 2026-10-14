@@ -251,6 +251,7 @@ function restoreState(rules, w, st, raw, c) {
   st.contents = c.items(raw.contents);
   st.output = c.items(raw.output);
   if (st.hist !== undefined) st.hist = typeof raw.hist === 'string' && /^[rib]*$/.test(raw.hist) ? raw.hist.slice(-HISTORY_SECONDS) : '';
+  if (m.kind === 'machine' && typeof raw.recipe === 'string' && rules.recipesByStation[st.type].some((r) => r.id === raw.recipe)) st.recipe = raw.recipe;
   if (upgradable(rules, st)) {
     const level = int(raw.level, 0, rules.game.upgrades.costs.length, 0);
     if (level > 0) st.level = level;
@@ -291,7 +292,9 @@ function restoreState(rules, w, st, raw, c) {
     }
     case 'splitter':
     case 'merger':
+    case 'sorter':
       st.buffer = isObj(raw.buffer) ? beltEntry(st, raw.buffer) : null;
+      if (m.kind === 'sorter') st.filter = c.itemId(raw.filter);
       st.toggle = oneOf(raw.toggle, [0, 1], 0);
       st.rr = int(raw.rr, 0, 3, 0);
       break;

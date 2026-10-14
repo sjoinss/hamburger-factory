@@ -1,7 +1,7 @@
 // 투입기: 뒤 칸에서 집어 앞 칸에 놓는다. 앞에 놓을 수 있는 물건만 집는다 (집게에 걸려 멈추지 않게).
 import { stationAt, DIRS } from './lookup.js';
 import { canAccept, machineOf } from './station.js';
-import { canInsertAt, insertSorted, makeBeltItem } from './conveyor.js';
+import { canInsertAt, insertSorted, makeBeltItem, isRouterKind } from './conveyor.js';
 import { groundItemAt } from './interact.js';
 import { receiveAtCounter } from './orders.js';
 import { store } from './storage.js';
@@ -30,7 +30,7 @@ function pickCandidates(world, rules, tile) {
       .filter((it) => rules.items[it.item].category !== 'bundle')
       .map((it) => ({ item: it.item, take: () => st.items.splice(st.items.indexOf(it), 1) }));
   }
-  if ((kind === 'splitter' || kind === 'merger') && st.buffer && rules.items[st.buffer.item].category !== 'bundle') {
+  if (isRouterKind(kind) && st.buffer && rules.items[st.buffer.item].category !== 'bundle') {
     const b = st.buffer;
     return [{ item: b.item, take: () => { st.buffer = null; } }];
   }
@@ -59,7 +59,7 @@ function dropTarget(world, rules, ins, tile, item) {
       noteTutorial(world, 'fed', st.type);
     };
   }
-  if ((kind === 'splitter' || kind === 'merger') && !st.buffer) {
+  if (isRouterKind(kind) && !st.buffer) {
     return () => {
       st.buffer = makeBeltItem(st, item, 0.5);
       noteTutorial(world, 'fed', st.type);
