@@ -13,7 +13,8 @@ function focusInside(panel) {
   }, 60);
 }
 
-export function createPanels({ onOpen, returnFocus }) {
+/** keysBlocked: 단축키를 받지 않을 때 (타이틀 화면) */
+export function createPanels({ onOpen, returnFocus, keysBlocked = () => false }) {
   const buttons = new Map();
   for (const btn of document.querySelectorAll('.menu button[data-panel]')) {
     buttons.set(btn.dataset.panel, btn);
@@ -56,6 +57,7 @@ export function createPanels({ onOpen, returnFocus }) {
   window.addEventListener('keydown', (e) => {
     const t = e.target;
     if (t instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName)) return;
+    if (keysBlocked()) return;
     if (e.code === 'Escape' && current) {
       e.preventDefault();
       close();

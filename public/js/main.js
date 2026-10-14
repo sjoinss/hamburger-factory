@@ -8,7 +8,7 @@ import { createCamera, pixelScale, setZoom, clampCamera, screenToWorld } from '.
 import { drawWorld } from './render/world.js';
 import { createEffects } from './render/effects.js';
 import { createInput } from './input.js';
-import { createHud, checkPixelFont } from './ui/hud.js';
+import { createHud, checkPixelFont, BANNER } from './ui/hud.js';
 import { createPanels } from './ui/panels.js';
 import { createRecipeBook } from './ui/recipebook.js';
 import { createTutorialCard } from './ui/tutorial.js';
@@ -119,6 +119,7 @@ async function boot() {
       if (name === 'build') build.renderPanel();
     },
     returnFocus: () => canvas.focus({ preventScroll: true }),
+    keysBlocked: () => !document.getElementById('title').hidden,
   });
   build = createBuildMode({ world, rules, bank, panels });
   const inspector = createInspector({ world, rules, bank });
@@ -128,7 +129,7 @@ async function boot() {
     world,
     rules,
     bank,
-    onAssigned: () => hud.banner('출고 게이트에 맡겼다', 2),
+    onAssigned: () => hud.banner('출고 게이트에 맡겼다', 2, BANNER.NOW),
   });
 
   // 병목 보기 (O 키 / 상단 '병목' 버튼)
@@ -154,10 +155,10 @@ async function boot() {
     if (st) {
       // 이미 그 기계 앞에서 바라보고 있으면 정보, 아니면 그 앞으로
       if (!walker.active() && facingStation() === st) inspect(st);
-      else if (!walker.walkToStation(st)) hud.banner('갈 수 없는 곳', 1.5);
+      else if (!walker.walkToStation(st)) hud.banner('갈 수 없는 곳', 1.5, BANNER.NOW);
       return;
     }
-    if (!walker.walkTo(x, y)) hud.banner('갈 수 없는 곳', 1.5);
+    if (!walker.walkTo(x, y)) hud.banner('갈 수 없는 곳', 1.5, BANNER.NOW);
   }
 
   const inspect = (st, opts) => {
@@ -185,7 +186,7 @@ async function boot() {
     rules,
     sound,
     prefs,
-    banner: (text, s) => hud.banner(text, s),
+    banner: (text, s) => hud.banner(text, s, BANNER.NOW),
     onReplace: (next) => {
       replaceWorld(world, next ?? createWorld(rules));
       away.cancel();
@@ -203,9 +204,10 @@ async function boot() {
   // 자리 비운 시간·안내는 타이틀에서 시작을 누른 뒤에
   const awaySeconds = saved.world && saved.savedAt ? (Date.now() - saved.savedAt) / 1000 : 0;
   const greet = () => {
-    if (saved.error) hud.banner(saved.error, 4);
+    if (saved.error) hud.banner(saved.error, 4, BANNER.IMPORTANT);
     else if (saved.world) {
-      hud.banner(saved.recovered ? '전에 못 읽은 저장을 되살렸다' : '이어서 하기', saved.recovered ? 3 : 1.5);
+      if (saved.recovered) hud.banner('전에 못 읽은 저장을 되살렸다', 3, BANNER.IMPORTANT);
+      else hud.banner('이어서 하기', 1.5, BANNER.ROUTINE);
       if (awaySeconds) away.start(awaySeconds);
     }
   };
@@ -285,10 +287,11 @@ async function boot() {
       view.scale = pixelScale(camera, view.dpr);
     }
 
-    // ── 건설 모드 ──
-    if (input.consumePress('KeyX')) build.toggleRemove();
-    if (input.consumePress('KeyO')) setOverlay(!overlay);
-    if (input.consumePress('KeyF')) {
+    // ── 건설 모드 ── (타이틀이 떠 있으면 뒤에서 창이 열리지 않게 단축키를 받지 않는다. 눌린 키는 프레임 끝에 버려진다)
+    const keysOn = !title.isOpen();
+    if (keysOn && input.consumePress('KeyX')) build.toggleRemove();
+    if (keysOn && input.consumePress('KeyO')) setOverlay(!overlay);
+    if (keysOn && input.consumePress('KeyF')) {
       const t = facingTile(world.player, config.player.reach);
       inspect(stationAt(world, t.x, t.y), { focus: true });
     }
@@ -375,28 +378,30 @@ async function boot() {
       if (ev.type === 'sold') hud.flashMoney();
       if (ev.type === 'orderDone') {
         hud.flashMoney();
-        hud.banner(ev.bundled ? `묶음 주문 완료 +${ev.reward} (보너스)` : `주문 완료 +${ev.reward}`, 2);
+        // 인식기가 맡아 처리한 주문은 알리지 않는다 (자동 공장에서 쉴 새 없이 뜨지 않게. 돈 깜박임·소리로 충분)
+        const auto = world.orders.list.find((o) => o.id === ev.orderId)?.auto;
+        if (!auto) hud.banner(ev.bundled ? `묶음 주문 완료 +${ev.reward} (보너스)` : `주문 완료 +${ev.reward}`, 2, BANNER.ROUTINE);
       }
       if (ev.type === 'zoneBought') {
         const z = rules.zones.zones.find((x) => x.id === ev.zone);
-        hud.banner(`${z.name} 매입!`, 2);
+        hud.banner(`${z.name} 매입!`, 2, BANNER.IMPORTANT);
       }
       if (ev.type === 'chapterDone') {
         const done = rules.chapters.find((c) => c.id === ev.chapter);
         const next = rules.chapters[world.chapters.index];
         hud.flashMoney();
-        hud.banner(`${done.name} 완료!${ev.reward.money ? ` +${ev.reward.money}` : ''}`, 3);
+        hud.banner(`${done.name} 완료!${ev.reward.money ? ` +${ev.reward.money}` : ''}`, 3, BANNER.IMPORTANT);
       }
-      if (ev.type === 'dayEnd') hud.banner(`${ev.day}일째 끝 · ${daySummaryText(ev)}`, 4);
+      if (ev.type === 'dayEnd') hud.banner(`${ev.day}일째 끝 · ${daySummaryText(ev)}`, 4, BANNER.IMPORTANT);
       if (ev.type === 'challengeDone') {
         hud.flashMoney();
-        hud.banner(`도전 ${ev.level} 완료! +${ev.reward.money}`, 3);
+        hud.banner(`도전 ${ev.level} 완료! +${ev.reward.money}`, 3, BANNER.IMPORTANT);
       }
       if (ev.type === 'ending') chapterView.showEnding();
-      if (ev.type === 'orderFailed') hud.banner('손님이 떠났다', 2);
+      if (ev.type === 'orderFailed') hud.banner('손님이 떠났다', 2, BANNER.NORMAL);
       if (ev.type === 'orderNew' && panels.current() === 'orders') orderBoard.forceRender();
       if (ev.type === 'unlocked') {
-        hud.banner(`새 기계 ${ev.machines.length}개!`, 3);
+        hud.banner(`새 기계 ${ev.machines.length}개!`, 3, BANNER.IMPORTANT);
       }
       if (ev.type === 'unlocked' || ev.type === 'built' || ev.type === 'removed') {
         if (panels.current() === 'build') build.renderPanel();

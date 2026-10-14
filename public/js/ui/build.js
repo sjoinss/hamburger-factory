@@ -186,6 +186,8 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
   const chip = (id, text) => itemChip(bank, rules, id, text);
 
   function renderPanel() {
+    // 다시 그려도 키보드 포커스가 있던 버튼으로 돌아가게 (해금·건설 때 목록이 새로 만들어진다)
+    const focusKey = document.activeElement?.dataset?.focusKey ?? null;
     const partIds = Object.keys(rules.items).filter((id) => rules.items[id].category === 'part');
     // 받은 부품 + 호퍼·사일로에 쌓인 부품 (건설에 바로 쓰인다)
     partsList.replaceChildren(...partIds.map((id) => chip(id, `${partName(id)} ${partCount(world, rules, id)}`)));
@@ -200,6 +202,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'build-item';
+      btn.dataset.focusKey = `build:${type}`;
       btn.append(spriteIcon(bank, m.sprite));
       const name = document.createElement('span');
       name.className = 'build-name';
@@ -219,6 +222,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     lockedNote.textContent = world.unlocked.machines.length === 0
       ? '첫 햄버거를 팔면 열린다'
       : `잠긴 기계 ${locked}개`;
+    if (focusKey) document.querySelector(`[data-focus-key="${CSS.escape(focusKey)}"]`)?.focus({ preventScroll: true });
   }
 
   const zoneBox = document.getElementById('zone-box');
@@ -249,6 +253,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
       }
       const btn = document.createElement('button');
       btn.type = 'button';
+      btn.dataset.focusKey = `zone:${z.id}`;
       btn.textContent = check.ok ? '매입' : ZONE_REASON[check.reason] ?? '매입 불가';
       btn.disabled = !check.ok;
       btn.addEventListener('click', () => {

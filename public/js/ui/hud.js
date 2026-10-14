@@ -131,6 +131,20 @@ export function describeInteraction(act, rules, touch, world = null) {
   }
 }
 
+/** 알림 중요도 */
+export const BANNER = Object.freeze({ ROUTINE: 0, NORMAL: 1, IMPORTANT: 2, NOW: 3 });
+
+/**
+ * 새 알림을 어떻게 할지: 'show'(지금 보임) | 'queue'(줄 서서 뒤에) | 'drop'(버림)
+ * @param shown 지금 떠 있는 알림의 중요도 (없으면 null)
+ * @param queued 줄 선 알림 수
+ */
+export function bannerDecision(shown, priority, queued = 0) {
+  if (shown === null || priority === BANNER.NOW) return 'show';
+  if (priority === BANNER.IMPORTANT && shown >= BANNER.IMPORTANT) return queued < 4 ? 'queue' : 'drop';
+  return priority < shown ? 'drop' : 'show';
+}
+
 export function createHud({ onSpeed, bank, rules }) {
   const $ = (id) => document.getElementById(id);
   const money = $('stat-money');
@@ -166,7 +180,24 @@ export function createHud({ onSpeed, bank, rules }) {
   }
 
   const last = { money: null, rep: null, time: null, prompt: null };
+  // 알림: 한 칸을 같이 쓰므로 중요도를 본다. 중요한 알림이 떠 있으면 덜 중요한 것은 버리고,
+  // 중요한 것끼리는 줄을 세운다 (장 완료·새 기계·하루 결산이 주문 알림에 묻히지 않게)
+  const bannerEl = $('banner');
   let bannerTimer = 0;
+  let shown = null; // { priority, until }
+  const queue = [];
+  function showBanner(text, seconds, priority) {
+    bannerEl.textContent = text;
+    bannerEl.hidden = false;
+    shown = { text, seconds, priority, until: performance.now() + seconds * 1000 };
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => {
+      bannerEl.hidden = true;
+      shown = null;
+      const next = queue.shift();
+      if (next) showBanner(next.text, next.seconds, next.priority);
+    }, seconds * 1000);
+  }
 
   return {
     setSpeed(speed) {
@@ -212,13 +243,18 @@ export function createHud({ onSpeed, bank, rules }) {
       }
 
     },
-    /** 화면 가운데 위에 잠깐 띄우는 알림 */
-    banner(text, seconds = 4) {
-      const el = $('banner');
-      el.textContent = text;
-      el.hidden = false;
-      clearTimeout(bannerTimer);
-      bannerTimer = setTimeout(() => { el.hidden = true; }, seconds * 1000);
+    /**
+     * 화면 가운데 위에 잠깐 띄우는 알림.
+     * priority: BANNER.ROUTINE(덮이면 버림) | NORMAL | IMPORTANT(줄 서서 꼭 보인다) | NOW(사용자 조작에 대한 답, 바로)
+     */
+    banner(text, seconds = 4, priority = BANNER.NORMAL) {
+      const busy = shown && performance.now() < shown.until;
+      const what = bannerDecision(busy ? shown.priority : null, priority, queue.length);
+      if (what === 'queue') queue.push({ text, seconds, priority });
+      if (what !== 'show') return;
+      // 바로 보여 주되, 사용자 조작 답에 가려진 중요한 알림은 뒤에 다시
+      if (busy && shown.priority === BANNER.IMPORTANT) queue.unshift(shown);
+      showBanner(text, seconds, priority);
     },
     flashMoney() {
       money.classList.remove('flash');

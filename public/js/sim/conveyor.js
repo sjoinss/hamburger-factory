@@ -168,9 +168,14 @@ function moveBelt(world, rules, belt, net, dt) {
   belt.idle += ((keep.length === 0 ? 1 : 0) - belt.idle) * k;
 }
 
+/**
+ * 분배기·합류기: 한 번에 하나를 담아 넘긴다. 물건이 머무는 시간은 꽉 찬 벨트에서 물건 하나가 지나가는 시간
+ * (간격 SPACING 만큼)이라서, 들어온 벨트만큼 흘려보낸다 (고속 벨트에서 온 물건은 고속으로).
+ */
 function updateRouter(rules, router, net, dt) {
   const kind = kindOf(rules, router);
-  const v = rules.machines[router.type].speed * dt;
+  const speed = Math.max(rules.machines[router.type].speed, router.buffer?.speed ?? 0);
+  const v = (speed / SPACING) * dt;
 
   if (router.buffer) {
     router.buffer.pos = Math.min(1, router.buffer.pos + v);
@@ -181,7 +186,8 @@ function updateRouter(rules, router, net, dt) {
         if (!o?.node) continue;
         const pos = entryPos(o.node, o.dir);
         if (o.node.items && canInsertAt(o.node.items, pos)) {
-          insertSorted(o.node.items, { ...router.buffer, pos });
+          const { speed: _, ...item } = router.buffer;
+          insertSorted(o.node.items, { ...item, pos });
           if (kind === 'splitter') router.toggle = outs.indexOf(o) === 0 ? 1 : 0; // 다음엔 반대쪽 먼저
           router.buffer = null;
           break;
@@ -198,7 +204,7 @@ function updateRouter(rules, router, net, dt) {
       const lead = u.items[0];
       if (lead && lead.pos >= 1 - EPS) {
         u.items.shift();
-        router.buffer = { ...lead, pos: 0 };
+        router.buffer = { ...lead, pos: 0, speed: rules.machines[u.type].speed };
         router.rr = (router.rr + k + 1) % ups.length;
         break;
       }

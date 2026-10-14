@@ -6,6 +6,7 @@ import { placeMachine, removeMachine } from '../public/js/sim/build.js';
 import { buyZone, checkZone, ownedBounds, zoneSpeed } from '../public/js/sim/zones.js';
 import { checkUpgrade, upgradeStation, speedMult } from '../public/js/sim/upgrade.js';
 import { TILE, getTile, isSolid } from '../public/js/sim/grid.js';
+import { stationAt } from '../public/js/sim/lookup.js';
 import { challengeAt, currentChallenge, updateChapters } from '../public/js/sim/chapters.js';
 import { record, recordEarned } from '../public/js/sim/stats.js';
 import { updateOrders } from '../public/js/sim/orders.js';
@@ -228,4 +229,32 @@ test('구역 데이터: 겹치거나 앞 구역과 떨어진 구역은 거절', 
   assert.throws(bad({ y: 10 }), /겹침/);
   assert.throws(bad({ y: 15 }), /맞닿아야/);
   assert.throws(bad({ x: 1, y: 16 }), /맞닿아야|길/);
+});
+
+test('분배기·합류기는 들어온 벨트만큼 흘려보낸다 (병목이 아니다)', () => {
+  /** 꽉 채워 흘려 보내고 끝 칸에서 초당 몇 개 나오는지 */
+  const throughput = (beltType, midType) => {
+    const w = worldAt(100);
+    for (let x = 2; x <= 6; x++) build(w, beltType, x, 8, R);
+    build(w, midType, 7, 8, R);
+    for (let x = 8; x <= 12; x++) build(w, beltType, x, 8, R);
+    const first = stationAt(w, 2, 8);
+    const last = stationAt(w, 12, 8);
+    let out = 0;
+    for (let i = 0; i < secs(20); i++) {
+      if (first.items.every((it) => it.pos > 0.34)) {
+        first.items.push({ item: 'patty', pos: 0, x: 2, y: 8.5, px: 2, py: 8.5, tag: null, bag: null });
+        first.items.sort((a, b) => b.pos - a.pos);
+      }
+      const k = last.items.findIndex((it) => it.pos >= 0.999);
+      if (k >= 0) { last.items.splice(k, 1); if (i > secs(5)) out++; }
+      run(w, 1);
+    }
+    return out / 15;
+  };
+  const plain = throughput('belt', 'belt');
+  assert.ok(throughput('belt', 'merger') > plain * 0.95, '일반 벨트');
+  const fast = throughput('fast_belt', 'fast_belt');
+  assert.ok(fast > plain * 1.5, '고속 벨트가 더 많이 나른다');
+  assert.ok(throughput('fast_belt', 'merger') > fast * 0.95, '고속 벨트에서 온 물건은 고속으로');
 });

@@ -1,6 +1,7 @@
 // 자리 비운 동안 진행: 저장 후 다시 열거나 숨긴 탭으로 돌아오면, 비운 시간(최대 maxSeconds)만큼 공장을 빨리 돌린다.
 // 한 프레임에 조금씩 (화면이 멈추지 않게) 돌리고, 끝나면 번 돈·처리한 주문을 한 줄로 알려 준다.
 import { stepWorld, NO_INPUT } from '../sim/world.js';
+import { BANNER } from './hud.js';
 
 const BUDGET_MS = 12;
 
@@ -18,7 +19,7 @@ export function createAway({ world, rules, hud }) {
     parts.push(`돈 ${money >= 0 ? '+' : ''}${money}`);
     if (t.done > job.done) parts.push(`주문 ${t.done - job.done}건`);
     if (t.failed > job.failed) parts.push(`놓친 주문 ${t.failed - job.failed}`);
-    hud.banner(parts.join(' · '), 4);
+    hud.banner(parts.join(' · '), 4, BANNER.IMPORTANT);
     job = null;
   }
 
@@ -46,7 +47,7 @@ export function createAway({ world, rules, hud }) {
         for (let i = 0; i < 20 && job.left > 0; i++, job.left--) stepWorld(world, NO_INPUT, tickDt, rules);
         world.events.length = 0; // 빨리 돌리는 동안의 소리·효과는 건너뛴다
       }
-      if (job.left > 0) hud.banner(`자리 비운 동안 돌리는 중 ${Math.floor((1 - job.left / job.total) * 100)}%`, 1);
+      if (job.left > 0) hud.banner(`자리 비운 동안 돌리는 중 ${Math.floor((1 - job.left / job.total) * 100)}%`, 1, BANNER.ROUTINE);
       else finish();
       return true;
     },
