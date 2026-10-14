@@ -75,13 +75,13 @@ test('부품 조립기: 센서·제어 회로', () => {
   assert.deepEqual(pa.output, ['circuit']);
 });
 
-test('주문 인식기: 가만히 있어도 재고가 되는 주문을 게이트에 맡겨 처리한다 (급한 주문 먼저)', () => {
+test('주문 인식기: 가만히 있어도 재고가 되는 주문을 게이트에 맡겨 처리한다 (남은 시간이 짧은 주문 먼저)', () => {
   const w = autoWorld();
   const { hopper, gate, reader } = readerLine(w);
   hopper.stock = { burger: 6, patty: 2 };
   const cant = addOrder(w, { fries: 1 }, 'normal', 10); // 재고 없음: 맡기지 않는다
   const slow = addOrder(w, { burger: 2 }, 'normal', 30);
-  const urgent = addOrder(w, { burger: 1, patty: 2 }, 'special', 50, w.time + 60);
+  const urgent = addOrder(w, { burger: 1, patty: 2 }, 'normal', 50, w.time + 60);
   const money0 = w.money;
   run(w, secs(2));
   assert.equal(gate.mode.kind, 'order');
@@ -160,7 +160,7 @@ test('합류 포장기: 번호표 없는 물건은 그대로 통과 (시세 판�
 test('합류 포장기: 주문이 시간 초과되면 모으던 물건을 풀어서 내보낸다', () => {
   const w = autoWorld();
   const { bundler } = bundleLine(w);
-  const o = addOrder(w, { burger: 3 }, 'special', 90, w.time + 1);
+  const o = addOrder(w, { burger: 3 }, 'normal', 90, w.time + 1);
   const belt = build(w, 'belt', 7, 11, R); // 왼쪽에서 포장기로
   insertSorted(belt.items, { ...makeBeltItem(belt, 'burger', 1), tag: o.id });
   run(w, secs(0.5));
@@ -324,7 +324,7 @@ test('완전 자동: 플레이어가 가만히 서 있어도 주문이 처리되
   run(w, secs(300));
   const done = w.orders.list.filter((o) => o.state === 'done').length + (w.reputation - rep0 > 0 ? 1 : 0);
   assert.ok(done > 0);
-  assert.ok(w.money - money0 >= 300, `5분 동안 번 돈 ${w.money - money0}`);
+  assert.ok(w.money - money0 >= 200, `5분 동안 번 돈 ${w.money - money0}`);
   assert.ok(w.reputation > rep0, '주문을 처리해 평판이 올랐다');
   assert.ok(silo.stock.burger < 200, '사일로 버거가 나갔다');
   assert.deepEqual({ x: w.player.x, y: w.player.y }, playerAt, '플레이어는 그대로');

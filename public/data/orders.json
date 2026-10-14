@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "maxOpen": 6,
   "firstSpawnSeconds": 4,
   "spawnSeconds": 20,
@@ -33,63 +33,8 @@
         { "fried_chicken": 2 },
         { "ice_cream": 2 },
         { "burger": 1, "ice_cream": 1 },
-        { "hotdog": 1, "cola": 1 }
-      ]
-    },
-    "special": {
-      "name": "특별",
-      "weight": 2,
-      "rewardMul": [1.5, 3],
-      "deadline": 120,
-      "repDone": 2,
-      "repFail": -1,
-      "templates": [
-        { "burger": 3 },
-        { "burger": 2, "patty": 2 },
-        { "burger": 4 },
-        { "set": 2 },
-        { "burger": 2, "fries": 2 },
-        { "pizza": 2, "cola": 2 },
-        { "fried_chicken": 3 },
-        { "hotdog": 3, "cola": 1 },
-        { "pizza": 1, "fried_chicken": 1, "ice_cream": 2 }
-      ]
-    },
-    "rush": {
-      "name": "급함",
-      "feature": "rush",
-      "weight": 2,
-      "rewardMul": [2, 2.6],
-      "deadline": 60,
-      "repDone": 2,
-      "repFail": -2,
-      "templates": [
-        { "burger": 2 },
-        { "set": 1 },
-        { "burger": 1, "cola": 1 },
-        { "pizza": 1 },
-        { "fried_chicken": 1 },
-        { "hotdog": 2 },
-        { "ice_cream": 2 }
-      ]
-    },
-    "bulk": {
-      "name": "단체",
-      "weight": 1,
-      "rewardMul": [1.3, 1.5],
-      "deadline": 300,
-      "repDone": 3,
-      "repFail": -2,
-      "templates": [
-        { "burger": 8 },
-        { "burger": 12 },
-        { "burger": 6, "patty": 6 },
-        { "set": 4 },
-        { "cola": 8 },
-        { "pizza": 4 },
-        { "fried_chicken": 6 },
-        { "ice_cream": 8 },
-        { "hotdog": 8 }
+        { "hotdog": 1, "cola": 1 },
+        { "set": 1 }
       ]
     }
   }

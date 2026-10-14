@@ -4,7 +4,7 @@
 function totals(world) {
   return {
     sold: Object.values(world.stats.sold).reduce((a, b) => a + b, 0),
-    earned: world.stats.earned,
+    earned: world.stats.earned - (world.stats.spent ?? 0), // 수익 (원료 값을 뺀)
     done: world.stats.orders.done,
     failed: world.stats.orders.failed,
   };

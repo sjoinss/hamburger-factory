@@ -1,6 +1,6 @@
 // 주문 인식기: 주문서를 읽어서, 붙어 있는 출고 게이트 중 놀고 있는 게이트에 주문을 맡긴다.
 // 게이트의 호퍼/사일로에 그 주문을 다 채울 재고가 있을 때만 맡긴다 (반쯤 보내고 멈추지 않게).
-// 시한이 있는 주문(특별·단체)부터, 그다음 먼저 온 순서.
+// 남은 시간이 짧은 주문부터, 그다음 먼저 온 순서.
 import { stationAt, DIRS } from './lookup.js';
 import { gateSources, setGateOrder } from './gate.js';
 import { openOrders, orderById, orderNeeds } from './orders.js';

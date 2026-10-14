@@ -9,7 +9,6 @@ import { TILE, getTile, isSolid } from '../public/js/sim/grid.js';
 import { stationAt } from '../public/js/sim/lookup.js';
 import { challengeAt, currentChallenge, updateChapters } from '../public/js/sim/chapters.js';
 import { record, recordEarned } from '../public/js/sim/stats.js';
-import { updateOrders } from '../public/js/sim/orders.js';
 import { serializeWorld, loadWorld } from '../public/js/sim/save.js';
 import { validateZones } from '../public/js/data.js';
 import { loadRules, readData } from './helpers.js';
@@ -94,12 +93,12 @@ test('주방동: 조리 기계만 빨라진다', () => {
   assert.deepEqual(home.output, []);
 });
 
-test('햄버거 100개: 업그레이드·고속 벨트·급한 주문이 열린다', () => {
+test('햄버거 100개: 업그레이드·고속 벨트가 열린다', () => {
   const pre = worldAt(99);
   const g = build(pre, 'grill', 3, 9);
   assert.equal(checkUpgrade(pre, rules, g).reason, 'locked');
   const w = worldAt(100);
-  assert.ok(w.features.includes('upgrades') && w.features.includes('rush'));
+  assert.ok(w.features.includes('upgrades'));
   assert.ok(w.unlocked.machines.includes('fast_belt'));
 });
 
@@ -162,26 +161,6 @@ test('고속 벨트: 일반 벨트 위에 깔면 그 자리에서 바뀌고 물�
   normal.items = [{ item: 'patty', pos: 0, x: 3, y: 11.5, px: 3, py: 11.5, tag: null, bag: null }];
   run(w, 4);
   assert.ok(fast.items[0].pos > normal.items[0].pos * 1.9, `${fast.items[0].pos} vs ${normal.items[0].pos}`);
-});
-
-test('급한 주문: 기능이 열린 뒤에만 오고, 시간이 짧고 보상이 크다', () => {
-  const kinds = (w) => {
-    const seen = new Set();
-    for (let i = 0; i < 300; i++) {
-      w.orders.list = [];
-      w.orders.timer = 0;
-      updateOrders(w, rules, dt);
-      for (const o of w.orders.list) seen.add(o.kind);
-    }
-    return seen;
-  };
-  const pre = worldAt(99);
-  assert.ok(!kinds(pre).has('rush'));
-  const w = worldAt(100);
-  assert.ok(kinds(w).has('rush'));
-  const rush = rules.orders.kinds.rush;
-  assert.ok(rush.deadline < rules.orders.kinds.special.deadline);
-  assert.ok(rush.rewardMul[0] > rules.orders.kinds.special.rewardMul[0]);
 });
 
 test('엔딩 뒤 도전: 단계마다 목표가 오르고, 채우면 보상 (1초에 한 단계씩)', () => {

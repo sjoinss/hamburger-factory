@@ -49,7 +49,7 @@ test('주문 수 집계: 완료/실패/인식기/묶음', () => {
   w.features.push('orders');
   w.orders.timer = 1e9;
   const add = (items, extra = {}) => {
-    const o = { id: w.orders.nextId++, kind: 'special', items, delivered: {}, reward: 10, createdAt: 0, deadline: w.time + 1, state: 'open', leaveAt: null, look: { hair: 0, shirt: 0, seed: 0 }, auto: false, ...extra };
+    const o = { id: w.orders.nextId++, kind: 'normal', items, delivered: {}, reward: 10, createdAt: 0, deadline: w.time + 1, state: 'open', leaveAt: null, look: { hair: 0, shirt: 0, seed: 0 }, auto: false, ...extra };
     w.orders.list.push(o);
     return o;
   };

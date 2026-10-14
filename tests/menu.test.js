@@ -23,6 +23,7 @@ function worldWith(sold) {
   w.orders.timer = 1e9;
   w.chapters.ended = true;
   w.parts = { iron_plate: 500, gear: 200, heat_plate: 50, wire: 100, motor: 50, cooling_unit: 5 };
+  w.money = 1000; // 입고구 원료 값
   return w;
 }
 function build(w, type, x, y, rot = 0) {

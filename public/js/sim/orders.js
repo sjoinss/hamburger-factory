@@ -27,9 +27,8 @@ function spawnOrder(world, rules) {
   // 지금 만들 수 있는 품목으로만 된 주문만 (새 메뉴가 열리면 섞여 나온다)
   const can = producible(world, rules);
   const doable = (t) => Object.keys(t).every((id) => can.has(id));
-  // feature 가 붙은 종류(급한 주문 등)는 그 기능이 열린 뒤에만
   const weights = Object.fromEntries(Object.entries(cfg.kinds)
-    .filter(([, v]) => (v.feature === undefined || world.features.includes(v.feature)) && v.templates.some(doable))
+    .filter(([, v]) => v.templates.some(doable))
     .map(([k, v]) => [k, v.weight]));
   if (Object.keys(weights).length === 0) return;
   const kindId = pickWeighted(world, weights);

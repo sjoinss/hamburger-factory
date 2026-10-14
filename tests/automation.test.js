@@ -6,7 +6,7 @@ import { placeMachine } from '../public/js/sim/build.js';
 import { setSupplyItem } from '../public/js/sim/station.js';
 import { insertSorted, makeBeltItem } from '../public/js/sim/conveyor.js';
 import { stationAt } from '../public/js/sim/lookup.js';
-import { utilization, perMinute } from '../public/js/sim/stats.js';
+import { utilization, perMinute, earnedPerMinute } from '../public/js/sim/stats.js';
 import { loadRules } from './helpers.js';
 
 const baseRules = loadRules();
@@ -22,6 +22,7 @@ function automationWorld() {
   w.stats.sold.burger = 6;
   run(w, 1);
   Object.assign(w.player, { x: 15.5, y: 1.5, prevX: 15.5, prevY: 1.5 });
+  w.money = 1000; // 입고구 원료 값
   return w;
 }
 function build(w, type, x, y, rot = 0) {
@@ -89,6 +90,27 @@ test('입고구는 정해진 재료를 일정 시간마다 들여오고, 꽉 차
   run(w, secs(60));
   assert.equal(s.output.length, rules.machines.supply.outputCap);
   assert.equal(s.status, 'blocked');
+});
+
+test('원료 값: 들여올 때마다 돈을 내고, 모자라면 기다린다. 수익은 원료 값을 뺀다', () => {
+  const w = automationWorld();
+  const buy = rules.items.raw_meat.buy;
+  assert.ok(buy > 0);
+  w.chapters.ended = true; // 장 보상이 끼지 않게
+  w.money = buy; // 한 개 값만
+  const s = supply(w, 5, 9, 'raw_meat');
+  run(w, secs(rules.machines.supply.seconds * 3 + 0.1));
+  assert.deepEqual(s.output, ['raw_meat'], '돈이 떨어지면 더 들여오지 않는다');
+  assert.equal(w.money, 0);
+  assert.ok(s.short);
+  assert.equal(w.stats.spent, buy);
+  assert.equal(earnedPerMinute(w), -buy * 6, '수익 = 판 돈 - 원료 값 (1분 기준으로 환산)');
+  w.money = 100;
+  run(w, secs(rules.machines.supply.seconds + 0.1));
+  assert.equal(s.output.length, 2, '돈이 생기면 다시');
+  assert.ok(!s.short);
+  // 물처럼 값이 없는 원료는 그냥 들여온다
+  assert.equal(rules.items.water.buy ?? 0, 0);
 });
 
 test('입고 → 햄버거 → 판매까지 사람 손 없이 흐른다', () => {

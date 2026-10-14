@@ -102,7 +102,7 @@ test('호퍼 필터와 사일로 한 품목 제한', () => {
 test('출고구: 주문 먼저 채우고, 남는 건 시세로 판다', () => {
   const w = storageWorld();
   const a = addOrder(w, { burger: 2 }, 'normal', 50);
-  const b = addOrder(w, { burger: 1 }, 'special', 40);
+  const b = addOrder(w, { burger: 1 }, 'normal', 40);
   const money0 = w.money;
   receiveAtCounter(w, rules, 'burger', counter(w));
   assert.equal(a.delivered.burger, 1, '오래된 주문부터');
@@ -114,15 +114,15 @@ test('출고구: 주문 먼저 채우고, 남는 건 시세로 판다', () => {
   const before = w.money;
   receiveAtCounter(w, rules, 'burger', counter(w)); // 주문 없음 → 시세
   assert.equal(w.money - before, marketPrice(w, rules, 'burger'));
-  assert.equal(w.reputation, rules.orders.kinds.normal.repDone + rules.orders.kinds.special.repDone);
+  assert.equal(w.reputation, rules.orders.kinds.normal.repDone * 2);
 });
 
-test('특별 주문 시간이 지나면 실패: 평판 하락, 손님은 잠시 뒤 떠난다', () => {
+test('주문 시간이 지나면 실패: 손님은 잠시 뒤 떠난다', () => {
   const w = storageWorld();
-  const o = addOrder(w, { burger: 3 }, 'special', 99, w.time + 2);
+  const o = addOrder(w, { burger: 3 }, 'normal', 99, w.time + 2);
   run(w, secs(2.1));
   assert.equal(o.state, 'failed');
-  assert.equal(w.reputation, rules.orders.kinds.special.repFail);
+  assert.equal(w.reputation, rules.orders.kinds.normal.repFail);
   assert.equal(w.orders.list.length, 1, '반응하는 동안은 남아 있다');
   run(w, secs(rules.orders.leaveSeconds + 0.1));
   assert.equal(w.orders.list.length, 0);
@@ -165,7 +165,7 @@ test('게이트 주문 모드: 맡은 주문을 정확히 채우고 보상이 �
   const { hopper, gate } = gateToCounter(w);
   hopper.stock = { burger: 5, patty: 5 };
   const decoy = addOrder(w, { burger: 3 }, 'normal', 10); // 먼저 온 다른 주문
-  const target = addOrder(w, { burger: 2, patty: 1 }, 'special', 77, w.time + 60);
+  const target = addOrder(w, { burger: 2, patty: 1 }, 'normal', 77, w.time + 60);
   setGateOrder(gate, target.id);
   const money0 = w.money;
   run(w, secs(5));
@@ -189,7 +189,7 @@ test('게이트 → 벨트 → 출고구도 번호표가 따라간다', () => {
   build(w, 'belt', 8, 11, D); // 출고구 (8,12) 를 가리킨다
   hopper.stock = { burger: 4 };
   const decoy = addOrder(w, { burger: 2 }, 'normal', 10);
-  const target = addOrder(w, { burger: 2 }, 'bulk', 55, w.time + 120);
+  const target = addOrder(w, { burger: 2 }, 'normal', 55, w.time + 120);
   setGateOrder(gate, target.id);
   run(w, secs(20));
   assert.equal(target.state, 'done');

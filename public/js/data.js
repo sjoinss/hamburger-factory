@@ -2,7 +2,7 @@
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate', 'farm', 'generator', 'reader', 'bundler']);
-export const FEATURES = new Set(['orders', 'market', 'power', 'zones', 'blueprints', 'upgrades', 'rush']);
+export const FEATURES = new Set(['orders', 'market', 'power', 'zones', 'blueprints', 'upgrades']);
 const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger']);
 // bundle: 합류 포장기가 만드는 주문 묶음 (출고구에서만 의미가 있다)
 const ITEM_CATEGORIES = new Set(['food', 'part', 'material', 'bundle']);
@@ -48,6 +48,7 @@ export function validateItems(data) {
     assert(isStr(it.name, 24) && isStr(it.sprite, 32), `아이템 ${id}: name/sprite 오류`);
     assert(isNum(it.price, 0, 1e6), `아이템 ${id}: price 오류`);
     assert(ITEM_CATEGORIES.has(it.category), `아이템 ${id}: category 오류`);
+    assert(it.buy === undefined || isNum(it.buy, 0, 1e6), `아이템 ${id}: buy 오류`);
   }
   return data.items;
 }
@@ -287,7 +288,6 @@ export function validateOrders(data, items) {
     const where = `주문 종류 ${id}`;
     assert(ID_RE.test(id) && !DONE_ORDER_IDS.has(id), `${where}: id 오류`);
     assert(isStr(k.name, 8) && isNum(k.weight, 0, 100), `${where}: name/weight 오류`);
-    assert(k.feature === undefined || FEATURES.has(k.feature), `${where}: feature 오류`);
     assert(Array.isArray(k.rewardMul) && isNum(k.rewardMul[0], 0.1, 20) && isNum(k.rewardMul[1], k.rewardMul[0], 20), `${where}: rewardMul 오류`);
     assert(k.deadline === null || isNum(k.deadline, 5, 86400), `${where}: deadline 오류`);
     assert(isInt(k.repDone, -100, 100) && isInt(k.repFail, -100, 100), `${where}: rep 오류`);

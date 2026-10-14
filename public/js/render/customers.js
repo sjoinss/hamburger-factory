@@ -5,7 +5,7 @@ import { TILE, getTile } from '../sim/grid.js';
 const REACT_SECONDS = 1.2; // 기쁨/실망 표정을 보여주는 시간
 const WALK_TILES_PER_SECOND = 4;
 
-const BUBBLE_BORDER = { normal: 'K', special: 'o', bulk: 'p', rush: 'R' };
+const BUBBLE_BORDER = { normal: 'K' };
 
 /**
  * @param px 원본 픽셀 → 기기 픽셀 변환 함수들은 world.js 에서 받는다

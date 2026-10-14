@@ -489,9 +489,6 @@ body:not(.is-touch) #btn-build-draw { display: none; }
 .order-bulk { border-left-color: var(--c-blue); }
 .order-head { display: flex; gap: 8px; align-items: baseline; }
 .order-kind { padding: 0 4px; background: var(--c-outline); color: var(--c-light); }
-.order-special .order-kind { background: var(--c-orange); color: var(--c-black); }
-.order-bulk .order-kind { background: var(--c-blue); color: var(--c-light); }
-.order-rush .order-kind { background: var(--c-red); color: var(--c-light); }
 .order-reward { color: var(--c-outline); }
 .order-time { margin-left: auto; color: var(--c-oil); }
 .order-time.is-urgent { color: var(--c-red); text-decoration: underline; }

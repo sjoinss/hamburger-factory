@@ -1,5 +1,5 @@
 // 통계 패널: 최근 5분 수익 막대 그래프 (10초 단위) + 지난 하루 결산 + 품목별 분당 표.
-import { perMinute, BUCKET_SECONDS, BUCKETS } from '../sim/stats.js';
+import { perMinute, bucketNet, BUCKET_SECONDS, BUCKETS } from '../sim/stats.js';
 
 /** 하루 결산 한 줄 (배너와 통계 패널이 같이 쓴다) */
 export function daySummaryText(d) {
@@ -27,7 +27,7 @@ export function createStatsPanel({ world, rules, bank }) {
   /** 최근 30개 구간 (빈 구간도 0 으로 채움). 맨 끝이 지금. */
   function series() {
     const now = Math.floor(world.time / BUCKET_SECONDS) * BUCKET_SECONDS;
-    const byT = new Map(world.stats.timeline.map((b) => [b.t0, b.earned]));
+    const byT = new Map(world.stats.timeline.map((b) => [b.t0, bucketNet(b)]));
     return Array.from({ length: BUCKETS }, (_, i) => {
       const t0 = now - (BUCKETS - 1 - i) * BUCKET_SECONDS;
       return { t0, earned: t0 < 0 ? 0 : byT.get(t0) ?? 0, agoSeconds: now - t0 };
@@ -53,7 +53,7 @@ export function createStatsPanel({ world, rules, bank }) {
     if (hoverIndex === null) return '막대를 누르면 값';
     const d = data[hoverIndex];
     const ago = d.agoSeconds === 0 ? '지금 구간' : `${d.agoSeconds}초 전`;
-    return `${ago}: +${d.earned}`;
+    return `${ago}: ${d.earned >= 0 ? '+' : ''}${d.earned}`;
   }
 
   function pointAt(e) {

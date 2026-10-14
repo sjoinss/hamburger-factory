@@ -385,12 +385,13 @@ function restoreStats(rules, w, raw, c) {
   const st = w.stats;
   st.sold = c.counts(raw.sold);
   st.earned = num(raw.earned, 0, 1e12, 0);
+  st.spent = num(raw.spent, 0, 1e12, 0);
   st.built = c.counts(raw.built, (k) => Object.hasOwn(rules.machines, k));
   const o = isObj(raw.orders) ? raw.orders : {};
   st.orders = { done: int(o.done, 0, 1e9, 0), failed: int(o.failed, 0, 1e9, 0), auto: int(o.auto, 0, 1e9, 0), bundled: int(o.bundled, 0, 1e9, 0) };
   st.timeline = (Array.isArray(raw.timeline) ? raw.timeline.slice(-BUCKETS) : [])
     .filter((b) => isObj(b) && fin(b.t0))
-    .map((b) => ({ t0: b.t0, produced: c.counts(b.produced), consumed: c.counts(b.consumed), sold: c.counts(b.sold), earned: num(b.earned, 0, 1e12, 0) }));
+    .map((b) => ({ t0: b.t0, produced: c.counts(b.produced), consumed: c.counts(b.consumed), sold: c.counts(b.sold), earned: num(b.earned, 0, 1e12, 0), spent: num(b.spent, 0, 1e12, 0) }));
 }
 
 function restoreMarket(w, raw, c) {

@@ -2,7 +2,7 @@
 import { createRoomGrid, isSolid, setOccupant } from './grid.js';
 import { createPlayer, updatePlayer } from './player.js';
 import { createStation, updateMachine, updateSupply, updateFarm } from './station.js';
-import { createStats, recordRecipe, record, sampleHistory } from './stats.js';
+import { createStats, recordRecipe, record, recordSpent, sampleHistory } from './stats.js';
 import { updateInteraction } from './interact.js';
 import { createTutorial, updateTutorial, noteTutorial } from './tutorial.js';
 import { updateProgression } from './progression.js';
@@ -113,8 +113,21 @@ export function stepWorld(world, input, dt, rules, opts = {}) {
       continue;
     }
     if (kind === 'supply') {
+      // 원료 값: 들여올 때마다 낸다. 돈이 모자라면 들여오지 않고 기다린다
+      const buy = rules.items[st.item].buy ?? 0;
+      st.short = buy > world.money;
+      if (st.short) {
+        st.status = 'idle';
+        continue;
+      }
       const item = updateSupply(rules, st, pdt, zoneMult(world, rules, st, 'supply') * speedMult(world, rules, st));
-      if (item) record(world, 'produced', item);
+      if (item) {
+        record(world, 'produced', item);
+        if (buy > 0) {
+          world.money -= buy;
+          recordSpent(world, buy);
+        }
+      }
       continue;
     }
     if (kind !== 'machine') continue;

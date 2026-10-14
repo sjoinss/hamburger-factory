@@ -7,7 +7,8 @@ export const HISTORY_SECONDS = 60;
 
 export function createStats() {
   // orders: 끝낸 주문 수 (done 완료, failed 실패, auto 인식기가 맡긴 것, bundled 묶음 납품)
-  return { sold: {}, earned: 0, built: {}, timeline: [], orders: { done: 0, failed: 0, auto: 0, bundled: 0 } };
+  // earned: 판 돈 (총액), spent: 입고구 원료 값. 수익 = earned - spent
+  return { sold: {}, earned: 0, spent: 0, built: {}, timeline: [], orders: { done: 0, failed: 0, auto: 0, bundled: 0 } };
 }
 
 function bucket(world) {
@@ -15,7 +16,7 @@ function bucket(world) {
   const t0 = Math.floor(world.time / BUCKET_SECONDS) * BUCKET_SECONDS;
   let b = tl[tl.length - 1];
   if (!b || b.t0 !== t0) {
-    b = { t0, produced: {}, consumed: {}, sold: {}, earned: 0 };
+    b = { t0, produced: {}, consumed: {}, sold: {}, earned: 0, spent: 0 };
     tl.push(b);
     if (tl.length > BUCKETS) tl.splice(0, tl.length - BUCKETS);
   }
@@ -31,6 +32,15 @@ export function record(world, kind, item, n = 1) {
 export function recordEarned(world, amount) {
   bucket(world).earned += amount;
 }
+
+/** 원료를 사느라 쓴 돈 */
+export function recordSpent(world, amount) {
+  bucket(world).spent += amount;
+  world.stats.spent = (world.stats.spent ?? 0) + amount;
+}
+
+/** 한 구간의 수익 (판 돈 - 원료 값) */
+export const bucketNet = (b) => b.earned - (b.spent ?? 0);
 
 /** 레시피 한 번: 입력 소비, 출력 생산 */
 export function recordRecipe(world, recipe) {
@@ -61,7 +71,7 @@ export function perMinute(world) {
 export function earnedPerMinute(world) {
   const since = world.time - 60;
   let sum = 0;
-  for (const b of world.stats.timeline) if (b.t0 + BUCKET_SECONDS > since) sum += b.earned;
+  for (const b of world.stats.timeline) if (b.t0 + BUCKET_SECONDS > since) sum += bucketNet(b);
   const span = Math.min(60, Math.max(BUCKET_SECONDS, world.time));
   return Math.round((sum * 60) / span);
 }

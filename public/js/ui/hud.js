@@ -25,6 +25,8 @@ export function machineStatusText(station, rules, world = null) {
     return '대기: 뒤 칸에 앞으로 보낼 물건 없음';
   }
   if (kind === 'supply') {
+    const buy = rules.items[station.item].buy ?? 0;
+    if (station.short) return `대기: 돈 부족 (${name(station.item)} ${buy})`;
     if (station.status === 'blocked') return `막힘: 출력 꽉 참 (${name(station.item)})`;
     const m = rules.machines[station.type];
     return `들여오는 중: ${name(station.item)} ${Math.floor((station.progress / m.seconds) * 100)}%`;

@@ -232,7 +232,7 @@
       "unlock": {
         "machines": ["fast_belt"],
         "recipes": [],
-        "features": ["upgrades", "rush"]
+        "features": ["upgrades"]
       },
       "reward": {
         "parts": {
