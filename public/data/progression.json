@@ -1,5 +1,5 @@
 {
-  "version": 13,
+  "version": 14,
   "start": {
     "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "mill_wheat", "mix_dough", "bake_bun", "assemble_burger"],
     "machines": [],
@@ -210,7 +210,7 @@
         }
       },
       "unlock": {
-        "machines": ["freezer", "centrifuge", "sugarcane_field", "sugar_refiner", "cone_mold"],
+        "machines": ["freezer", "centrifuge", "sugarcane_field", "sugar_refiner", "cone_mold", "cold_storage"],
         "recipes": ["make_cooling", "separate_milk", "make_cheese_skim", "refine_sugar", "freeze_ice_cream", "bake_cone", "freeze_cone"]
       },
       "reward": {

@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "basePower": 120,
   "zones": [
     {
@@ -48,7 +48,7 @@
       "x": 52, "y": 14, "w": 16, "h": 12,
       "requires": "south2",
       "cost": { "money": 7000, "parts": { "motor": 12, "circuit": 4, "sensor": 4 } },
-      "trait": { "kind": "speed", "mult": 1.5, "machines": ["freezer"], "text": "냉동고 속도 +50%" }
+      "trait": { "kind": "speed", "mult": 1.5, "machines": ["freezer"], "cold": true, "text": "냉동고 속도 +50%, 창고는 냉동" }
     }
   ]
 }

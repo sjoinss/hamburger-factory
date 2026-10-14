@@ -113,6 +113,7 @@ export const SPRITE_DEFS = {
   coneMold: deep.CONE_MOLD,
   bigOven: deep.BIG_OVEN,
   fieldSugarcane: deep.FIELD_SUGARCANE,
+  coldStorage: [deep.COLD_STORAGE],
   customer: customers.CUSTOMER,
   ...Object.fromEntries(Object.entries(customers.DIGITS).map(([k, rows]) => [`digit${k}`, [rows]])),
   playerDown: characters.PLAYER_DOWN,

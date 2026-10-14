@@ -172,8 +172,8 @@ export const COMPOST_BIN = frames3((f) => {
 
 // ── M18 후반 메뉴 재료와 기계 ──
 
-// 닭고기: 뼈를 발라낸 분홍 살코기 덩어리
-export const CHICKEN_MEAT = plot(lump(8, 9, 5, 's', 'S', 'l'), [[6, 7, 'f'], [9, 10, 'f'], [10, 8, 'f']]);
+// 닭고기: 뼈를 발라낸 옅은 살코기 (분홍 돼지고기와 구분)
+export const CHICKEN_MEAT = plot(lump(8, 9, 5, 'f', 'F', 'l'), [[6, 7, 's'], [9, 10, 's'], [10, 8, 'l']]);
 
 // 닭뼈: 하얀 뼈 하나
 export const BONE = outline((() => {
@@ -331,3 +331,23 @@ export const FIELD_SUGARCANE = [0, 1, 2, 3].map((stage) => {
   }));
   return r;
 });
+
+// ── M19 신선도 ──
+
+// 냉동 창고 (2x2): 하얀 상자에 파란 문, 성에
+export const COLD_STORAGE = (() => {
+  let r = blank(32, 32);
+  r = rect(r, 1, 3, 30, 27, 'l');
+  r = frame(r, 0, 2, 32, 29, 'k');
+  r = rect(r, 1, 3, 30, 3, '3');
+  r = rect(r, 4, 8, 11, 19, 'p');
+  r = rect(r, 17, 8, 11, 19, 'p');
+  r = frame(r, 4, 8, 11, 19, 'k');
+  r = frame(r, 17, 8, 11, 19, 'k');
+  r = rect(r, 13, 15, 1, 5, '3');
+  r = rect(r, 18, 15, 1, 5, '3');
+  // 성에 (눈송이)
+  for (const [cx, cy] of [[9, 13], [22, 20]]) r = plot(r, [[cx, cy, 'l'], [cx - 1, cy, '3'], [cx + 1, cy, '3'], [cx, cy - 1, '3'], [cx, cy + 1, '3']]);
+  r = plot(r, [[3, 28, 'P'], [28, 28, 'P'], [6, 4, 'p'], [25, 4, 'p']]);
+  return rect(r, 1, 31, 31, 1, 'K');
+})();

@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "items": {
     "raw_meat"       : { "name": "생고기", "sprite": "rawMeat", "price": 0, "category": "food", "buy": 3 },
     "ground_meat"    : { "name": "다진고기", "sprite": "groundMeat", "price": 1, "category": "food" },
@@ -39,7 +39,7 @@
     "fried_chicken"  : { "name": "치킨", "sprite": "friedChicken", "price": 19, "category": "food" },
     "sausage"        : { "name": "소시지", "sprite": "sausage", "price": 0, "category": "food" },
     "hotdog"         : { "name": "핫도그", "sprite": "hotdog", "price": 24, "category": "food" },
-    "ice_cream"      : { "name": "아이스크림", "sprite": "iceCream", "price": 15, "category": "food" },
+    "ice_cream"      : { "name": "아이스크림", "sprite": "iceCream", "price": 15, "category": "food", "perish": 20 },
     "cooling_unit"   : { "name": "냉동 유닛", "sprite": "coolingUnit", "price": 0, "category": "part" },
     "cheeseburger"   : { "name": "치즈버거", "sprite": "cheeseburger", "price": 35, "category": "food" },
     "double_burger"  : { "name": "더블버거", "sprite": "doubleBurger", "price": 33, "category": "food" },
@@ -59,6 +59,6 @@
     "sugarcane"      : { "name": "사탕수수", "sprite": "sugarcane", "price": 0, "category": "food" },
     "sugar"          : { "name": "설탕", "sprite": "sugar", "price": 0, "category": "food" },
     "cone"           : { "name": "콘", "sprite": "cone", "price": 0, "category": "food" },
-    "cone_ice_cream" : { "name": "콘 아이스크림", "sprite": "coneIceCream", "price": 23, "category": "food" }
+    "cone_ice_cream" : { "name": "콘 아이스크림", "sprite": "coneIceCream", "price": 23, "category": "food", "perish": 20 }
   }
 }

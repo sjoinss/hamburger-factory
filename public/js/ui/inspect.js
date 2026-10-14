@@ -3,6 +3,7 @@ import { stationById } from '../sim/lookup.js';
 import { utilization, HISTORY_SECONDS } from '../sim/stats.js';
 import { setSupplyItem, setMachineRecipe } from '../sim/station.js';
 import { producible } from '../sim/market.js';
+import { melting, isCold } from '../sim/fresh.js';
 import { storageTotal, setStorageFilter } from '../sim/storage.js';
 import { setGateManual, gateSources } from '../sim/gate.js';
 import { orderById } from '../sim/orders.js';
@@ -214,7 +215,10 @@ export function createInspector({ world, rules, bank }) {
         return li;
       }));
     }
-    status.textContent = `${storageTotal(st)} / ${m.capacity}${m.singleItem ? ' (한 가지 품목만)' : ''}`;
+    const melt = melting(world, rules, st);
+    const cold = isCold(world, rules, st) ? ' · 냉동' : '';
+    const meltText = melt.length ? ` · 녹는 중: ${melt.map((id) => rules.items[id].name).join(', ')}` : '';
+    status.textContent = `${storageTotal(st)} / ${m.capacity}${m.singleItem ? ' (한 가지 품목만)' : ''}${cold}${meltText}`;
     itemButtons(filterRow, choosable(Object.keys(st.stock)), st.filter, (id) => setStorageFilter(rules, st, id), true);
   }
 

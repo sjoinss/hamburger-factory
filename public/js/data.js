@@ -49,6 +49,7 @@ export function validateItems(data) {
     assert(isNum(it.price, 0, 1e6), `아이템 ${id}: price 오류`);
     assert(ITEM_CATEGORIES.has(it.category), `아이템 ${id}: category 오류`);
     assert(it.buy === undefined || isNum(it.buy, 0, 1e6), `아이템 ${id}: buy 오류`);
+    assert(it.perish === undefined || isNum(it.perish, 1, 3600), `아이템 ${id}: perish 오류`);
   }
   return data.items;
 }
@@ -73,6 +74,7 @@ export function validateMachines(data, items) {
     }
     if (m.kind === 'storage') {
       assert(isInt(m.capacity, 1, 100000) && typeof m.singleItem === 'boolean', `기계 ${id}: 저장소 capacity/singleItem 오류`);
+      assert(m.cold === undefined || typeof m.cold === 'boolean', `기계 ${id}: cold 오류`);
     }
     if (m.kind === 'gate' || m.kind === 'reader') assert(isNum(m.seconds, 0.05, 60), `기계 ${id}: seconds 오류`);
     if (m.kind === 'bundler') {
@@ -352,6 +354,7 @@ export function validateZones(data, items, game, machines) {
     }
     const t = z.trait;
     assert(isObj(t) && ZONE_TRAITS.has(t.kind) && isNum(t.mult, 1, 10) && isStr(t.text, 40), `${where}: trait 오류`);
+    assert(t.cold === undefined || typeof t.cold === 'boolean', `${where}: trait.cold 오류`);
     if (t.kind === 'speed') {
       assert(Array.isArray(t.machines) && t.machines.length > 0, `${where}: trait.machines 오류`);
       for (const id of t.machines) assert(Object.hasOwn(machines, id) && machines[id].kind === 'machine', `${where}: 속도를 올릴 수 없는 기계 ${short(id)}`);

@@ -326,6 +326,12 @@ function restoreState(rules, w, st, raw, c) {
         total += take;
       }
       st.filter = c.itemId(raw.filter);
+      // 녹는 중인 시간 (품목마다)
+      if (isObj(raw.melt)) {
+        const melt = {};
+        for (const [id, v] of entries(raw.melt)) if (c.itemId(id) && rules.items[id].perish && fin(v)) melt[id] = Math.min(Math.max(0, v), rules.items[id].perish);
+        if (Object.keys(melt).length) st.melt = melt;
+      }
       break;
     }
     case 'gate': {

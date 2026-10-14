@@ -1,5 +1,5 @@
 {
-  "version": 13,
+  "version": 14,
   "machines": {
     "crate": {
       "name": "재료 상자",
@@ -750,6 +750,19 @@
       "harvestSeconds": 0.8,
       "cost": {
         "iron_plate": 2
+      }
+    },
+    "cold_storage": {
+      "name": "냉동 창고",
+      "kind": "storage",
+      "size": [2, 2],
+      "sprite": "coldStorage",
+      "capacity": 60,
+      "singleItem": false,
+      "cold": true,
+      "cost": {
+        "iron_plate": 8,
+        "cooling_unit": 2
       }
     }
   }

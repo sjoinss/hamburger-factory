@@ -18,6 +18,7 @@ import { createPower, updatePower } from './power.js';
 import { zoneMult } from './zones.js';
 import { speedMult } from './upgrade.js';
 import { createDay, updateDay } from './day.js';
+import { updateFreshness } from './fresh.js';
 import { createChapters, createRecords, updateChapters } from './chapters.js';
 
 export const NO_INPUT = Object.freeze({
@@ -144,6 +145,7 @@ export function stepWorld(world, input, dt, rules, opts = {}) {
     updateChapters(world, rules);
     updateDay(world, rules);
   }
+  updateFreshness(world, rules, dt);
   updateMarket(world, rules, dt);
   updateOrders(world, rules, dt, opts.customers !== false);
   updateTutorial(world, rules);
