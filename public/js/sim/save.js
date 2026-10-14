@@ -124,7 +124,16 @@ function restore(rules, s) {
   const stageIds = new Set(rules.progression.stages.map((st) => st.id));
   w.stagesDone = ids(s.stagesDone, (x) => stageIds.has(x));
   w.features = ids(s.features, (x) => FEATURES.has(x));
-  w.parts = c.counts(s.parts, (k) => c.itemId(k) !== null && rules.items[k].category === 'part', 1e7);
+  // 이미 지난 단계에 나중에 더해진 기계·레시피도 연다 (업데이트로 단계 내용이 늘어난 경우. 보상은 다시 주지 않는다)
+  for (const stage of rules.progression.stages) {
+    if (!w.stagesDone.includes(stage.id)) continue;
+    const add = (list, ids) => { for (const id of ids ?? []) if (!list.includes(id)) list.push(id); };
+    add(w.unlocked.machines, stage.unlock.machines);
+    add(w.unlocked.recipes, stage.unlock.recipes);
+    add(w.unlocked.supplies, stage.unlock.supplies);
+    add(w.features, stage.unlock.features);
+  }
+  w.parts =c.counts(s.parts, (k) => c.itemId(k) !== null && rules.items[k].category === 'part', 1e7);
 
   // 구역: 앞 구역부터 순서대로
   for (const z of rules.zones.zones) {

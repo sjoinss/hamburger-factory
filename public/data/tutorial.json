@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "tracks": {
     "start": [
       { "text": "햄버거 만들기", "target": { "guide": "burger" }, "done": { "have": "burger" } },
@@ -41,7 +41,8 @@
       { "text": "핫도그 만들기", "target": { "station": "hotdog_assembler", "ui": "build" }, "done": { "made": "hotdog_assembler" } }
     ],
     "dessert": [
-      { "text": "아이스크림 만들기", "target": { "station": "freezer", "ui": "build" }, "done": { "made": "freezer" } }
+      { "text": "아이스크림 만들기", "target": { "station": "freezer", "ui": "build" }, "done": { "made": "freezer" } },
+      { "text": "콘 아이스크림 팔기", "target": { "station": "freezer" }, "done": { "sold": "cone_ice_cream" } }
     ],
     "upgrade": [
       { "text": "기계 업그레이드", "target": { "station": "burger_assembler" }, "done": { "ui": "upgrade" } },

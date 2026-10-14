@@ -169,3 +169,165 @@ export const COMPOST_BIN = frames3((f) => {
   r = plot(r, [[5, 2, 'g'], [6, 1 + (f % 2), 'G'], [10, 2, 'g'], [11, 2 - (f === 2 ? 1 : 0), 'g']]);
   return plot(r, [[3, 13, 'y'], [12, 13, 'g']]);
 });
+
+// ── M18 후반 메뉴 재료와 기계 ──
+
+// 닭고기: 뼈를 발라낸 분홍 살코기 덩어리
+export const CHICKEN_MEAT = plot(lump(8, 9, 5, 's', 'S', 'l'), [[6, 7, 'f'], [9, 10, 'f'], [10, 8, 'f']]);
+
+// 닭뼈: 하얀 뼈 하나
+export const BONE = outline((() => {
+  let r = blank(16, 16);
+  for (let i = 0; i < 8; i++) r = plot(r, [[4 + i, 11 - i, 'l'], [5 + i, 11 - i, 'f']]);
+  return plot(r, [[3, 11, 'l'], [3, 12, 'l'], [4, 12, 'f'], [2, 11, 'l'],
+    [12, 3, 'l'], [12, 4, 'f'], [13, 3, 'l'], [12, 2, 'l']]);
+})());
+
+// 튀김옷: 그릇에 담긴 반죽물
+export const BATTER = (() => {
+  let r = blank(16, 16);
+  r = rect(r, 2, 7, 12, 5, '3');
+  r = rect(r, 3, 6, 10, 2, 'f');
+  r = rect(r, 4, 12, 8, 1, '2');
+  r = frame(r, 2, 6, 12, 7, 'k');
+  r = plot(r, [[5, 6, 'l'], [9, 6, 'l'], [11, 4, '2'], [12, 3, '2'], [13, 2, 'k']]);
+  return rect(r, 3, 13, 10, 1, 'K');
+})();
+
+// 크림: 뚜껑 달린 하얀 단지
+export const CREAM = (() => {
+  let r = blank(16, 16);
+  r = rect(r, 4, 5, 8, 9, 'l');
+  r = rect(r, 5, 9, 6, 2, 'c');
+  r = frame(r, 4, 5, 8, 9, 'k');
+  r = rect(r, 3, 3, 10, 2, 'f');
+  r = frame(r, 3, 3, 10, 2, 'k');
+  r = plot(r, [[7, 2, 'k'], [8, 2, 'k'], [5, 6, 'f']]);
+  return rect(r, 5, 14, 8, 1, 'K');
+})();
+
+// 탈지우유: 푸른 병 (우유와 색이 반대)
+export const SKIM_MILK = (() => {
+  let r = blank(16, 16);
+  r = rect(r, 6, 1, 4, 3, 'l');
+  r = frame(r, 6, 1, 4, 3, 'k');
+  r = rect(r, 4, 4, 8, 10, 'p');
+  r = rect(r, 5, 8, 6, 3, 'l');
+  r = frame(r, 4, 4, 8, 10, 'k');
+  r = plot(r, [[5, 5, '3'], [10, 12, 'P']]);
+  return rect(r, 5, 14, 8, 1, 'K');
+})();
+
+// 사탕수수: 마디 있는 초록 줄기 세 개
+export const SUGARCANE = outline((() => {
+  let r = blank(16, 16);
+  for (const [x, top] of [[4, 2], [8, 1], [12, 3]]) {
+    r = rect(r, x, top, 2, 14 - top, 'g');
+    for (let y = top + 3; y < 14; y += 4) r = rect(r, x, y, 2, 1, 'G');
+    r = plot(r, [[x + 2, top, 'g'], [x - 1, top + 1, 'g']]);
+  }
+  return r;
+})());
+
+// 설탕: 하얀 알갱이 더미
+export const SUGAR = (() => {
+  let r = blank(16, 16);
+  for (let y = 0; y < 6; y++) r = rect(r, 7 - y, 7 + y, 2 + y * 2, 1, y % 2 ? 'l' : 'f');
+  r = plot(r, [[6, 10, '3'], [9, 9, '3'], [8, 12, '3'], [4, 12, '3']]);
+  return outline(r);
+})();
+
+// 콘: 격자무늬 와플 콘
+export const CONE = (() => {
+  let r = blank(16, 16);
+  for (let y = 0; y < 10; y++) {
+    const w = 10 - y;
+    r = rect(r, 3 + Math.ceil(y / 2), 3 + y, w, 1, (y % 3 === 0) ? 'B' : 'b');
+  }
+  for (let y = 4; y < 12; y += 2) r = plot(r, [[6 + (y % 4), y, 'B'], [9 - (y % 4), y, 'B']]);
+  return outline(r);
+})();
+
+// 아이스크림 (컵): 종이컵에 한 덩이
+export const ICE_CUP = (() => {
+  let r = blank(16, 16);
+  r = rect(r, 4, 9, 8, 5, 'l');
+  r = rect(r, 4, 11, 8, 1, 't');
+  r = frame(r, 4, 9, 8, 5, 'k');
+  r = plot(lump(8, 7, 4, 'c', 'y', 'l'), []).map((row, y) => (y < 9 ? row : r[y]));
+  return rect(r, 5, 14, 6, 1, 'K');
+})();
+
+// 발골기: 칼날이 오르내리는 작업대
+export const DEBONER = frames3((f) => {
+  let r = box(8);
+  r = rect(r, 2, 6, 12, 3, '3');
+  r = frame(r, 2, 6, 12, 3, 'k');
+  r = rect(r, 6, 1 + (f === 1 ? 2 : 0), 5, 4, '2');
+  r = frame(r, 6, 1 + (f === 1 ? 2 : 0), 5, 4, 'k');
+  r = plot(r, [[4, 7, 's'], [5, 7, 's'], [12, 7, 'l']]);
+  return plot(r, [[3, 13, 'y'], [12, 13, 'r']]);
+});
+
+// 원심분리기: 둥근 통이 돈다
+export const CENTRIFUGE = frames3((f) => {
+  let r = box(5);
+  const blades = [[[8, 4], [8, 5]], [[6, 6], [7, 6]], [[9, 6], [10, 6]]];
+  r = rect(r, 3, 1, 10, 10, '3');
+  r = frame(r, 3, 1, 10, 10, 'k');
+  r = rect(r, 5, 3, 6, 6, 'l');
+  r = frame(r, 5, 3, 6, 6, '2');
+  r = plot(r, blades[f].map(([x, y]) => [x, y, 'p']));
+  return plot(r, [[3, 13, 'y'], [12, 13, 'p']]);
+});
+
+// 설탕 정제기: 깔때기에서 하얀 가루가 떨어진다
+export const SUGAR_REFINER = frames3((f) => {
+  let r = box(7);
+  for (let y = 0; y < 5; y++) r = rect(r, 2 + y, 1 + y, 12 - y * 2, 1, 'g');
+  r = rect(r, 7, 6, 2, 3, '2');
+  r = frame(r, 7, 6, 2, 3, 'k');
+  if (f) r = plot(r, [[7 + (f % 2), 10, 'l'], [8, 11, 'l']]);
+  return plot(r, [[3, 13, 'y'], [12, 13, 'l']]);
+});
+
+// 콘 굽기 틀: 와플 판
+export const CONE_MOLD = frames3((f) => {
+  let r = box(6);
+  r = rect(r, 2, 3, 12, 8, '1');
+  r = frame(r, 2, 3, 12, 8, 'k');
+  for (let x = 3; x < 13; x += 2) for (let y = 4; y < 10; y += 2) r = plot(r, [[x, y, f ? 'o' : 'b']]);
+  return plot(r, [[3, 13, 'y'], [12, 13, 'b']]);
+});
+
+// 대형 오븐 (2x2): 벽돌 오븐에 문 두 짝, 안에 번이 줄지어
+export const BIG_OVEN = frames3((f) => {
+  let r = blank(32, 32);
+  r = rect(r, 0, 4, 32, 27, 'r');
+  for (let y = 7; y < 30; y += 4) r = rect(r, 0, y, 32, 1, 'B');
+  r = frame(r, 0, 4, 32, 27, 'k');
+  r = rect(r, 3, 10, 26, 14, 'K');
+  r = frame(r, 3, 10, 26, 14, 'k');
+  for (let x = 5; x < 27; x += 6) r = rect(r, x, 18, 4, 3, 'b');
+  if (f) r = plot(r, [[6 + f * 3, 14, 'o'], [14, 15 - (f % 2), 'y'], [22, 14, 'o'], [18, 16, 'r']]);
+  r = rect(r, 12, 0, 8, 4, '2');
+  r = frame(r, 12, 0, 8, 4, 'k');
+  return rect(r, 1, 31, 31, 1, 'K');
+});
+
+// 사탕수수밭 (2x2, 4단계)
+export const FIELD_SUGARCANE = [0, 1, 2, 3].map((stage) => {
+  let r = blank(32, 32);
+  r = rect(r, 0, 0, 32, 31, 'd');
+  for (let y = 4; y < 30; y += 7) r = rect(r, 2, y + 3, 28, 1, 'm');
+  r = frame(r, 0, 0, 32, 31, 'B');
+  r = frame(r, 1, 1, 30, 29, 'b');
+  r = rect(r, 1, 31, 31, 1, 'K');
+  [5, 13, 21].forEach((x0) => [8, 16, 24].forEach((y0) => {
+    const h = [1, 3, 5, 7][stage];
+    r = rect(r, x0, y0 - h, 2, h, 'g');
+    if (stage >= 2) r = plot(r, [[x0, y0 - h + 2, 'G'], [x0 + 2, y0 - h, 'g']]);
+    if (stage === 3) r = plot(r, [[x0 - 1, y0 - h, 'g'], [x0 + 1, y0 - 4, 'G']]);
+  }));
+  return r;
+});

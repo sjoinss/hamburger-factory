@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "recipes": [
     {
       "id": "chop_meat",
@@ -284,7 +284,7 @@
       "verb": "절이기",
       "stations": ["brine_tank"],
       "inputs": {
-        "raw_chicken": 1,
+        "chicken_meat": 1,
         "water": 1
       },
       "outputs": {
@@ -297,7 +297,8 @@
       "verb": "튀기기",
       "stations": ["chicken_fryer"],
       "inputs": {
-        "brined_chicken": 1
+        "brined_chicken": 1,
+        "batter": 1
       },
       "outputs": {
         "fried_chicken": 1
@@ -348,8 +349,8 @@
       "verb": "얼리기",
       "stations": ["freezer"],
       "inputs": {
-        "milk": 1,
-        "syrup": 1
+        "cream": 1,
+        "sugar": 1
       },
       "outputs": {
         "ice_cream": 1
@@ -447,6 +448,119 @@
         "fertilizer": 1
       },
       "seconds": 6
+    },
+    {
+      "id": "debone",
+      "verb": "발골",
+      "stations": ["deboner"],
+      "inputs": {
+        "raw_chicken": 1
+      },
+      "outputs": {
+        "chicken_meat": 1
+      },
+      "byproduct": { "item": "bone", "every": 1 },
+      "seconds": 3
+    },
+    {
+      "id": "mix_batter",
+      "verb": "섞기",
+      "stations": ["mixer"],
+      "inputs": {
+        "flour": 1,
+        "water": 1
+      },
+      "outputs": {
+        "batter": 1
+      },
+      "seconds": 2
+    },
+    {
+      "id": "separate_milk",
+      "verb": "분리",
+      "stations": ["centrifuge"],
+      "inputs": {
+        "milk": 2
+      },
+      "outputs": {
+        "cream": 1
+      },
+      "byproduct": { "item": "skim_milk", "every": 1 },
+      "seconds": 4
+    },
+    {
+      "id": "make_cheese_skim",
+      "verb": "굳히기",
+      "stations": ["cheese_vat"],
+      "inputs": {
+        "skim_milk": 3
+      },
+      "outputs": {
+        "cheese": 1
+      },
+      "seconds": 5
+    },
+    {
+      "id": "refine_sugar",
+      "verb": "정제",
+      "stations": ["sugar_refiner"],
+      "inputs": {
+        "sugarcane": 1
+      },
+      "outputs": {
+        "sugar": 2
+      },
+      "seconds": 3
+    },
+    {
+      "id": "bake_cone",
+      "verb": "굽기",
+      "stations": ["cone_mold"],
+      "inputs": {
+        "dough": 1
+      },
+      "outputs": {
+        "cone": 2
+      },
+      "seconds": 4
+    },
+    {
+      "id": "freeze_cone",
+      "verb": "얼리기",
+      "stations": ["freezer"],
+      "inputs": {
+        "cream": 1,
+        "sugar": 1,
+        "cone": 1
+      },
+      "outputs": {
+        "cone_ice_cream": 1
+      },
+      "seconds": 6
+    },
+    {
+      "id": "compost_bone",
+      "verb": "삭히기",
+      "stations": ["compost_bin"],
+      "inputs": {
+        "bone": 2
+      },
+      "outputs": {
+        "fertilizer": 1
+      },
+      "seconds": 6
+    },
+    {
+      "id": "bake_bun_batch",
+      "verb": "굽기",
+      "stations": ["big_oven"],
+      "inputs": {
+        "dough": 8
+      },
+      "outputs": {
+        "bun": 8
+      },
+      "seconds": 16
     }
   ]
 }

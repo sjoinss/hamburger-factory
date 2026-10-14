@@ -48,17 +48,21 @@ test('햄버거 80개 → 피자, 피자 15개 → 치킨·핫도그, 치킨 15�
   assert.equal(c.tutorial.track, 'dessert');
 });
 
-test('새 기계 레시피: 소스·치즈·피자·염지·치킨·소시지·핫도그·아이스크림', () => {
+test('새 기계 레시피: 소스·치즈·피자·발골·염지·치킨·소시지·핫도그·원심분리·설탕·콘·아이스크림', () => {
   const w = worldWith({ burger: 80, pizza: 15, fried_chicken: 15 });
   const cases = [
     ['sauce_pot', ['tomato', 'tomato'], 'tomato_sauce'],
     ['cheese_vat', ['milk', 'milk'], 'cheese'],
     ['pizza_oven', ['dough', 'tomato_sauce', 'cheese'], 'pizza'],
-    ['brine_tank', ['raw_chicken', 'water'], 'brined_chicken'],
-    ['chicken_fryer', ['brined_chicken'], 'fried_chicken'],
+    ['deboner', ['raw_chicken'], 'chicken_meat'],
+    ['brine_tank', ['chicken_meat', 'water'], 'brined_chicken'],
+    ['chicken_fryer', ['brined_chicken', 'batter'], 'fried_chicken'],
     ['sausage_maker', ['ground_meat', 'ground_meat'], 'sausage'],
     ['hotdog_assembler', ['bun', 'sausage'], 'hotdog'],
-    ['freezer', ['milk', 'syrup'], 'ice_cream'],
+    ['centrifuge', ['milk', 'milk'], 'cream'],
+    ['sugar_refiner', ['sugarcane'], 'sugar'],
+    ['cone_mold', ['dough'], 'cone'],
+    ['freezer', ['cream', 'sugar'], 'ice_cream'],
   ];
   let x = 2;
   let y = 4;
@@ -70,7 +74,8 @@ test('새 기계 레시피: 소스·치즈·피자·염지·치킨·소시지·�
     return st;
   });
   run(w, secs(6));
-  cases.forEach(([type, , out], i) => assert.deepEqual(made[i].output, [out], type));
+  // 설탕·콘은 한 번에 둘 (부산물은 재활용 단계 전이라 없다)
+  cases.forEach(([type, , out], i) => assert.deepEqual([...new Set(made[i].output)], [out], type));
 });
 
 test('부품 조립기: 모터 + 철판 2 → 냉동 유닛 (센서·열판과 헷갈리지 않는다)', () => {
@@ -98,22 +103,26 @@ test('새 메뉴 주문은 만들 수 있게 된 뒤에만 나온다', () => {
   assert.ok(['pizza', 'fried_chicken', 'hotdog', 'ice_cream'].some((id) => seen.has(id)), [...seen].join(','));
 });
 
-test('치킨 라인: 생닭·물 입고 → 염지통 → 튀김기 → 벨트 → 출고구, 손 안 대고 팔린다', () => {
+test('치킨 라인: 생닭 입고 → 발골기 → 염지통(+물) → 튀김기(+튀김옷) → 출고구, 손 안 대고 팔린다', () => {
   const w = worldWith({ burger: 80, pizza: 15 });
-  const chick = build(w, 'supply', 2, 10);
+  const chick = build(w, 'supply', 1, 10);
   assert.ok(setSupplyItem(rules, chick, 'raw_chicken', w));
-  build(w, 'inserter', 3, 10, R);
-  const water = build(w, 'supply', 4, 8);
+  build(w, 'inserter', 2, 10, R);
+  build(w, 'deboner', 3, 10);
+  build(w, 'inserter', 4, 10, R);
+  const water = build(w, 'supply', 5, 8);
   setSupplyItem(rules, water, 'water', w);
-  build(w, 'inserter', 4, 9, D);
-  build(w, 'brine_tank', 4, 10);
-  build(w, 'inserter', 5, 10, R);
-  build(w, 'chicken_fryer', 6, 10);
-  build(w, 'inserter', 7, 10, R);
-  build(w, 'belt', 8, 10, D);
-  build(w, 'belt', 8, 11, D); // → 출고구 (8,12)
+  build(w, 'inserter', 5, 9, D);
+  build(w, 'brine_tank', 5, 10);
+  build(w, 'inserter', 6, 10, R);
+  const fryer = build(w, 'chicken_fryer', 7, 10);
+  build(w, 'inserter', 7, 11, D); // → 출고구 (7,12)
   const money0 = w.money;
-  run(w, secs(90));
+  // 튀김옷은 반죽기 라인 대신 시험에서 직접 채운다
+  for (let s = 0; s < 90; s++) {
+    while (fryer.contents.filter((x) => x === 'batter').length < 2) fryer.contents.push('batter');
+    run(w, secs(1));
+  }
   assert.ok((w.stats.sold.fried_chicken ?? 0) >= 5, `치킨 ${w.stats.sold.fried_chicken}`);
   assert.ok(w.money > money0);
 });
