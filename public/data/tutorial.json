@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "tracks": {
     "start": [
       { "text": "햄버거 만들기", "target": { "guide": "burger" }, "done": { "have": "burger" } },
@@ -42,6 +42,10 @@
     ],
     "dessert": [
       { "text": "아이스크림 만들기", "target": { "station": "freezer", "ui": "build" }, "done": { "made": "freezer" } }
+    ],
+    "upgrade": [
+      { "text": "기계 업그레이드", "target": { "station": "burger_assembler" }, "done": { "ui": "upgrade" } },
+      { "text": "고속 벨트 깔기", "target": { "ui": "build" }, "done": { "built": "fast_belt" } }
     ]
   }
 }

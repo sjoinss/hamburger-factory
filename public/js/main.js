@@ -21,7 +21,7 @@ import { createWalker } from './ui/walk.js';
 import { createSound } from './audio/sound.js';
 import { createSettings, readSavedGame } from './ui/settings.js';
 import { replaceWorld } from './sim/save.js';
-import { ownedWidth } from './sim/zones.js';
+import { ownedBounds } from './sim/zones.js';
 import { createChapterView } from './ui/chapters.js';
 
 const FONT_FAMILY = '"Galmuri11", ui-monospace, monospace';
@@ -214,8 +214,6 @@ async function boot() {
     },
   );
 
-  const worldH = world.grid.height * ts;
-
   resizeCanvas(camera);
   new ResizeObserver(() => resizeCanvas(camera)).observe(stage);
   if (coarse) enterTouchMode();
@@ -353,6 +351,10 @@ async function boot() {
         hud.flashMoney();
         hud.banner(`${done.name} 완료!${ev.reward.money ? ` +${ev.reward.money}` : ''}`, 3);
       }
+      if (ev.type === 'challengeDone') {
+        hud.flashMoney();
+        hud.banner(`도전 ${ev.level} 완료! +${ev.reward.money}`, 3);
+      }
       if (ev.type === 'ending') chapterView.showEnding();
       if (ev.type === 'orderFailed') hud.banner('손님이 떠났다', 2);
       if (ev.type === 'orderNew' && panels.current() === 'orders') orderBoard.forceRender();
@@ -377,7 +379,8 @@ async function boot() {
     }
     updateViewPadding();
     // 산 구역까지만 (안 산 구역은 그리지 않으므로 그쪽으로 카메라가 가지 않게)
-    clampCamera(camera, view, ownedWidth(world, rules) * ts, worldH);
+    const owned = ownedBounds(world, rules);
+    clampCamera(camera, view, owned.w * ts, owned.h * ts);
 
     const prevHover = hover;
     hover = null;

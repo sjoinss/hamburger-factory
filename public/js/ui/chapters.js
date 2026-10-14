@@ -1,5 +1,5 @@
 // 목표 패널 맨 위 챕터 카드, 엔딩 화면. 글은 textContent 로만.
-import { currentChapter, goalStatus } from '../sim/chapters.js';
+import { currentChapter, currentChallenge, goalStatus } from '../sim/chapters.js';
 import { itemChip } from './icons.js';
 
 /** 목표 한 줄 글 */
@@ -31,6 +31,7 @@ export function createChapterView({ world, rules, bank }) {
   const text = $('chapter-text');
   const goals = $('goal-list');
   const reward = $('chapter-reward');
+  const records = $('records');
   const endingBtn = $('btn-ending');
   const ending = $('ending');
 
@@ -67,24 +68,30 @@ export function createChapterView({ world, rules, bank }) {
   });
   endingBtn.addEventListener('click', showEnding);
 
+  /** 최고 기록 한 줄: 분당 수익 + 많이 판 품목 셋 */
+  function renderRecords() {
+    const rec = world.records;
+    records.hidden = rec.earnRate <= 0;
+    if (records.hidden) return;
+    const top = Object.entries(rec.rate).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    records.textContent = ['최고 기록: 분당 수익 ' + rec.earnRate, ...top.map(([id, n]) => `${rules.items[id].name} ${n}`)].join(' · ');
+  }
+
   let lastKey = null;
   return {
     showEnding,
     /** 목표 패널이 열려 있을 때 (stats 패널과 같은 0.5초 간격) */
     render() {
-      const ch = currentChapter(world, rules);
+      renderRecords();
       endingBtn.hidden = !world.chapters.ended;
-      if (!ch) {
-        name.textContent = '모든 장 완료';
-        count.textContent = `${rules.chapters.length}/${rules.chapters.length}`;
-        text.textContent = '이제부터는 자유롭게 공장을 키우자';
-        goals.replaceChildren();
-        reward.textContent = '';
-        lastKey = null;
-        return;
-      }
+      // 엔딩 뒤에는 끝없는 도전 (장과 같은 모양으로 보여 준다)
+      const challenge = currentChallenge(world, rules);
+      const ch = challenge
+        ? { id: `challenge${challenge.level}`, name: `도전 ${challenge.level}`, text: rules.challenge.text, goals: challenge.goals, reward: challenge.reward }
+        : currentChapter(world, rules);
+      if (!ch) return;
       name.textContent = ch.name;
-      count.textContent = `${world.chapters.index + 1}/${rules.chapters.length}`;
+      count.textContent = challenge ? '' : `${world.chapters.index + 1}/${rules.chapters.length}`;
       text.textContent = ch.text;
       const states = ch.goals.map((g) => goalStatus(world, rules, g));
       const key = JSON.stringify([ch.id, states]);

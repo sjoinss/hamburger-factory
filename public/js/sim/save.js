@@ -7,6 +7,7 @@ import { openZone, zoneMult } from './zones.js';
 import { canInsertAt, insertSorted, makeBeltItem } from './conveyor.js';
 import { BUCKETS, HISTORY_SECONDS } from './stats.js';
 import { FEATURES } from '../data.js';
+import { upgradable } from './upgrade.js';
 
 export const SAVE_FORMAT = 'hamburger-factory-save';
 export const SAVE_VERSION = 1;
@@ -123,8 +124,15 @@ function restore(rules, s) {
       index: int(s.chapters.index, 0, rules.chapters.length, 0),
       ended,
       endedAt: ended && s.chapters.endedAt !== null ? num(s.chapters.endedAt, 0, 1e9, w.time) : null,
+      challenge: int(s.chapters.challenge, 0, 1e6, 0),
     };
     if (w.chapters.index >= rules.chapters.length) w.chapters.ended = true;
+  }
+  if (isObj(s.records)) {
+    w.records = {
+      earnRate: num(s.records.earnRate, 0, 1e9, 0),
+      rate: c.counts(s.records.rate, (k) => c.itemId(k) !== null && rules.items[k].price > 0, 1e7),
+    };
   }
   w.stationsVersion += 1;
   return { world: w, dropped };
@@ -199,6 +207,10 @@ function restoreState(rules, w, st, raw, c) {
   st.contents = c.items(raw.contents);
   st.output = c.items(raw.output);
   if (st.hist !== undefined) st.hist = typeof raw.hist === 'string' && /^[rib]*$/.test(raw.hist) ? raw.hist.slice(-HISTORY_SECONDS) : '';
+  if (upgradable(rules, st)) {
+    const level = int(raw.level, 0, rules.game.upgrades.costs.length, 0);
+    if (level > 0) st.level = level;
+  }
 
   const beltEntry = (node, e) => {
     const item = c.itemId(e?.item);

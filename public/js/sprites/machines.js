@@ -108,26 +108,30 @@ export const GRILL = [
 // ── 컨베이어류 (기본 방향 = 오른쪽. 회전은 런타임) ──
 
 // 벨트: 위아래 철제 난간 + 검은 고무 위 '>' 모양 갈빗살. 4프레임으로 2px씩 흐른다.
-function beltFrame(frame) {
+// 고속 벨트는 난간이 노랑·주황 (실루엣은 같고 색으로만 구분, 갈빗살도 밝게)
+const BELT_COLORS = { top: '3', mid: '2', low: '1', rib: '1' };
+const FAST_BELT_COLORS = { top: 'y', mid: 'o', low: 'r', rib: '2' };
+function beltFrame(frame, c = BELT_COLORS) {
   let r = blank(16, 16);
   r = rect(r, 0, 0, 16, 1, 'k');
-  r = rect(r, 0, 1, 16, 1, '3');
-  r = rect(r, 0, 2, 16, 1, '2');
+  r = rect(r, 0, 1, 16, 1, c.top);
+  r = rect(r, 0, 2, 16, 1, c.mid);
   r = rect(r, 0, 3, 16, 10, 'K');
-  r = rect(r, 0, 13, 16, 1, '1');
+  r = rect(r, 0, 13, 16, 1, c.low);
   r = rect(r, 0, 14, 16, 1, 'k');
   r = rect(r, 0, 15, 16, 1, 'K');
   const pts = [];
   for (let y = 3; y <= 12; y++) {
     const bend = Math.floor(Math.abs(y - 7.5));
     for (let x = 0; x < 16; x++) {
-      if ((((x + bend - frame * 2) % 8) + 8) % 8 === 0) pts.push([x, y, '1']);
+      if ((((x + bend - frame * 2) % 8) + 8) % 8 === 0) pts.push([x, y, c.rib]);
     }
   }
   r = plot(r, pts);
-  return plot(r, [[3, 1, 'k'], [11, 14, '3']]); // 난간 리벳 (위아래 어긋나게)
+  return plot(r, [[3, 1, 'k'], [11, 14, c.top]]); // 난간 리벳 (위아래 어긋나게)
 }
-export const BELT = [0, 1, 2, 3].map(beltFrame);
+export const BELT = [0, 1, 2, 3].map((f) => beltFrame(f));
+export const BELT_FAST = [0, 1, 2, 3].map((f) => beltFrame(f, FAST_BELT_COLORS));
 
 // 분배기: 벨트 위에 철제 뭉치, 위·아래(왼쪽·오른쪽 출구)로 노란 화살
 export const SPLITTER = (() => {

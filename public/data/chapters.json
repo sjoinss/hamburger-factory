@@ -1,5 +1,18 @@
 {
-  "version": 1,
+  "version": 2,
+  "challenge": {
+    "text": "기록을 넘어라",
+    "earn": { "base": 600, "step": 150 },
+    "rates": [
+      { "item": "burger", "base": 75, "step": 15 },
+      { "item": "pizza", "base": 8, "step": 4 },
+      { "item": "fried_chicken", "base": 8, "step": 4 },
+      { "item": "set", "base": 8, "step": 4 },
+      { "item": "hotdog", "base": 10, "step": 5 },
+      { "item": "ice_cream", "base": 10, "step": 5 }
+    ],
+    "reward": { "base": 500, "step": 250 }
+  },
   "chapters": [
     {
       "id": "open",

@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "machines": {
     "crate": {
       "name": "재료 상자",
@@ -61,6 +61,20 @@
         "iron_plate": 1
       },
       "power": 0.5
+    },
+    "fast_belt": {
+      "name": "고속 컨베이어",
+      "kind": "belt",
+      "size": [1, 1],
+      "sprite": "beltFast",
+      "speed": 3,
+      "walkable": true,
+      "dragPlace": true,
+      "cost": {
+        "iron_plate": 1,
+        "gear": 1
+      },
+      "power": 1
     },
     "inserter": {
       "name": "투입기",

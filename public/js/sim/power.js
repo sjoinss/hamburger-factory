@@ -1,6 +1,7 @@
 // 전력: 기본 전력(도시 전기) + 발전기 출력 vs 돌아가는 기계들의 소비.
 // 모자라면 모든 기계가 같은 비율만큼 느려진다 (일부만 꺼지지 않는다).
 import { zoneMult } from './zones.js';
+import { powerMult } from './upgrade.js';
 
 export function createPower() {
   return { supply: 0, demand: 0, ratio: 1 };
@@ -45,7 +46,7 @@ export function updatePower(world, rules, dt) {
   for (const st of world.stations) {
     const m = rules.machines[st.type];
     if (m.kind === 'generator') supply += burn(world, rules, st, dt);
-    else if (m.power && drawing(rules, st)) demand += m.power;
+    else if (m.power && drawing(rules, st)) demand += m.power * powerMult(rules, st);
   }
   p.supply = supply;
   p.demand = demand;

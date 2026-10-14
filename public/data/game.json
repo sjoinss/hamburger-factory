@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "tileSize": 16,
   "ticksPerSecond": 20,
   "maxTicksPerFrame": 20,
@@ -17,6 +17,16 @@
     "walkFrameSeconds": 0.15,
     "carryCapacity": 2,
     "reach": 0.8
+  },
+  "upgrades": {
+    "kinds": ["machine", "supply"],
+    "speedPerLevel": 0.25,
+    "powerPerLevel": 0.4,
+    "costs": [
+      { "money": 300, "parts": { "gear": 4, "motor": 1 } },
+      { "money": 900, "parts": { "gear": 8, "motor": 2, "wire": 4 } },
+      { "money": 2500, "parts": { "motor": 4, "circuit": 1, "sensor": 1 } }
+    ]
   },
   "touch": {
     "pinchStep": 1.25

@@ -96,6 +96,7 @@ export const SPRITE_DEFS = {
   counter: [machines.COUNTER],
   grill: machines.GRILL,
   belt: machines.BELT,
+  beltFast: machines.BELT_FAST,
   splitter: [machines.SPLITTER],
   merger: [machines.MERGER],
   inserterBase: [machines.INSERTER_BASE],

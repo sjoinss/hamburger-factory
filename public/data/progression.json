@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "start": {
     "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "mill_wheat", "mix_dough", "bake_bun", "assemble_burger"],
     "machines": [],
@@ -220,6 +220,27 @@
         }
       },
       "tutorial": "dessert"
+    },
+    {
+      "id": "upgrade",
+      "name": "설비 강화",
+      "when": {
+        "sold": {
+          "burger": 100
+        }
+      },
+      "unlock": {
+        "machines": ["fast_belt"],
+        "recipes": [],
+        "features": ["upgrades", "rush"]
+      },
+      "reward": {
+        "parts": {
+          "gear": 10,
+          "motor": 2
+        }
+      },
+      "tutorial": "upgrade"
     }
   ]
 }

@@ -486,6 +486,7 @@ body:not(.is-touch) #btn-build-draw { display: none; }
 .order-kind { padding: 0 4px; background: var(--c-outline); color: var(--c-light); }
 .order-special .order-kind { background: var(--c-orange); color: var(--c-black); }
 .order-bulk .order-kind { background: var(--c-blue); color: var(--c-light); }
+.order-rush .order-kind { background: var(--c-red); color: var(--c-light); }
 .order-reward { color: var(--c-outline); }
 .order-time { margin-left: auto; color: var(--c-oil); }
 .order-time.is-urgent { color: var(--c-red); text-decoration: underline; }
@@ -515,6 +516,8 @@ button:disabled { opacity: 1; color: var(--c-oil); background: var(--c-floor-dar
 .zone-cost { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--c-metal-3); }
 .zone-cost .is-short { color: var(--c-orange); }
 .zone button { width: 100%; }
+.upgrade-box { display: grid; gap: 3px; margin-top: 6px; }
+.upgrade-box button { width: 100%; }
 
 /* ── 설정: 저장 / 소리 ───────────────────────────────── */
 .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }

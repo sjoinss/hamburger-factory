@@ -187,6 +187,7 @@
         <p class="muted" id="chapter-text"></p>
         <ul class="goal-list" id="goal-list"></ul>
         <p class="chapter-reward" id="chapter-reward"></p>
+        <p class="muted" id="records" hidden></p>
         <button type="button" class="wide-btn" id="btn-ending" hidden>엔딩 다시 보기</button>
       </section>
       <button type="button" class="wide-btn" data-ui="overlay" aria-pressed="false">병목 보기<span class="key-hint"> (O)</span></button>
@@ -212,6 +213,10 @@
         <div class="util-bar" id="util-bar" aria-hidden="true"><span class="u-run"></span><span class="u-idle"></span><span class="u-block"></span></div>
         <p class="muted" id="inspect-util"></p>
         <p id="inspect-buffers"></p>
+        <div class="upgrade-box" id="upgrade-box" hidden>
+          <span class="zone-cost" id="upgrade-cost"></span>
+          <button type="button" id="btn-upgrade">업그레이드</button>
+        </div>
         <div class="supply-pick" id="supply-pick" role="group" aria-label="들여올 재료" hidden></div>
         <div class="storage-box" id="storage-box" hidden>
           <ul class="stock-list" id="stock-list"></ul>

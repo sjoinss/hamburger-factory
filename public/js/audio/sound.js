@@ -158,11 +158,13 @@ export function createSound() {
         case 'orderNew': return play('bell');
         case 'made': return play(MADE_SOUND[ev.machine] ?? 'click');
         case 'crafted': return play('click');
-        case 'built': return play('build');
+        case 'built':
+        case 'upgraded': return play('build');
         case 'removed': return play('remove');
         case 'unlocked':
         case 'zoneBought':
         case 'chapterDone':
+        case 'challengeDone':
         case 'ending': return play('fanfare');
         case 'bundled': return play('tape');
         case 'readerAssigned': return play('beep');

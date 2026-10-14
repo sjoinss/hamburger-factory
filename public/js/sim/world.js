@@ -16,7 +16,8 @@ import { createOrders, updateOrders } from './orders.js';
 import { TILE, getTile, setTile } from './grid.js';
 import { createPower, updatePower } from './power.js';
 import { zoneMult } from './zones.js';
-import { createChapters, updateChapters } from './chapters.js';
+import { speedMult } from './upgrade.js';
+import { createChapters, createRecords, updateChapters } from './chapters.js';
 
 export const NO_INPUT = Object.freeze({
   moveX: 0, moveY: 0, interactPressed: false, interactHeld: false, dropPressed: false,
@@ -77,6 +78,7 @@ export function createWorld(rules) {
     orders: createOrders(),
     tutorial: createTutorial(rules.progression.start.tutorial),
     chapters: createChapters(),
+    records: createRecords(),
     // 렌더/사운드가 읽고 비우는 일회성 사건 목록
     events: [],
   };
@@ -106,12 +108,12 @@ export function stepWorld(world, input, dt, rules) {
       continue;
     }
     if (kind === 'supply') {
-      const item = updateSupply(rules, st, pdt, zoneMult(world, rules, st, 'supply'));
+      const item = updateSupply(rules, st, pdt, zoneMult(world, rules, st, 'supply') * speedMult(world, rules, st));
       if (item) record(world, 'produced', item);
       continue;
     }
     if (kind !== 'machine') continue;
-    const done = updateMachine(rules, st, pdt);
+    const done = updateMachine(rules, st, pdt * speedMult(world, rules, st));
     if (done) {
       recordRecipe(world, done);
       noteTutorial(world, 'made', st.type);

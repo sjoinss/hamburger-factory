@@ -9,7 +9,7 @@ import { DIRS } from '../sim/lookup.js';
 import { utilization } from '../sim/stats.js';
 import { storageTotal, mostStocked } from '../sim/storage.js';
 import { drawCustomers } from './customers.js';
-import { ownedWidth } from '../sim/zones.js';
+import { ownedBounds } from '../sim/zones.js';
 import { viewOrigin } from './camera.js';
 
 /** 칸 좌표 → 고정 난수. 바닥 얼룩/균열 위치를 매번 같게 만든다. */
@@ -28,6 +28,28 @@ function tileSprite(type, x, y) {
   const light = (x + y) % 2 === 0;
   if (light) return h % 13 === 0 ? 'floorLightCrack' : 'floorLight';
   return h % 17 === 0 ? 'floorDarkOil' : 'floorDark';
+}
+
+// 그리는 칸: 바닥·길·창구, 그리고 그 옆 벽. 안 산 구역과 공장 밖은 빈 공간 (막힌 벽처럼 보이지 않게)
+const OPEN_TILES = new Set([TILE.FLOOR, TILE.STREET, TILE.WINDOW]);
+const shownCache = new WeakMap();
+
+function shownTiles(grid, key) {
+  const cached = shownCache.get(grid);
+  if (cached && cached.key === key) return cached.shown;
+  const shown = new Uint8Array(grid.width * grid.height);
+  for (let y = 0; y < grid.height; y++) {
+    for (let x = 0; x < grid.width; x++) {
+      const t = getTile(grid, x, y);
+      let show = OPEN_TILES.has(t);
+      if (t === TILE.WALL) {
+        for (let dy = -1; dy <= 1 && !show; dy++) for (let dx = -1; dx <= 1 && !show; dx++) show = OPEN_TILES.has(getTile(grid, x + dx, y + dy));
+      }
+      shown[y * grid.width + x] = show ? 1 : 0;
+    }
+  }
+  shownCache.set(grid, { key, shown });
+  return shown;
 }
 
 // 상태등을 다는 기계
@@ -92,11 +114,14 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   const x0 = Math.max(0, Math.floor(-ox / cell));
   const y0 = Math.max(0, Math.floor(-oy / cell));
   // 아직 안 산 구역은 그리지 않는다 (막힌 벽처럼 보이지 않게 빈 공간으로 둔다. 매입은 건설 메뉴에서)
-  const x1 = Math.min(ownedWidth(world, rules) - 1, Math.floor((view.width - ox) / cell));
-  const y1 = Math.min(grid.height - 1, Math.floor((view.height - oy) / cell));
+  const owned = ownedBounds(world, rules);
+  const x1 = Math.min(owned.w - 1, Math.floor((view.width - ox) / cell));
+  const y1 = Math.min(owned.h - 1, Math.floor((view.height - oy) / cell));
+  const shown = shownTiles(grid, world.zonesBought.join(','));
 
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
+      if (!shown[y * grid.width + x]) continue;
       ctx.drawImage(bank.get(tileSprite(getTile(grid, x, y), x, y)), ox + x * cell, oy + y * cell, cell, cell);
     }
   }
@@ -274,7 +299,7 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   // 전력 부족: 형광등이 이따금 깜박 (점무늬로 어둡게, 팔레트 밖 색 없음)
   if (world.power && world.power.ratio < 1 && Math.floor(world.time * 10) % 17 === 0) {
     const dim = bank.get('overlayDim');
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) ctx.drawImage(dim, ox + x * cell, oy + y * cell, cell, cell);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (shown[y * grid.width + x]) ctx.drawImage(dim, ox + x * cell, oy + y * cell, cell, cell);
   }
 
   /**

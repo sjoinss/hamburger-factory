@@ -5,7 +5,8 @@ import { setSupplyItem } from '../sim/station.js';
 import { storageTotal, setStorageFilter } from '../sim/storage.js';
 import { setGateManual, gateSources } from '../sim/gate.js';
 import { orderById } from '../sim/orders.js';
-import { spriteIcon } from './icons.js';
+import { spriteIcon, itemChip } from './icons.js';
+import { checkUpgrade, levelOf, upgradable, upgradeStation } from '../sim/upgrade.js';
 import { machineStatusText } from './hud.js';
 
 const pct = (v) => `${Math.round(v * 100)}%`;
@@ -40,6 +41,40 @@ export function createInspector({ world, rules, bank }) {
   const gateOrderInfo = $('gate-order-info');
   const modeManual = $('gate-mode-manual');
   const modeOrder = $('gate-mode-order');
+  const upgradeBox = $('upgrade-box');
+  const upgradeCost = $('upgrade-cost');
+  const upgradeBtn = $('btn-upgrade');
+  const UPGRADE_REASON = { max: '최고 등급', money: '돈 부족', parts: '부품 부족' };
+
+  upgradeBtn.addEventListener('click', () => {
+    const st = selectedId === null ? null : stationById(world, selectedId);
+    if (st) upgradeStation(world, rules, st);
+  });
+
+  /** 업그레이드: 다음 등급 비용 + 버튼 (부족한 것은 표시) */
+  function renderUpgrade(st) {
+    upgradeBox.hidden = !world.features.includes('upgrades') || !upgradable(rules, st);
+    if (upgradeBox.hidden) return;
+    const check = checkUpgrade(world, rules, st);
+    const key = JSON.stringify([st.id, levelOf(st), check.reason ?? 'ok', check.missing ?? null]);
+    if (upgradeBox.dataset.key === key) return;
+    upgradeBox.dataset.key = key;
+    upgradeCost.replaceChildren();
+    if (check.cost) {
+      const money = document.createElement('span');
+      money.textContent = `돈 ${check.cost.money}`;
+      if (check.reason === 'money') money.classList.add('is-short');
+      upgradeCost.append(money);
+      for (const [id, n] of Object.entries(check.cost.parts)) {
+        const c = itemChip(bank, rules, id, check.missing?.[id] ? `${n} · 부족 -${check.missing[id]}` : String(n));
+        if (check.missing?.[id]) c.classList.add('is-short');
+        upgradeCost.append(c);
+      }
+    }
+    const pctUp = Math.round(rules.game.upgrades.speedPerLevel * 100);
+    upgradeBtn.textContent = check.ok ? `업그레이드 (속도 +${pctUp}%)` : UPGRADE_REASON[check.reason] ?? '업그레이드 불가';
+    upgradeBtn.disabled = !check.ok;
+  }
 
   /** 고를 수 있는 품목: 파는 물건 + (있으면) 저장소에 든 물건 */
   const choosable = (extra = []) => {
@@ -172,7 +207,7 @@ export function createInspector({ world, rules, bank }) {
       box.hidden = false;
       empty.hidden = true;
       const machine = rules.machines[st.type];
-      name.textContent = machine.name;
+      name.textContent = levelOf(st) > 0 ? `${machine.name} Lv${levelOf(st)}` : machine.name;
 
       if (machine.kind === 'belt') {
         const state = st.jam > 0.5 ? '막힘 (꽉 차서 멈춤)' : st.idle > 0.8 ? '한산 (비어 있음)' : '흐르는 중';
@@ -209,6 +244,7 @@ export function createInspector({ world, rules, bank }) {
         buffers.textContent = parts.join(' / ');
       }
       renderSupplyPick(st);
+      renderUpgrade(st);
       storageBox.hidden = true;
       gateBox.hidden = true;
       if (machine.kind === 'storage') renderStorage(st);

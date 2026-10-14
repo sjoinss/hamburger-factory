@@ -126,7 +126,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
       const res = placeMachine(world, rules, mode.type, cursor.x, cursor.y, mode.rot);
       if (!res.ok) flash(placeFailText(res));
       else renderPanel();
-      return;
+      return res;
     }
     const res = removeMachine(world, rules, cursor.x, cursor.y);
     if (res.ok) {
@@ -197,7 +197,9 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
   function renderZones() {
     zoneBox.hidden = !world.features.includes('zones');
     if (zoneBox.hidden) return;
-    zoneList.replaceChildren(...rules.zones.zones.map((z) => {
+    // 앞 구역을 아직 안 산 구역은 숨긴다 (지금 살 수 있는 곳과 산 곳만)
+    const shown = rules.zones.zones.filter((z) => !z.requires || world.zonesBought.includes(z.requires));
+    zoneList.replaceChildren(...shown.map((z) => {
       const check = checkZone(world, rules, z.id);
       const li = document.createElement('li');
       li.className = 'zone';
@@ -297,11 +299,8 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
         updateConfirmLabel();
         return;
       }
-      const before = world.stations.length;
-      confirm();
-      if (mode?.kind === 'place' && world.stations.length > before) {
-        drag = { x, y, id: world.stations[world.stations.length - 1].id };
-      }
+      const res = confirm();
+      if (mode?.kind === 'place' && res?.ok) drag = { x, y, id: res.station.id };
     },
     /** 누른 채 다른 칸으로: 끌어서 깔 수 있는 기계만 이어서 설치 */
     dragTo(x, y) {

@@ -6,6 +6,7 @@ import { noteTutorial } from './tutorial.js';
 import { missingCost, spendParts } from './parts.js';
 import { zoneMult } from './zones.js';
 import { bundlerItems } from './bundler.js';
+import { upgradeParts } from './upgrade.js';
 
 export function isUnlocked(world, type) {
   return world.unlocked.machines.includes(type);
@@ -22,8 +23,15 @@ function playerOverlaps(world, rules, x, y, w, h) {
   return p.x + half > x && p.x - half < x + w && p.y + half > y && p.y - half < y + h;
 }
 
+/** 이 칸의 다른 종류 벨트 (벨트 위에 다른 벨트를 깔면 그 자리에서 바꾼다: 고속 벨트로 올리기) */
+function swappableBelt(world, rules, type, x, y) {
+  if (rules.machines[type].kind !== 'belt') return null;
+  const st = removableAt(world, x, y);
+  return st && st.type !== type && rules.machines[st.type].kind === 'belt' ? st : null;
+}
+
 /**
- * 이 자리에 지을 수 있는가.
+ * 이 자리에 지을 수 있는가. replace: 바꿔 깔 벨트 (있으면)
  * reason: locked | outside | blocked | item | player | parts
  */
 export function checkPlacement(world, rules, type, x, y, rot) {
@@ -31,6 +39,12 @@ export function checkPlacement(world, rules, type, x, y, rot) {
   const [w, h] = rotatedSize(machine, rot);
   const base = { w, h };
   if (!machine.cost || !isUnlocked(world, type)) return { ...base, ok: false, reason: 'locked' };
+  const replace = swappableBelt(world, rules, type, x, y);
+  if (replace) {
+    const missing = missingCost(world, rules, machine.cost);
+    if (Object.keys(missing).length > 0) return { ...base, ok: false, reason: 'parts', missing };
+    return { ...base, ok: true, replace };
+  }
   for (let j = y; j < y + h; j++) {
     for (let i = x; i < x + w; i++) {
       if (!inBounds(world.grid, i, j)) return { ...base, ok: false, reason: 'outside' };
@@ -50,6 +64,7 @@ export function placeMachine(world, rules, type, x, y, rot = 0) {
   const check = checkPlacement(world, rules, type, x, y, rot);
   if (!check.ok) return check;
   spendParts(world, rules, rules.machines[type].cost);
+  if (check.replace) return swapBelt(world, rules, check, type, rot);
   const id = world.nextStationId++;
   const station = createStation(id, { type, x, y, rot, built: true }, rules.machines[type]);
   if (rules.machines[type].kind === 'storage') station.capMult = zoneMult(world, rules, station, 'storage');
@@ -63,6 +78,19 @@ export function placeMachine(world, rules, type, x, y, rot = 0) {
   return { ...check, station };
 }
 
+/** 벨트 종류만 바꾼다: 위 물건·번호는 그대로, 옛 벨트 부품은 돌려준다 */
+function swapBelt(world, rules, check, type, rot) {
+  const st = check.replace;
+  for (const [id, n] of Object.entries(rules.machines[st.type].cost)) world.parts[id] = (world.parts[id] ?? 0) + n;
+  st.type = type;
+  st.rot = rot;
+  world.stationsVersion += 1;
+  world.stats.built[type] = (world.stats.built[type] ?? 0) + 1;
+  noteTutorial(world, 'built', type);
+  world.events.push({ type: 'built', machine: type, x: st.x, y: st.y });
+  return { ...check, station: st };
+}
+
 /** 철거할 수 있는 기계 (플레이어가 지은 것만) */
 export function removableAt(world, x, y) {
   const id = getOccupant(world.grid, x, y);
@@ -72,7 +100,7 @@ export function removableAt(world, x, y) {
 }
 
 /**
- * 철거: 부품 100% 환급, 안에 든 물건은 플레이어 손으로.
+ * 철거: 부품 100% 환급 (업그레이드 부품 포함, 돈은 빼고), 안에 든 물건은 플레이어 손으로.
  * 손에 다 들어가지 않으면 철거하지 않는다 (물건이 사라지지 않게).
  * reason: none | items
  */
@@ -90,8 +118,8 @@ export function removeMachine(world, rules, x, y) {
   if (items.length > free) return { ok: false, reason: 'items', count: items.length, free };
 
   for (const it of items) world.player.inventory[freeSlot(world.player)] = it;
-  for (const [id, n] of Object.entries(rules.machines[st.type].cost)) {
-    world.parts[id] = (world.parts[id] ?? 0) + n;
+  for (const cost of [rules.machines[st.type].cost, upgradeParts(rules, st)]) {
+    for (const [id, n] of Object.entries(cost)) world.parts[id] = (world.parts[id] ?? 0) + n;
   }
   for (let j = st.y; j < st.y + st.h; j++) for (let i = st.x; i < st.x + st.w; i++) setOccupant(world.grid, i, j, null);
   world.stations = world.stations.filter((s) => s !== st);

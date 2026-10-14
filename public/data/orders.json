@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "maxOpen": 6,
   "firstSpawnSeconds": 4,
   "spawnSeconds": 20,
@@ -53,6 +53,24 @@
         { "fried_chicken": 3 },
         { "hotdog": 3, "cola": 1 },
         { "pizza": 1, "fried_chicken": 1, "ice_cream": 2 }
+      ]
+    },
+    "rush": {
+      "name": "급함",
+      "feature": "rush",
+      "weight": 2,
+      "rewardMul": [2, 2.6],
+      "deadline": 60,
+      "repDone": 2,
+      "repFail": -2,
+      "templates": [
+        { "burger": 2 },
+        { "set": 1 },
+        { "burger": 1, "cola": 1 },
+        { "pizza": 1 },
+        { "fried_chicken": 1 },
+        { "hotdog": 2 },
+        { "ice_cream": 2 }
       ]
     },
     "bulk": {

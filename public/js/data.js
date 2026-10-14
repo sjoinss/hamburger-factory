@@ -2,7 +2,7 @@
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'inserter', 'storage', 'gate', 'farm', 'generator', 'reader', 'bundler']);
-export const FEATURES = new Set(['orders', 'market', 'power', 'zones', 'blueprints']);
+export const FEATURES = new Set(['orders', 'market', 'power', 'zones', 'blueprints', 'upgrades', 'rush']);
 const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger']);
 // bundle: 합류 포장기가 만드는 주문 묶음 (출고구에서만 의미가 있다)
 const ITEM_CATEGORIES = new Set(['food', 'part', 'material', 'bundle']);
@@ -158,6 +158,17 @@ export function validateGameConfig(g, items, machines) {
 
   assert(isObj(g.touch) && isNum(g.touch.pinchStep, 1.01, 4), 'touch 오류');
 
+  const up = g.upgrades;
+  assert(isObj(up) && Array.isArray(up.kinds) && up.kinds.every((k) => k === 'machine' || k === 'supply'), 'upgrades.kinds 오류');
+  assert(isNum(up.speedPerLevel, 0, 10) && isNum(up.powerPerLevel, 0, 10), 'upgrades 배율 오류');
+  assert(Array.isArray(up.costs) && up.costs.length >= 1 && up.costs.length <= 10, 'upgrades.costs 오류');
+  for (const [i, c] of up.costs.entries()) {
+    assert(isObj(c) && isInt(c.money, 0, 1e9) && isObj(c.parts), `upgrades.costs[${i}] 오류`);
+    for (const [id, n] of Object.entries(c.parts)) {
+      assert(Object.hasOwn(items, id) && items[id].category === 'part' && isInt(n, 1, 9999), `upgrades.costs[${i}]: 부품 오류 ${short(id)}`);
+    }
+  }
+
   const m = g.map;
   assert(isObj(m) && isInt(m.roomWidth, 1, 512) && isInt(m.roomHeight, 1, 512) && isInt(m.wallThickness, 0, 8), 'map 오류');
   assert(isInt(m.streetRows ?? 0, 0, 8), 'map.streetRows 오류');
@@ -183,7 +194,7 @@ const DONE_ITEM_KINDS = new Set(['have', 'placed', 'sold']);
 const DONE_MACHINE_KINDS = new Set(['built', 'made', 'took', 'fed']);
 const UI_TARGETS = new Set(['build', 'overlay', 'orders', 'stats']);
 // ui: 기계가 아닌 화면 기능을 써 봤는가 / order: any(아무 주문) · auto(인식기가 맡긴 주문) · bundle(묶음 납품) · 주문 종류
-const DONE_UI_IDS = new Set(['blueprint']);
+const DONE_UI_IDS = new Set(['blueprint', 'upgrade']);
 const DONE_ORDER_IDS = new Set(['any', 'auto', 'bundle']);
 
 export function validateTutorial(data, items, machines, orders) {
@@ -273,6 +284,7 @@ export function validateOrders(data, items) {
     const where = `주문 종류 ${id}`;
     assert(ID_RE.test(id) && !DONE_ORDER_IDS.has(id), `${where}: id 오류`);
     assert(isStr(k.name, 8) && isNum(k.weight, 0, 100), `${where}: name/weight 오류`);
+    assert(k.feature === undefined || FEATURES.has(k.feature), `${where}: feature 오류`);
     assert(Array.isArray(k.rewardMul) && isNum(k.rewardMul[0], 0.1, 20) && isNum(k.rewardMul[1], k.rewardMul[0], 20), `${where}: rewardMul 오류`);
     assert(k.deadline === null || isNum(k.deadline, 5, 86400), `${where}: deadline 오류`);
     assert(isInt(k.repDone, -100, 100) && isInt(k.repFail, -100, 100), `${where}: rep 오류`);
@@ -287,28 +299,55 @@ export function validateOrders(data, items) {
   return data;
 }
 
-const ZONE_TRAITS = new Set(['storage', 'generator', 'supply']);
+const ZONE_TRAITS = new Set(['storage', 'generator', 'supply', 'speed']);
 
-export function validateZones(data, items, game) {
+/** 두 사각형 사이 간격 (겹치면 음수). 축마다 [간격, 다른 축 겹침 길이] */
+function rectGap(a, b) {
+  const gx = Math.max(b.x - (a.x + a.w), a.x - (b.x + b.w));
+  const gy = Math.max(b.y - (a.y + a.h), a.y - (b.y + b.h));
+  return { gx, gy };
+}
+
+export function validateZones(data, items, game, machines) {
   rejectForbiddenKeys(data, 'zones');
   assert(isObj(data) && isNum(data.basePower, 0, 100000), 'zones.basePower 오류');
   assert(Array.isArray(data.zones) && data.zones.length <= 32, 'zones.zones 오류');
-  const ids = new Set();
-  let right = game.map.roomWidth + game.map.wallThickness; // 시작 방 오른쪽 벽
+  const m = game.map;
+  const wall = m.wallThickness;
+  // 시작 방 + 가게 앞 길 (구역이 길을 덮으면 안 된다)
+  const start = { x: wall, y: wall, w: m.roomWidth, h: m.roomHeight };
+  const street = { x: 0, y: m.roomHeight + wall * 2, w: m.roomWidth + wall * 2, h: m.streetRows ?? 0 };
+  const placed = new Map();
   for (const z of data.zones) {
     const where = `구역 ${short(z.id)}`;
-    assert(ID_RE.test(z.id) && !ids.has(z.id) && z.id !== 'base', `${where}: id 오류/중복`);
+    assert(ID_RE.test(z.id) && !placed.has(z.id) && z.id !== 'base', `${where}: id 오류/중복`);
     assert(isStr(z.name, 12), `${where}: name 오류`);
-    assert(isInt(z.x, 1, 4096) && isInt(z.w, 1, 256), `${where}: 위치 오류`);
-    assert(z.x === right + 1, `${where}: 앞 구역 벽 바로 오른쪽에서 시작해야 함 (x=${right + 1})`);
-    right = z.x + z.w;
-    assert(z.requires === null || ids.has(z.requires), `${where}: requires 오류`);
+    assert(isInt(z.x, wall, 4096) && isInt(z.y, wall, 4096) && isInt(z.w, 1, 256) && isInt(z.h, 1, 256), `${where}: 위치 오류`);
+    // 다른 방과는 벽 두께 이상 떨어져야 한다
+    for (const other of [start, ...placed.values()]) {
+      const { gx, gy } = rectGap(z, other);
+      assert(gx >= wall || gy >= wall, `${where}: 다른 구역과 겹침`);
+    }
+    if (street.h > 0) {
+      const { gx, gy } = rectGap(z, street);
+      assert(gx >= 0 || gy >= 0, `${where}: 가게 앞 길과 겹침`);
+    }
+    assert(z.requires === null || placed.has(z.requires), `${where}: requires 오류`);
+    // 앞 구역(없으면 시작 방)과 벽 한 줄을 사이에 두고 맞닿아야 걸어 들어갈 수 있다
+    const prev = z.requires === null ? start : placed.get(z.requires);
+    const { gx, gy } = rectGap(z, prev);
+    assert((gx === wall && gy < 0) || (gy === wall && gx < 0), `${where}: 앞 구역과 벽 한 줄을 두고 맞닿아야 함`);
     assert(isObj(z.cost) && isInt(z.cost.money, 0, 1e9) && isObj(z.cost.parts), `${where}: cost 오류`);
     for (const [id, n] of Object.entries(z.cost.parts)) {
       assert(Object.hasOwn(items, id) && items[id].category === 'part' && isInt(n, 1, 9999), `${where}: 부품 비용 오류 ${short(id)}`);
     }
-    assert(isObj(z.trait) && ZONE_TRAITS.has(z.trait.kind) && isNum(z.trait.mult, 1, 10) && isStr(z.trait.text, 40), `${where}: trait 오류`);
-    ids.add(z.id);
+    const t = z.trait;
+    assert(isObj(t) && ZONE_TRAITS.has(t.kind) && isNum(t.mult, 1, 10) && isStr(t.text, 40), `${where}: trait 오류`);
+    if (t.kind === 'speed') {
+      assert(Array.isArray(t.machines) && t.machines.length > 0, `${where}: trait.machines 오류`);
+      for (const id of t.machines) assert(Object.hasOwn(machines, id) && machines[id].kind === 'machine', `${where}: 속도를 올릴 수 없는 기계 ${short(id)}`);
+    }
+    placed.set(z.id, z);
   }
   return data;
 }
@@ -336,12 +375,27 @@ export function validateChapters(data, items, machines) {
   return data.chapters;
 }
 
+/** 엔딩 뒤 끝없는 도전: 분당 수익·분당 판매 목표의 시작값과 오름폭 */
+export function validateChallenge(c, items) {
+  rejectForbiddenKeys(c, 'challenge');
+  const step = (v, where) => assert(isObj(v) && isInt(v.base, 1, 1e7) && isInt(v.step, 0, 1e7), `${where} 오류`);
+  assert(isObj(c) && isStr(c.text, 40), 'chapters.challenge 오류');
+  step(c.earn, 'challenge.earn');
+  step(c.reward, 'challenge.reward');
+  assert(Array.isArray(c.rates) && c.rates.length > 0 && c.rates.length <= 20, 'challenge.rates 오류');
+  for (const r of c.rates) {
+    assert(isObj(r) && Object.hasOwn(items, r.item) && items[r.item].price > 0, `challenge.rates: 품목 오류 ${short(r?.item)}`);
+    step(r, `challenge.rates ${r.item}`);
+  }
+  return c;
+}
+
 /** 시뮬레이션이 쓰는 규칙 묶음. 순수 데이터 + 조회용 색인. */
-export function buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones, chapters }) {
+export function buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones, chapters, challenge }) {
   const recipesByStation = Object.create(null);
   for (const id of Object.keys(machines)) recipesByStation[id] = [];
   for (const r of recipes) for (const s of r.stations) recipesByStation[s].push(r);
-  return { game, items, machines, recipes, recipesByStation, tutorial, progression, orders, zones, chapters };
+  return { game, items, machines, recipes, recipesByStation, tutorial, progression, orders, zones, chapters, challenge };
 }
 
 export const DATA_FILES = ['palette', 'game', 'items', 'machines', 'recipes', 'tutorial', 'progression', 'orders', 'zones', 'chapters'];
@@ -355,9 +409,10 @@ export function validateAll(raw) {
   const orders = validateOrders(raw.orders, items);
   const tutorial = validateTutorial(raw.tutorial, items, machines, orders);
   const progression = validateProgression(raw.progression, { recipes, machines, items, tutorial });
-  const zones = validateZones(raw.zones, items, game);
+  const zones = validateZones(raw.zones, items, game, machines);
   const chapters = validateChapters(raw.chapters, items, machines);
-  return { palette, rules: buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones, chapters }) };
+  const challenge = validateChallenge(raw.chapters.challenge, items);
+  return { palette, rules: buildRules({ game, items, machines, recipes, tutorial, progression, orders, zones, chapters, challenge }) };
 }
 
 async function fetchJson(url) {
