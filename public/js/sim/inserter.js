@@ -22,7 +22,7 @@ function pickCandidates(world, rules, tile) {
   }
   const kind = machineOf(rules, st).kind;
   if (kind === 'machine' || kind === 'crafter' || kind === 'supply' || kind === 'farm') {
-    return st.output.length ? [{ item: st.output[0], take: () => st.output.shift() }] : [];
+    return [...new Set(st.output)].map((item) => ({ item, take: () => st.output.splice(st.output.indexOf(item), 1) }));
   }
   if (kind === 'belt') {
     // 앞쪽(끝에 가까운) 물건부터. 주문 묶음은 집게로 옮기면 번호표가 떨어지므로 집지 않는다.
@@ -42,7 +42,7 @@ function dropTarget(world, rules, ins, tile, item) {
   const st = stationAt(world, tile.x, tile.y);
   if (!st) return null; // 빈 바닥에는 놓지 않는다
   const kind = machineOf(rules, st).kind;
-  if (kind === 'crafter' || kind === 'machine' || kind === 'counter' || kind === 'storage' || kind === 'generator') {
+  if (kind === 'crafter' || kind === 'machine' || kind === 'counter' || kind === 'storage' || kind === 'generator' || kind === 'farm') {
     if (!canAccept(rules, st, item, world)) return null;
     return () => {
       if (kind === 'counter') receiveAtCounter(world, rules, item, st);

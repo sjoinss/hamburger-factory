@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "start": {
     "recipes": ["chop_meat", "prep_lettuce", "fry_patty", "mill_wheat", "mix_dough", "bake_bun", "assemble_burger"],
     "machines": [],
@@ -261,6 +261,27 @@
         }
       },
       "tutorial": "variety"
+    },
+    {
+      "id": "recycle",
+      "name": "재활용",
+      "when": {
+        "sold": {
+          "burger": 150
+        }
+      },
+      "unlock": {
+        "machines": ["refiner", "compost_bin"],
+        "recipes": ["refine_oil", "compost_peel"],
+        "features": ["byproducts"]
+      },
+      "reward": {
+        "parts": {
+          "motor": 2,
+          "wire": 6
+        }
+      },
+      "tutorial": "recycle"
     }
   ]
 }

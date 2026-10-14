@@ -110,7 +110,7 @@ test('전력: 쓰는 만큼 모자라면 모든 기계가 같은 비율로 느�
   run(w, 2);
   assert.equal(w.power.supply, rules.zones.basePower + rules.machines.generator.output);
   assert.equal(w.power.ratio, 1);
-  run(w, secs(rules.machines.generator.burnSeconds * 2 + 1));
+  run(w, secs(rules.machines.generator.fuels.coal * 2 + 1));
   assert.equal(gen.contents.length, 0, '석탄을 다 태움');
   assert.equal(w.power.supply, rules.zones.basePower);
 });

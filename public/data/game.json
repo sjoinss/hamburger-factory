@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "tileSize": 16,
   "ticksPerSecond": 20,
   "maxTicksPerFrame": 20,
@@ -19,6 +19,7 @@
     "reach": 0.8
   },
   "dayMinutes": 10,
+  "fertilizer": { "item": "fertilizer", "speed": 2, "cap": 2 },
   "away": { "minSeconds": 30, "maxSeconds": 600 },
   "upgrades": {
     "kinds": ["machine", "supply"],

@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "items": {
     "raw_meat"       : { "name": "생고기", "sprite": "rawMeat", "price": 0, "category": "food", "buy": 3 },
     "ground_meat"    : { "name": "다진고기", "sprite": "groundMeat", "price": 1, "category": "food" },
@@ -46,6 +46,10 @@
     "bacon_burger"   : { "name": "베이컨버거", "sprite": "baconBurger", "price": 22, "category": "food" },
     "pork"           : { "name": "돼지고기", "sprite": "pork", "price": 0, "category": "food", "buy": 3 },
     "bacon"          : { "name": "베이컨", "sprite": "bacon", "price": 0, "category": "food" },
-    "wedges"         : { "name": "웨지감자", "sprite": "wedges", "price": 10, "category": "food" }
+    "wedges"         : { "name": "웨지감자", "sprite": "wedges", "price": 10, "category": "food" },
+    "used_oil"       : { "name": "폐식용유", "sprite": "usedOil", "price": 0, "category": "material" },
+    "bio_fuel"       : { "name": "바이오 연료", "sprite": "bioFuel", "price": 0, "category": "material" },
+    "peel"           : { "name": "감자 껍질", "sprite": "peel", "price": 0, "category": "material" },
+    "fertilizer"     : { "name": "비료", "sprite": "fertilizer", "price": 0, "category": "material" }
   }
 }

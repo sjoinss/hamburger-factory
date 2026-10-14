@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "recipes": [
     {
       "id": "chop_meat",
@@ -171,6 +171,7 @@
       "outputs": {
         "potato_stick": 2
       },
+      "byproduct": { "item": "peel", "every": 2 },
       "seconds": 2
     },
     {
@@ -183,6 +184,7 @@
       "outputs": {
         "fries": 1
       },
+      "byproduct": { "item": "used_oil", "every": 4 },
       "seconds": 4
     },
     {
@@ -300,6 +302,7 @@
       "outputs": {
         "fried_chicken": 1
       },
+      "byproduct": { "item": "used_oil", "every": 4 },
       "seconds": 5
     },
     {
@@ -420,6 +423,30 @@
         "wedges": 1
       },
       "seconds": 5
+    },
+    {
+      "id": "refine_oil",
+      "verb": "정제",
+      "stations": ["refiner"],
+      "inputs": {
+        "used_oil": 2
+      },
+      "outputs": {
+        "bio_fuel": 1
+      },
+      "seconds": 4
+    },
+    {
+      "id": "compost_peel",
+      "verb": "삭히기",
+      "stations": ["compost_bin"],
+      "inputs": {
+        "peel": 4
+      },
+      "outputs": {
+        "fertilizer": 1
+      },
+      "seconds": 6
     }
   ]
 }

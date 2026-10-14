@@ -136,7 +136,12 @@ export function canAccept(rules, station, item, world = null) {
   }
   if (machine.kind === 'storage') return canStore(rules, station, item);
   if (machine.kind === 'bundler') return false; // 번호표가 붙은 물건만 받는다 (벨트·게이트에서)
-  if (machine.kind === 'generator') return item === machine.fuel && station.contents.length < machine.fuelCap;
+  if (machine.kind === 'generator') return Object.hasOwn(machine.fuels, item) && station.contents.length < machine.fuelCap;
+  // 밭: 비료만 (정해진 개수까지)
+  if (machine.kind === 'farm') {
+    const fz = rules.game.fertilizer;
+    return item === fz.item && station.contents.length < fz.cap;
+  }
   if (machine.kind === 'machine') {
     // 입력 버퍼: 레시피 입력의 inputBatches 배까지 쌓아 둘 수 있다.
     const counts = countItems([...station.contents, item]);
@@ -197,11 +202,15 @@ export function machineRecipe(rules, station) {
 
 const outputCount = (recipe) => Object.values(recipe.outputs).reduce((a, b) => a + b, 0);
 
+/** 이번에 끝나면 부산물이 나올 차례인가 */
+const byproductDue = (recipe, station, on) => Boolean(on && recipe.byproduct && ((station.byCount ?? 0) + 1) % recipe.byproduct.every === 0);
+
 /**
  * 자동 기계 한 틱. 플레이어가 누르고 있지 않아도 돌아간다.
+ * byproducts: 부산물 단계가 열렸는가 (그 전에는 부산물이 나오지 않는다)
  * @returns 이번 틱에 완성품이 나왔으면 그 레시피, 아니면 null
  */
-export function updateMachine(rules, station, dt) {
+export function updateMachine(rules, station, dt, byproducts = false) {
   const machine = machineOf(rules, station);
   const recipe = machineRecipe(rules, station);
   if (!recipe) {
@@ -209,7 +218,8 @@ export function updateMachine(rules, station, dt) {
     station.progress = 0;
     return null;
   }
-  if (station.output.length + outputCount(recipe) > machine.outputCap) {
+  const extra = byproductDue(recipe, station, byproducts) ? 1 : 0;
+  if (station.output.length + outputCount(recipe) + extra > machine.outputCap) {
     station.status = 'blocked';
     return null;
   }
@@ -224,6 +234,11 @@ export function updateMachine(rules, station, dt) {
   for (const [id, n] of Object.entries(recipe.outputs)) {
     for (let i = 0; i < n; i++) station.output.push(id);
   }
+  // 부산물: every 번에 한 번 (빼 주지 않으면 출력 칸이 차서 기계가 멈춘다)
+  if (byproducts && recipe.byproduct) {
+    if (extra) station.output.push(recipe.byproduct.item);
+    station.byCount = ((station.byCount ?? 0) + 1) % recipe.byproduct.every;
+  }
   return recipe;
 }
 
@@ -237,9 +252,13 @@ export function updateFarm(rules, station, dt) {
     return false;
   }
   station.status = 'growing';
-  station.growth += dt;
+  // 비료가 있으면 빨리 자라고, 한 번 다 자랄 때 하나를 쓴다
+  const fz = rules.game.fertilizer;
+  const fed = station.contents.includes(fz.item);
+  station.growth += dt * (fed ? fz.speed : 1);
   if (station.growth + 1e-9 < machine.growSeconds) return false;
   station.growth = 0;
+  if (fed) station.contents.splice(station.contents.indexOf(fz.item), 1);
   for (let i = 0; i < machine.yield; i++) station.output.push(machine.crop);
   station.status = 'ready';
   return true;

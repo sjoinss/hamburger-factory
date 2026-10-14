@@ -213,7 +213,13 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
       } else if (machine.kind === 'machine') {
         // 자동 기계: 넣은 재료는 기계 안에 있다. 완성품만 위로 살짝 내민다.
         if (st.output.length > 0) itemSprite(st.output[0], bx + (st.w * ts - ts) / 2, by - 7);
-      } else if (st.output.length > 0 && machine.kind !== 'farm') {
+      } else if (machine.kind === 'farm') {
+        // 밭에 준 비료: 왼쪽 위에 작게 (작물을 가리지 않게)
+        st.contents.forEach((it, i) => {
+          const img = bank.mini(rules.items[it].sprite);
+          ctx.drawImage(img, sx(bx + 1 + i * 7), sy(by + 1), img.width * s, img.height * s);
+        });
+      } else if (st.output.length > 0) {
         itemSprite(st.output[0], bx + (st.w * ts - ts) / 2, by - 2);
       } else if (st.contents.length > 0) {
         if (st.w === 1) itemSprite(st.contents[st.contents.length - 1], bx, by - 1);

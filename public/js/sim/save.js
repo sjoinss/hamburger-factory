@@ -276,7 +276,8 @@ function restoreState(rules, w, st, raw, c) {
       break;
     }
     case 'machine':
-      st.output = st.output.slice(0, m.outputCap);
+      st.output = st.output.slice(0, m.outputCap + 1); // 부산물 한 칸 여유
+      if (Number.isInteger(raw.byCount) && raw.byCount > 0 && raw.byCount < 100) st.byCount = raw.byCount;
       break;
     case 'belt': {
       st.items = [];
@@ -335,14 +336,14 @@ function restoreState(rules, w, st, raw, c) {
       break;
     }
     case 'generator':
-      st.fuelLeft = num(raw.fuelLeft, 0, m.burnSeconds, 0);
-      st.contents = st.contents.filter((id) => id === m.fuel).slice(0, m.fuelCap);
+      st.fuelLeft = num(raw.fuelLeft, 0, Math.max(...Object.values(m.fuels)), 0);
+      st.contents = st.contents.filter((id) => Object.hasOwn(m.fuels, id)).slice(0, m.fuelCap);
       st.output = [];
       break;
     case 'farm':
       st.growth = num(raw.growth, 0, m.growSeconds, 0);
       st.output = st.output.filter((id) => id === m.crop).slice(0, m.yield);
-      st.contents = [];
+      st.contents = st.contents.filter((id) => id === rules.game.fertilizer.item).slice(0, rules.game.fertilizer.cap);
       break;
     case 'reader':
       st.t = num(raw.t, 0, 60, 0);

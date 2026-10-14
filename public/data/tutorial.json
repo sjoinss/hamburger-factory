@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "tracks": {
     "start": [
       { "text": "햄버거 만들기", "target": { "guide": "burger" }, "done": { "have": "burger" } },
@@ -50,6 +50,10 @@
     "variety": [
       { "text": "치즈버거 팔기", "target": { "station": "burger_assembler" }, "done": { "sold": "cheeseburger" } },
       { "text": "선별기 깔기", "target": { "ui": "build" }, "done": { "built": "sorter" } }
+    ],
+    "recycle": [
+      { "text": "폐식용유 정제하기", "target": { "station": "fryer", "ui": "build" }, "done": { "made": "refiner" } },
+      { "text": "퇴비 만들기", "target": { "station": "potato_cutter", "ui": "build" }, "done": { "made": "compost_bin" } }
     ]
   }
 }

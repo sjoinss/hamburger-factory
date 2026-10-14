@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "machines": {
     "crate": {
       "name": "재료 상자",
@@ -371,8 +371,7 @@
       "kind": "generator",
       "size": [2, 2],
       "sprite": "generator",
-      "fuel": "coal",
-      "burnSeconds": 10,
+      "fuels": { "coal": 10, "bio_fuel": 18 },
       "fuelCap": 10,
       "output": 80,
       "cost": {
@@ -638,6 +637,34 @@
         "sensor": 1
       },
       "power": 1
+    },
+    "refiner": {
+      "name": "폐유 정제기",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "refiner",
+      "speed": 1,
+      "inputBatches": 4,
+      "outputCap": 4,
+      "cost": {
+        "iron_plate": 4,
+        "wire": 2,
+        "motor": 1
+      },
+      "power": 6
+    },
+    "compost_bin": {
+      "name": "퇴비통",
+      "kind": "machine",
+      "size": [1, 1],
+      "sprite": "compostBin",
+      "speed": 1,
+      "inputBatches": 3,
+      "outputCap": 4,
+      "cost": {
+        "iron_plate": 3
+      },
+      "power": 0
     }
   }
 }

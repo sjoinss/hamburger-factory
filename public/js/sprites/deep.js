@@ -80,3 +80,92 @@ export const SMOKER = frames3((f) => {
   if (f) r = plot(r, [[12 + (f % 2), 0, '3'], [13 - (f % 2), 0, '3']]);
   return plot(r, [[3, 13, 'y'], [11, 13, 'o']]);
 });
+
+// ── M17 부산물과 순환 ──
+
+// 폐식용유: 거무스름한 기름통
+export const USED_OIL = (() => {
+  let r = blank(16, 16);
+  r = rect(r, 4, 3, 8, 11, 'd');
+  r = rect(r, 5, 4, 2, 4, 'B');
+  r = frame(r, 4, 3, 8, 11, 'k');
+  r = rect(r, 6, 1, 4, 2, '1');
+  r = frame(r, 6, 1, 4, 2, 'k');
+  r = plot(r, [[8, 9, 'K'], [9, 10, 'K'], [7, 11, 'K']]);
+  return rect(r, 5, 14, 8, 1, 'K');
+})();
+
+// 바이오 연료: 초록 연료통 + 노란 띠
+export const BIO_FUEL = (() => {
+  let r = blank(16, 16);
+  r = rect(r, 3, 3, 10, 11, 'G');
+  r = rect(r, 3, 7, 10, 2, 'y');
+  r = rect(r, 4, 4, 2, 2, 'g');
+  r = frame(r, 3, 3, 10, 11, 'k');
+  r = rect(r, 9, 1, 3, 2, '2');
+  r = frame(r, 9, 1, 3, 2, 'k');
+  return rect(r, 4, 14, 10, 1, 'K');
+})();
+
+/** 칠한 칸 바깥에 검은 테두리를 두른다 */
+function outline(rows) {
+  const out = rows.map((x) => [...x]);
+  for (let y = 0; y < rows.length; y++) {
+    for (let x = 0; x < rows[y].length; x++) {
+      if (rows[y][x] !== '.') continue;
+      if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (rows[y + dy]?.[x + dx] ?? '.') !== '.')) out[y][x] = 'k';
+    }
+  }
+  return out.map((x) => x.join(''));
+}
+
+// 감자 껍질: 두껍게 말린 갈색 껍질 두 가닥
+export const PEEL = (() => {
+  let r = blank(16, 16);
+  const curl = (cx, cy, turn) => {
+    for (let t = 0; t < turn; t += 0.12) {
+      const rad = 0.8 + t * 0.55;
+      const x = Math.round(cx + Math.cos(t) * rad);
+      const y = Math.round(cy + Math.sin(t) * rad);
+      r = plot(r, [[x, y, t > turn * 0.6 ? 'B' : 'b'], [x + 1, y, 'b']]);
+    }
+  };
+  curl(5, 5, 6);
+  curl(10, 10, 5.5);
+  return outline(r);
+})();
+
+// 비료: 포대 + 새싹
+export const FERTILIZER = (() => {
+  let r = blank(16, 16);
+  r = rect(r, 3, 4, 10, 10, 'F');
+  r = rect(r, 4, 5, 8, 2, 'f');
+  r = frame(r, 3, 4, 10, 10, 'k');
+  r = plot(r, [[7, 9, 'g'], [8, 9, 'g'], [8, 10, 'G'], [8, 11, 'G'], [9, 8, 'g'], [6, 8, 'g']]);
+  r = plot(r, [[4, 3, 'k'], [11, 3, 'k'], [5, 3, 'F'], [10, 3, 'F']]);
+  return rect(r, 4, 14, 10, 1, 'K');
+})();
+
+// 폐유 정제기: 통 두 개 + 이어진 관, 가동 중엔 방울이 떨어진다
+export const REFINER = frames3((f) => {
+  let r = box(6);
+  r = rect(r, 1, 2, 5, 9, 'd');
+  r = frame(r, 1, 2, 5, 9, 'k');
+  r = rect(r, 10, 4, 5, 7, 'G');
+  r = frame(r, 10, 4, 5, 7, 'k');
+  r = rect(r, 6, 4, 4, 1, '3');
+  r = rect(r, 6, 5, 4, 1, 'k');
+  if (f) r = plot(r, [[12, 2 + f, 'g']]);
+  return plot(r, [[3, 13, 'y'], [12, 13, 'G']]);
+});
+
+// 퇴비통: 나무 상자 + 위로 삐져나온 새싹
+export const COMPOST_BIN = frames3((f) => {
+  let r = box(7);
+  r = rect(r, 2, 3, 12, 9, 'B');
+  for (let y = 5; y < 12; y += 3) r = rect(r, 2, y, 12, 1, 'm');
+  r = frame(r, 2, 3, 12, 9, 'k');
+  r = rect(r, 3, 4, 10, 1, 'd');
+  r = plot(r, [[5, 2, 'g'], [6, 1 + (f % 2), 'G'], [10, 2, 'g'], [11, 2 - (f === 2 ? 1 : 0), 'g']]);
+  return plot(r, [[3, 13, 'y'], [12, 13, 'g']]);
+});

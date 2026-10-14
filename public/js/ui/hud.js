@@ -60,13 +60,14 @@ export function machineStatusText(station, rules, world = null) {
   if (kind === 'generator') {
     const m = rules.machines[station.type];
     const fuel = station.contents.length;
-    if (station.status === 'running') return `발전 중 ${m.output}kW · ${name(m.fuel)} ${fuel}개 남음`;
-    return `대기: ${name(m.fuel)} 넣기 (최대 ${m.fuelCap}개)`;
+    if (station.status === 'running') return `발전 중 ${m.output}kW · 연료 ${fuel}개 남음`;
+    return `대기: ${Object.keys(m.fuels).map(name).join(' 또는 ')} 넣기 (최대 ${m.fuelCap}개)`;
   }
   if (kind === 'farm') {
     const crop = name(rules.machines[station.type].crop);
     if (station.output.length > 0) return `다 자람: ${crop} ${station.output.length}개 수확 가능`;
-    return `자라는 중 ${Math.floor(farmGrowth(rules, station) * 100)}%`;
+    const fed = station.contents.length ? ` · 비료 ${station.contents.length}` : '';
+    return `자라는 중 ${Math.floor(farmGrowth(rules, station) * 100)}%${fed}`;
   }
   if (kind === 'splitter') return '좌우로 번갈아 나눔';
   if (kind === 'merger') return '모아서 앞으로';

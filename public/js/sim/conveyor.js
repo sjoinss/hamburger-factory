@@ -116,7 +116,7 @@ export function conveyorNetwork(world, rules) {
 function deliverToSink(world, rules, st, it) {
   if (kindOf(rules, st) === 'generator') {
     const m = rules.machines[st.type];
-    if (it.item !== m.fuel || st.contents.length >= m.fuelCap) return false;
+    if (!Object.hasOwn(m.fuels, it.item) || st.contents.length >= m.fuelCap) return false;
     st.contents.push(it.item);
     noteTutorial(world, 'fed', st.type);
     return true;

@@ -69,6 +69,9 @@ export function findInteraction(world, rules) {
       return { ...base, action: 'blocked', reason: bagFirst ? 'bag' : 'belt-empty' };
     }
     if (machine.kind === 'farm') {
+      // 비료를 들고 있으면 먼저 준다
+      const fz = p.inventory.findIndex((it) => it !== null && canAccept(rules, station, it));
+      if (fz !== -1 && station.output.length === 0) return { ...base, action: 'deposit', slot: fz, item: p.inventory[fz] };
       // 다 자랐으면 E 를 길게 눌러 하나씩 수확
       if (station.output.length === 0) {
         return { ...base, action: 'blocked', reason: 'growing', progress: farmGrowth(rules, station) };

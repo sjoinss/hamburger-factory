@@ -2,7 +2,7 @@
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const MACHINE_KINDS = new Set(['source', 'crafter', 'counter', 'machine', 'supply', 'belt', 'splitter', 'merger', 'sorter', 'inserter', 'storage', 'gate', 'farm', 'generator', 'reader', 'bundler']);
-export const FEATURES = new Set(['orders', 'market', 'power', 'zones', 'blueprints', 'upgrades']);
+export const FEATURES = new Set(['orders', 'market', 'power', 'zones', 'blueprints', 'upgrades', 'byproducts']);
 const CONVEYOR_KINDS = new Set(['belt', 'splitter', 'merger', 'sorter']);
 // bundle: 합류 포장기가 만드는 주문 묶음 (출고구에서만 의미가 있다)
 const ITEM_CATEGORIES = new Set(['food', 'part', 'material', 'bundle']);
@@ -81,8 +81,9 @@ export function validateMachines(data, items) {
     }
     assert(m.power === undefined || isNum(m.power, 0, 10000), `기계 ${id}: power 오류`);
     if (m.kind === 'generator') {
-      assert(Object.hasOwn(items, m.fuel), `기계 ${id}: 없는 연료 ${short(m.fuel)}`);
-      assert(isNum(m.burnSeconds, 0.5, 3600) && isInt(m.fuelCap, 1, 999) && isNum(m.output, 1, 100000), `기계 ${id}: 발전기 수치 오류`);
+      assert(isObj(m.fuels) && Object.keys(m.fuels).length > 0, `기계 ${id}: fuels 오류`);
+      for (const [f, sec] of Object.entries(m.fuels)) assert(Object.hasOwn(items, f) && isNum(sec, 0.5, 3600), `기계 ${id}: 연료 오류 ${short(f)}`);
+      assert(isInt(m.fuelCap, 1, 999) && isNum(m.output, 1, 100000), `기계 ${id}: 발전기 수치 오류`);
     }
     if (m.kind === 'farm') {
       assert(Object.hasOwn(items, m.crop), `기계 ${id}: 없는 작물 ${short(m.crop)}`);
@@ -133,6 +134,9 @@ export function validateRecipes(data, items, machines) {
     checkCounts(r.inputs, `레시피 ${r.id}.inputs`);
     checkCounts(r.outputs, `레시피 ${r.id}.outputs`);
     assert(isNum(r.seconds, 0.05, 600), `레시피 ${r.id}: seconds 오류`);
+    if (r.byproduct !== undefined) {
+      assert(isObj(r.byproduct) && Object.hasOwn(items, r.byproduct.item) && isInt(r.byproduct.every, 1, 100), `레시피 ${r.id}: byproduct 오류`);
+    }
   }
   return data.recipes;
 }
@@ -160,6 +164,8 @@ export function validateGameConfig(g, items, machines) {
   assert(isObj(g.touch) && isNum(g.touch.pinchStep, 1.01, 4), 'touch 오류');
 
   assert(isNum(g.dayMinutes, 1, 1440), 'dayMinutes 오류');
+  const fz = g.fertilizer;
+  assert(isObj(fz) && Object.hasOwn(items, fz.item) && isNum(fz.speed, 1, 10) && isInt(fz.cap, 1, 20), 'fertilizer 오류');
   assert(isObj(g.away) && isNum(g.away.minSeconds, 1, 3600) && isNum(g.away.maxSeconds, g.away.minSeconds, 86400), 'away 오류');
 
   const up = g.upgrades;

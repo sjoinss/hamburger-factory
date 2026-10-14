@@ -19,13 +19,13 @@ function drawing(rules, st) {
 function burn(world, rules, gen, dt) {
   const m = rules.machines[gen.type];
   if (gen.fuelLeft <= 0) {
-    const i = gen.contents.indexOf(m.fuel);
-    if (i === -1) {
+    const fuel = gen.contents.find((id) => Object.hasOwn(m.fuels, id));
+    if (!fuel) {
       gen.status = 'idle';
       return 0;
     }
-    gen.contents.splice(i, 1);
-    gen.fuelLeft = m.burnSeconds;
+    gen.contents.splice(gen.contents.indexOf(fuel), 1);
+    gen.fuelLeft = m.fuels[fuel];
   }
   gen.fuelLeft -= dt;
   gen.status = 'running';

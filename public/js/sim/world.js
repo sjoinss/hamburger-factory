@@ -131,7 +131,7 @@ export function stepWorld(world, input, dt, rules, opts = {}) {
       continue;
     }
     if (kind !== 'machine') continue;
-    const done = updateMachine(rules, st, pdt * speedMult(world, rules, st));
+    const done = updateMachine(rules, st, pdt * speedMult(world, rules, st), world.features.includes('byproducts'));
     if (done) {
       recordRecipe(world, done);
       noteTutorial(world, 'made', st.type);
