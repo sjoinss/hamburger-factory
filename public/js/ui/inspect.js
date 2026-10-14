@@ -7,6 +7,7 @@ import { setGateManual, gateSources } from '../sim/gate.js';
 import { orderById } from '../sim/orders.js';
 import { spriteIcon, itemChip } from './icons.js';
 import { checkUpgrade, levelOf, upgradable, upgradeStation } from '../sim/upgrade.js';
+import { settingsKind, readSettings, applySettings } from '../sim/presets.js';
 import { machineStatusText } from './hud.js';
 
 const pct = (v) => `${Math.round(v * 100)}%`;
@@ -45,6 +46,35 @@ export function createInspector({ world, rules, bank }) {
   const upgradeCost = $('upgrade-cost');
   const upgradeBtn = $('btn-upgrade');
   const UPGRADE_REASON = { max: '최고 등급', money: '돈 부족', parts: '부품 부족' };
+  const presetBox = $('preset-box');
+  const copyBtn = $('btn-preset-copy');
+  const pasteBtn = $('btn-preset-paste');
+  // 설정 복사: 같은 종류(입고구끼리, 저장소끼리, 게이트끼리)에 붙인다
+  let clip = null;
+  const selStation = () => (selectedId === null ? null : stationById(world, selectedId));
+
+  copyBtn.addEventListener('click', () => {
+    const st = selStation();
+    if (!st) return;
+    clip = { kind: settingsKind(rules, st.type), settings: readSettings(rules, st), from: st.id };
+    copyBtn.textContent = '복사함';
+  });
+  pasteBtn.addEventListener('click', () => {
+    const st = selStation();
+    if (st && clip) pasteBtn.textContent = applySettings(world, rules, st, clip.settings) ? '붙임' : '붙일 수 없음';
+  });
+
+  function renderPreset(st) {
+    const kind = settingsKind(rules, st.type);
+    presetBox.hidden = !kind;
+    if (!kind) return;
+    const key = `${st.id}|${clip?.from ?? ''}`;
+    if (presetBox.dataset.key === key) return;
+    presetBox.dataset.key = key;
+    copyBtn.textContent = clip?.from === st.id ? '복사함' : '설정 복사';
+    pasteBtn.textContent = '설정 붙이기';
+    pasteBtn.hidden = !clip || clip.kind !== kind || clip.from === st.id;
+  }
 
   upgradeBtn.addEventListener('click', () => {
     const st = selectedId === null ? null : stationById(world, selectedId);
@@ -245,6 +275,7 @@ export function createInspector({ world, rules, bank }) {
       }
       renderSupplyPick(st);
       renderUpgrade(st);
+      renderPreset(st);
       storageBox.hidden = true;
       gateBox.hidden = true;
       if (machine.kind === 'storage') renderStorage(st);

@@ -8,6 +8,7 @@ import { inBounds } from '../sim/grid.js';
 import { spriteIcon, itemChip } from './icons.js';
 import { captureBlueprint, checkBlueprint, pasteBlueprint, rotateBlueprint } from '../sim/blueprint.js';
 import { createBlueprints } from './blueprints.js';
+import { createUndo, noteBuilt, noteRemoved, snapshotStation, undoLast } from '../sim/undo.js';
 
 const MESSAGE_SECONDS = 2.5;
 
@@ -30,7 +31,26 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     confirm: document.getElementById('btn-build-confirm'),
     cancel: document.getElementById('btn-build-cancel'),
     draw: document.getElementById('btn-build-draw'),
+    undo: document.getElementById('btn-build-undo'),
   };
+  // 되돌리기 기록 (이번 판에서만. 불러오기·새로 시작하면 비운다)
+  const undo = createUndo();
+  const UNDO_FAIL = { empty: '되돌릴 것 없음', items: '손이 모자라다', parts: '부품 부족', blocked: '자리가 막혀 되돌릴 수 없다' };
+  const syncUndo = () => { bar.undo.hidden = undo.stack.length === 0; };
+  function doUndo() {
+    const res = undoLast(world, rules, undo);
+    if (res.ok) flash(res.kind === 'removed' ? '철거 되돌림' : `되돌림 (${res.count}개)`);
+    else flash(UNDO_FAIL[res.reason] ?? '되돌릴 수 없다');
+    syncUndo();
+    renderPanel();
+  }
+  bar.undo.addEventListener('click', doUndo);
+  window.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.code !== 'KeyZ' || e.shiftKey || e.altKey) return;
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    e.preventDefault();
+    doUndo();
+  });
   // 터치: 끌기를 '벨트 깔기'로 쓸지 '화면 이동'으로 쓸지 (끌어서 깔 수 있는 기계일 때만 의미 있음)
   let drawEnabled = true;
   const drawLabel = () => {
@@ -117,6 +137,8 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     if (mode.kind === 'paste') {
       const res = pasteBlueprint(world, rules, mode.bp, cursor.x, cursor.y);
       if (res.ok) {
+        noteBuilt(undo, res.placed);
+        syncUndo();
         flash(`청사진 '${mode.bp.name}': 기계 ${mode.bp.entries.length}개 설치`);
         renderPanel();
       } else flash(pasteFailText(res));
@@ -125,11 +147,19 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
     if (mode.kind === 'place') {
       const res = placeMachine(world, rules, mode.type, cursor.x, cursor.y, mode.rot);
       if (!res.ok) flash(placeFailText(res));
-      else renderPanel();
+      else {
+        res.undo = noteBuilt(undo, [res]);
+        syncUndo();
+        renderPanel();
+      }
       return res;
     }
+    const target = removableAt(world, cursor.x, cursor.y);
+    const snap = target ? snapshotStation(rules, target) : null;
     const res = removeMachine(world, rules, cursor.x, cursor.y);
     if (res.ok) {
+      noteRemoved(undo, snap);
+      syncUndo();
       flash(`${rules.machines[res.station.type].name} 철거`);
       renderPanel();
     } else if (res.reason === 'items') {
@@ -286,6 +316,11 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
 
   return {
     active: () => mode !== null,
+    /** 다른 공장을 불러오면 되돌리기 기록을 비운다 */
+    resetUndo() {
+      undo.stack.length = 0;
+      syncUndo();
+    },
     /** 터치 한 손가락 끌기를 벨트 깔기로 쓸지 */
     touchDraws: () => drawEnabled && ((mode?.kind === 'place' && Boolean(rules.machines[mode.type].dragPlace)) || mode?.kind === 'select'),
     /** 마우스를 누른 칸: 설치(또는 철거)하고, 끌기 시작 */
@@ -300,7 +335,7 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
         return;
       }
       const res = confirm();
-      if (mode?.kind === 'place' && res?.ok) drag = { x, y, id: res.station.id };
+      if (mode?.kind === 'place' && res?.ok) drag = { x, y, id: res.station.id, undo: res.undo };
     },
     /** 누른 채 다른 칸으로: 끌어서 깔 수 있는 기계만 이어서 설치 */
     dragTo(x, y) {
@@ -328,7 +363,9 @@ export function createBuildMode({ world, rules, bank, panels, onModeChange }) {
       this.setCursor(x, y);
       const res = placeMachine(world, rules, mode.type, x, y, rot);
       if (!res.ok) { flash(placeFailText(res)); drag = null; return; }
-      drag = { x, y, id: res.station.id };
+      // 한 번 끌어서 깐 줄은 한 번에 되돌린다
+      drag = { x, y, id: res.station.id, undo: noteBuilt(undo, [res], drag.undo) };
+      syncUndo();
       renderPanel();
     },
     endDrag() {

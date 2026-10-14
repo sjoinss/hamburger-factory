@@ -20,6 +20,8 @@ import { stationAt } from './sim/lookup.js';
 import { createWalker } from './ui/walk.js';
 import { createSound } from './audio/sound.js';
 import { createSettings, readSavedGame } from './ui/settings.js';
+import { createAway } from './ui/away.js';
+import { beltFlow } from './sim/flow.js';
 import { replaceWorld } from './sim/save.js';
 import { ownedBounds } from './sim/zones.js';
 import { createChapterView } from './ui/chapters.js';
@@ -181,6 +183,8 @@ async function boot() {
     banner: (text, s) => hud.banner(text, s),
     onReplace: (next) => {
       replaceWorld(world, next ?? createWorld(rules));
+      away.cancel();
+      build.resetUndo();
       build.cancel();
       walker.cancel();
       inspector.select(null);
@@ -189,11 +193,14 @@ async function boot() {
       camera.follow = true;
     },
   });
+  // 자리 비운 동안 진행 (저장한 뒤 지난 시간만큼)
+  const away = createAway({ world, rules, hud });
   if (saved.error) hud.banner(saved.error, 4);
   else if (saved.world) {
     hud.banner('이어서 하기', 1.5);
+    if (saved.savedAt) away.start((Date.now() - saved.savedAt) / 1000);
   }
-  if (flags.has('debug')) Object.assign(window.__game, { sound, settings });
+  if (flags.has('debug')) Object.assign(window.__game, { sound, settings, away });
 
   const coarse = window.matchMedia('(pointer: coarse)').matches || flags.has('touch');
   const enterTouchMode = () => {
@@ -219,21 +226,26 @@ async function boot() {
   if (coarse) enterTouchMode();
   setSpeed(1);
 
-  // 탭이 백그라운드로 가면 멈추고, 돌아와도 밀린 시간은 계산하지 않는다.
+  // 탭이 백그라운드로 가면 멈추고, 돌아오면 숨어 있던 시간만큼 빨리 돌린다 (일시정지 중이었으면 그대로).
   let acc = 0;
   let last = performance.now();
+  let hiddenAt = null;
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       state.speedBeforeHidden = state.speed;
+      hiddenAt = state.speed > 0 ? Date.now() : null;
       setSpeed(0);
     } else {
       setSpeed(state.speedBeforeHidden);
       acc = 0;
       last = performance.now();
+      if (hiddenAt !== null) away.start((Date.now() - hiddenAt) / 1000);
+      hiddenAt = null;
     }
   });
 
   const tickDt = 1 / config.ticksPerSecond;
+  let flowCache = { key: null, flow: null };
 
   function frame(now) {
     const realDt = Math.min((now - last) / 1000, 0.25);
@@ -315,6 +327,8 @@ async function boot() {
 
     // ── 시뮬레이션 ──
     acc += realDt * state.speed;
+    // 자리 비운 시간을 따라잡는 동안은 그것만 돌린다
+    if (away.run()) acc = 0;
     let steps = 0;
     while (acc >= tickDt && steps < config.maxTicksPerFrame) {
       const intent = input.tickIntent();
@@ -396,11 +410,16 @@ async function boot() {
       else build.setCursor(hover.x, hover.y);
     }
 
+    const selected = panels.current() === 'info' ? inspector.selected() : null;
+    // 고른 벨트의 흐름 (배치가 바뀔 때만 다시 계산)
+    const flowKey = selected ? `${selected.id}|${world.stationsVersion}|${world.stations.length}` : null;
+    if (flowKey !== flowCache.key) flowCache = { key: flowKey, flow: selected ? beltFlow(world, rules, selected) : null };
     drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build.preview(), {
       overlay,
       destination: walker.destination(),
       fontFamily: FONT_FAMILY,
-      selected: panels.current() === 'info' ? inspector.selected() : null,
+      selected,
+      flow: flowCache.flow,
     });
     if (panels.current() === 'info') inspector.render();
     if (panels.current() === 'stats') {

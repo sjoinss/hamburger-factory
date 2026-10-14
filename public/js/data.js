@@ -158,6 +158,8 @@ export function validateGameConfig(g, items, machines) {
 
   assert(isObj(g.touch) && isNum(g.touch.pinchStep, 1.01, 4), 'touch 오류');
 
+  assert(isObj(g.away) && isNum(g.away.minSeconds, 1, 3600) && isNum(g.away.maxSeconds, g.away.minSeconds, 86400), 'away 오류');
+
   const up = g.upgrades;
   assert(isObj(up) && Array.isArray(up.kinds) && up.kinds.every((k) => k === 'machine' || k === 'supply'), 'upgrades.kinds 오류');
   assert(isNum(up.speedPerLevel, 0, 10) && isNum(up.powerPerLevel, 0, 10), 'upgrades 배율 오류');

@@ -62,6 +62,7 @@
     <!-- 건설/철거 중에만 보이는 조작 띠 -->
     <div class="build-bar" id="build-bar" role="group" aria-label="건설 조작">
       <button type="button" id="btn-build-draw" aria-pressed="true" hidden>끌어서 깔기</button>
+      <button type="button" id="btn-build-undo" hidden>되돌리기<span class="key-hint"> (Ctrl+Z)</span></button>
       <button type="button" id="btn-build-rotate">회전<span class="key-hint"> (R)</span></button>
       <button type="button" class="build-confirm" id="btn-build-confirm">설치</button>
       <button type="button" id="btn-build-cancel">취소<span class="key-hint"> (Esc)</span></button>
@@ -239,6 +240,10 @@
             </div>
           </div>
           <p class="muted" id="gate-order-info"></p>
+        </div>
+        <div class="pick-row preset-row" id="preset-box" hidden>
+          <button type="button" id="btn-preset-copy">설정 복사</button>
+          <button type="button" id="btn-preset-paste" hidden>설정 붙이기</button>
         </div>
       </div>
       <p class="muted" id="inspect-empty">기계를 누르면 상태가 여기 나온다.</p>

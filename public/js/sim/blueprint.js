@@ -1,9 +1,8 @@
 // 청사진: 지은 기계들을 영역째 저장했다가 다른 곳에 한 번에 짓는다.
 // 설정(입고 품목, 호퍼 필터, 게이트 수동 설정)도 따라간다. 붙여넣을 때 부품은 한꺼번에 확인한다.
 import { checkPlacement, placeMachine } from './build.js';
-import { rotatedSize, setSupplyItem } from './station.js';
-import { setStorageFilter } from './storage.js';
-import { setGateManual } from './gate.js';
+import { rotatedSize } from './station.js';
+import { applySettings } from './presets.js';
 import { missingCost } from './parts.js';
 import { noteTutorial } from './tutorial.js';
 
@@ -92,17 +91,19 @@ export function checkBlueprint(world, rules, bp, ox, oy) {
 export function pasteBlueprint(world, rules, bp, ox, oy) {
   const check = checkBlueprint(world, rules, bp, ox, oy);
   if (!check.ok) return check;
+  const placed = [];
   for (const e of bp.entries) {
     const res = placeMachine(world, rules, e.type, ox + e.x, oy + e.y, e.rot);
     if (!res.ok) continue; // 미리 확인했으므로 일어나지 않는다
+    placed.push(res);
     const st = res.station;
-    if (e.item) setSupplyItem(rules, st, e.item, world);
-    if (e.filter) setStorageFilter(rules, st, e.filter);
-    if (e.gate) setGateManual(st, e.gate.item, e.gate.count, e.gate.repeat);
+    if (e.item) applySettings(world, rules, st, { item: e.item });
+    if (e.filter) applySettings(world, rules, st, { filter: e.filter });
+    if (e.gate) applySettings(world, rules, st, { gate: e.gate });
   }
   noteTutorial(world, 'ui', 'blueprint');
   world.events.push({ type: 'blueprint', x: ox, y: oy, count: bp.entries.length });
-  return check;
+  return { ...check, placed };
 }
 
 /**

@@ -85,7 +85,7 @@ function stationProgress(rules, station) {
  * @param alpha 틱 사이 보간 비율 0~1
  * @param hover 마우스가 가리키는 칸 {x,y} 또는 null
  * @param build 건설/철거 미리보기 (ui/build.js preview()) 또는 null
- * @param opts {{ overlay: boolean, selected: station|null }}
+ * @param opts {{ overlay: boolean, selected: station|null, flow: { path, ends }|null }}
  */
 export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, effects, build, opts = {}) {
   const config = rules.game;
@@ -246,6 +246,16 @@ export function drawWorld(ctx, world, bank, camera, view, alpha, hover, rules, e
   });
 
   if (opts.overlay) drawOverlay();
+  if (opts.flow) {
+    // 벨트 흐름: 지나가는 칸마다 가운데 점, 물건을 받아 가는 곳은 녹색 테두리
+    for (const st of opts.flow.path) {
+      const cx = st.x * ts + ts / 2;
+      const cy = st.y * ts + ts / 2;
+      fillPx('K', cx - 3, cy - 3, 6, 6);
+      fillPx('y', cx - 2, cy - 2, 4, 4);
+    }
+    for (const st of opts.flow.ends) drawFrame(st, 'G');
+  }
   if (opts.selected) drawFrame(opts.selected, 'y');
   if (opts.destination) {
     // 탭해서 가는 곳: 칸이면 커서, 기계면 테두리

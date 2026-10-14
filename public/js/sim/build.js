@@ -81,6 +81,7 @@ export function placeMachine(world, rules, type, x, y, rot = 0) {
 /** 벨트 종류만 바꾼다: 위 물건·번호는 그대로, 옛 벨트 부품은 돌려준다 */
 function swapBelt(world, rules, check, type, rot) {
   const st = check.replace;
+  const swapped = { type: st.type, rot: st.rot };
   for (const [id, n] of Object.entries(rules.machines[st.type].cost)) world.parts[id] = (world.parts[id] ?? 0) + n;
   st.type = type;
   st.rot = rot;
@@ -88,7 +89,7 @@ function swapBelt(world, rules, check, type, rot) {
   world.stats.built[type] = (world.stats.built[type] ?? 0) + 1;
   noteTutorial(world, 'built', type);
   world.events.push({ type: 'built', machine: type, x: st.x, y: st.y });
-  return { ...check, station: st };
+  return { ...check, station: st, swapped };
 }
 
 /** 철거할 수 있는 기계 (플레이어가 지은 것만) */

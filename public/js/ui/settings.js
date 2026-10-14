@@ -46,7 +46,7 @@ export function createSettings({ world, rules, sound, onReplace, banner }) {
 
   function saveNow() {
     try {
-      localStorage.setItem(SAVE_KEY, serializeWorld(world));
+      localStorage.setItem(SAVE_KEY, serializeWorld(world, Date.now()));
       status.textContent = `저장함 ${clock(new Date())}`;
       return true;
     } catch {

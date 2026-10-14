@@ -29,13 +29,14 @@ npm test       # 서버 보안 점검 + 시뮬레이션 + 스프라이트/팔레
 | 휠 / + - | 두 손가락 | 확대 3x~5x |
 | Space | 상단 II 버튼 | 일시정지 |
 | B → 기계 선택 → 클릭 | 건설 → 칸 탭 → 설치 | 기계 짓기 (R 회전, 방향키+Enter 가능, 컨베이어는 끌어서 여러 칸 — 모바일은 '끌어서 깔기') |
-| 클릭 / F | 바라보는 기계를 한 번 더 탭 | 기계 상태 보기 (최근 60초 가동률, 입고구 재료 고르기, 업그레이드) |
+| 클릭 / F | 바라보는 기계를 한 번 더 탭 | 기계 상태 보기 (최근 60초 가동률, 입고구 재료 고르기, 업그레이드, 설정 복사·붙이기. 벨트를 고르면 흐름: 노란 점 = 지나는 길, 녹색 테두리 = 받아 가는 곳) |
+| Ctrl+Z | 건설 중 '되돌리기' | 마지막 건설·철거·청사진 되돌리기 (끌어서 깐 줄은 한 번에, 최근 30번) |
 | O | 목표 창의 '병목 보기' | 병목 보기: 빨강 빗금 = 막힘, 파랑 점 = 한산 |
 | 상단 '주문' | 상단 '주문' | 주문서: 품목/보유량/부족/남은 시간, '게이트에 맡기기' |
 | X | 건설 창의 철거 모드 | 철거 (부품 100% 환급) |
 | 건설 → 청사진 '영역 저장' → 끌기 | 끌기, 또는 모서리 탭 → 시작점 → 여기까지 저장 | 청사진 저장 (목록에서 붙여넣기, R / 회전 버튼으로 90도씩) |
 | 상단 '목표' | 상단 '목표' | 지금 장의 목표·보상, 통계 |
-| 상단 '설정' | 상단 '설정' | 저장(30초 자동)·내보내기·불러오기·새로 시작, 소리 |
+| 상단 '설정' | 상단 '설정' | 저장(30초 자동)·내보내기·불러오기·새로 시작, 소리 (다시 열거나 탭으로 돌아오면 비운 시간만큼, 최대 10분 돌아간다) |
 | Esc | 닫기 / 취소 | 창 닫기, 건설 끝 |
 
 화면은 게임이 전부 쓰고, 주문·레시피·건설·목표·설정 다섯 개만 상단 메뉴에 두고 하나씩 펼친다. 조작법은 설정 안에, 기계 정보는 기계를 누르면 열린다.
@@ -59,7 +60,7 @@ public/
     main.js          부팅, 고정 20틱 루프 + rAF 렌더 보간
     data.js          JSON 로딩/검증
     input.js         키보드/마우스
-    sim/             시뮬레이션 (DOM/Canvas 모름): grid, upgrade(기계 업그레이드), lookup, rng, path, guide(길잡이 화살표), player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, chapters, world
+    sim/             시뮬레이션 (DOM/Canvas 모름): grid, upgrade(기계 업그레이드), undo(되돌리기), presets(기계 설정 복사), flow(벨트 흐름), lookup, rng, path, guide(길잡이 화살표), player, station, interact, build, parts, conveyor, inserter, storage, gate, orders, market, power, zones, progression, economy, stats, tutorial, reader(주문 인식기), bundler(합류 포장기), blueprint, save, chapters, world
     render/          sprites(bake/캐시), camera, world, customers, effects
     sprites/         도트 데이터 (문자열 배열): tiles, characters, customers, farm, farm-potato, items, machines, storage, workshop, auto, menu, ui
     audio/           Web Audio 합성 효과음 (파일 없음)
@@ -82,3 +83,4 @@ tests/               node:test
 - [x] M8 챕터 목표 (1장 개업 ~ 7장 버거 제국, 장마다 보상, 마지막 장을 끝내면 엔딩 후 샌드박스. 상단 '목표')
 - [x] M9 메뉴 확장 (햄버거 80개: 피자 — 토마토밭·소스 냄비·치즈 통·피자 오븐 / 피자 15개: 치킨·핫도그 — 염지통·치킨 튀김기·소시지 기계·핫도그 조립기 / 치킨 15개: 아이스크림 — 냉동 유닛·냉동고. 7장 푸드코트 추가)
 - [x] M10 후반 콘텐츠 (남쪽 구역 3곳: 주방동·공방동·냉동동, 구역별 기계 속도 보너스 / 햄버거 100개: 기계 업그레이드 Lv1~3, 고속 컨베이어(일반 벨트 위에 깔면 교체), 급한 주문 / 엔딩 뒤 끝없는 도전, 최고 기록)
+- [x] M11 편의 기능 (되돌리기 Ctrl+Z, 기계 설정 복사·붙이기, 벨트 흐름 보기, 자리 비운 동안 진행)

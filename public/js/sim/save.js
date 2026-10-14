@@ -15,10 +15,13 @@ export const SAVE_MAX_CHARS = 5_000_000;
 
 const LIMIT = { list: 64, orders: 30, ground: 200, packs: 20, log: 300 };
 
-/** 저장할 문자열. 격자와 캐시 번호는 구역·기계로 다시 만들 수 있으니 넣지 않는다. */
-export function serializeWorld(world) {
+/**
+ * 저장할 문자열. 격자와 캐시 번호는 구역·기계로 다시 만들 수 있으니 넣지 않는다.
+ * savedAt: 저장한 시각 (ms, 자리 비운 시간 계산용. 시뮬레이션은 실제 시계를 모르므로 밖에서 준다)
+ */
+export function serializeWorld(world, savedAt = null) {
   const { events, grid, stationsVersion, ...rest } = world;
-  return JSON.stringify({ format: SAVE_FORMAT, version: SAVE_VERSION, world: rest });
+  return JSON.stringify({ format: SAVE_FORMAT, version: SAVE_VERSION, savedAt, world: rest });
 }
 
 // ── 값 확인 도구 ──
@@ -69,7 +72,7 @@ export function loadWorld(rules, text) {
     throw new Error('지원하지 않는 저장 버전');
   }
   if (!isObj(data.world)) throw new Error('저장 데이터가 망가졌다');
-  return restore(rules, data.world);
+  return { ...restore(rules, data.world), savedAt: fin(data.savedAt) && data.savedAt > 0 ? data.savedAt : null };
 }
 
 function restore(rules, s) {
